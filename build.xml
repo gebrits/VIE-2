@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <project name="VIE^2" basedir="." default="all">
     
-	<property name="VERSION" value="0.1"/>
+	<property name="VERSION" value="0.4"/>
 	    
     <property name="DOCS_DIR" value="./docs" description="API documentation"/>
     <property name="DIST_DIR" value="./dist"/>
@@ -22,9 +22,11 @@
             <arg value="${JSDOC_TOOLKIT_DIR}/app/run.js"/>
             <arg value="-t=${JSDOC_TOOLKIT_DIR}/templates/jsdoc"/>
             <arg value="-d=${DOCS_DIR}"/>
+            <arg value="${SRC_DIR}/core/util.js"/>
+            <arg value="${SRC_DIR}/core/entity.js"/>
             <arg value="${SRC_DIR}/core/core.js"/>
             <arg value="${SRC_DIR}/core/connector.js"/>
-            <arg value="${SRC_DIR}/core/dsm.js"/>
+            <arg value="${SRC_DIR}/core/mapping.js"/>
         </java>
     </target>
 	
@@ -56,7 +58,11 @@
     <target name="combine" description="combines .js files into one file">
         <echo message="Building VIE2 Distribution" />
         <concat destfile="${JS}/vie2-${VERSION}.js">
-        	<fileset dir="${SRC_DIR}" includes="core.js"/>
+        	<fileset dir="${SRC_DIR}" includes="core/connector.js"/>
+        	<fileset dir="${SRC_DIR}" includes="core/mapping.js"/>
+        	<fileset dir="${SRC_DIR}" includes="core/core.js"/>
+        	<fileset dir="${SRC_DIR}" includes="core/entity.js"/>
+        	<fileset dir="${SRC_DIR}" includes="core/util.js"/>
        	</concat>
     </target>
 
