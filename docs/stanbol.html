@@ -1,0 +1,183 @@
+<!DOCTYPE html>  <html> <head>   <title>stanbol.js</title>   <meta http-equiv="content-type" content="text/html; charset=UTF-8">   <link rel="stylesheet" media="all" href="docco.css" /> </head> <body>   <div id="container">     <div id="background"></div>            <div id="jump_to">         Jump To &hellip;         <div id="jump_wrapper">           <div id="jump_page">                                           <a class="source" href="dbpedia.html">                 dbpedia.js               </a>                                           <a class="source" href="rdfa.html">                 rdfa.js               </a>                                           <a class="source" href="stanbol.html">                 stanbol.js               </a>                                           <a class="source" href="connector.html">                 connector.js               </a>                                           <a class="source" href="core.html">                 core.js               </a>                                           <a class="source" href="entity.html">                 entity.js               </a>                                           <a class="source" href="mapping.html">                 mapping.js               </a>                                           <a class="source" href="util.html">                 util.js               </a>                                           <a class="source" href="entity.html">                 entity.js               </a>                                           <a class="source" href="person.html">                 person.js               </a>                                           <a class="source" href="place.html">                 place.js               </a>                        </div>         </div>       </div>          <table cellpadding="0" cellspacing="0">       <thead>         <tr>           <th class="docs">             <h1>               stanbol.js             </h1>           </th>           <th class="code">           </th>         </tr>       </thead>       <tbody>                               <tr id="section-1">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-1">&#182;</a>               </div>                            </td>             <td class="code">               <div class="highlight"><pre><span class="c">/**</span>
+<span class="c"> * @fileOverview VIE^2</span>
+<span class="c"> * @author &lt;a href=&quot;mailto:sebastian.germesin@dfki.de&quot;&gt;Sebastian Germesin&lt;/a&gt;</span>
+<span class="c"> */</span>
+
+<span class="kd">var</span> <span class="nx">stanbolConnector</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Connector</span><span class="p">(</span><span class="s1">&#39;stanbol&#39;</span><span class="o">,</span> <span class="p">{</span>
+	<span class="s2">&quot;proxy_url&quot;</span> <span class="o">:</span> <span class="s2">&quot;../utils/proxy/proxy.php&quot;</span><span class="o">,</span>
+	<span class="s2">&quot;enhancer_url&quot;</span> <span class="o">:</span> <span class="s2">&quot;http://stanbol.iksfordrupal.net:9000/engines/&quot;</span><span class="o">,</span>
+	<span class="s2">&quot;entityhub_url&quot;</span> <span class="o">:</span> <span class="s2">&quot;http://stanbol.iksfordrupal.net:9000/entityhub/&quot;</span>
+<span class="p">});</span>
+
+<span class="nx">stanbolConnector</span><span class="p">.</span><span class="nx">analyze</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">object</span><span class="o">,</span> <span class="nx">namespaces</span><span class="o">,</span> <span class="nx">callback</span><span class="p">)</span> <span class="p">{</span>
+	<span class="k">if</span> <span class="p">(</span><span class="nx">object</span> <span class="o">==</span> <span class="kc">undefined</span><span class="p">)</span> <span class="p">{</span>
+		<span class="nx">jQuery</span><span class="p">.</span><span class="nx">VIE2</span><span class="p">.</span><span class="nx">log</span> <span class="p">(</span><span class="s2">&quot;warn&quot;</span><span class="o">,</span> <span class="s2">&quot;VIE2.Connector(&#39;&quot;</span> <span class="o">+</span> <span class="k">this</span><span class="p">.</span><span class="nx">id</span> <span class="o">+</span> <span class="s2">&quot;&#39;)&quot;</span><span class="o">,</span> <span class="s2">&quot;Given object is undefined!&quot;</span><span class="p">);</span>
+		<span class="nx">callback</span><span class="p">(</span><span class="nx">jQuery</span><span class="p">.</span><span class="nx">rdf</span><span class="p">());</span>
+	<span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="k">typeof</span> <span class="nx">object</span> <span class="o">===</span> <span class="s1">&#39;object&#39;</span><span class="p">)</span> <span class="p">{</span></pre></div>             </td>           </tr>                               <tr id="section-2">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-2">&#182;</a>               </div>               <p>stanbol can not deal with embedded HTML, so we remove that. --> BAD!</p>             </td>             <td class="code">               <div class="highlight"><pre>		<span class="kd">var</span> <span class="nx">text</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="o">;</span>
+		<span class="k">if</span> <span class="p">(</span><span class="nx">object</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="mi">0</span><span class="p">).</span><span class="nx">tagName</span> <span class="o">&amp;&amp;</span> <span class="nx">object</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="mi">0</span><span class="p">).</span><span class="nx">tagName</span> <span class="o">==</span> <span class="s1">&#39;TEXTAREA&#39;</span><span class="p">)</span> <span class="p">{</span>
+			<span class="nx">text</span> <span class="o">=</span> <span class="nx">object</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="mi">0</span><span class="p">).</span><span class="nx">val</span><span class="p">();</span>
+		<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+			<span class="nx">text</span> <span class="o">=</span> <span class="nx">object</span>
+		        <span class="p">.</span><span class="nx">clone</span><span class="p">()</span>    <span class="c">//clone the element</span>
+		        <span class="p">.</span><span class="nx">children</span><span class="p">()</span> <span class="c">//select all the children</span>
+		        <span class="p">.</span><span class="nx">remove</span><span class="p">()</span>   <span class="c">//remove all the children</span>
+		        <span class="p">.</span><span class="nx">end</span><span class="p">()</span>  <span class="c">//again go back to selected element</span>
+		        <span class="p">.</span><span class="nx">text</span><span class="p">()</span>    <span class="c">//get the text of element</span>
+		        <span class="p">.</span><span class="nx">replace</span><span class="p">(</span><span class="sr">/\s+/g</span><span class="o">,</span> <span class="s1">&#39; &#39;</span><span class="p">)</span> <span class="c">//collapse multiple whitespaces</span>
+		        <span class="p">.</span><span class="nx">replace</span><span class="p">(</span><span class="sr">/\0\b\n\r\f\t/g</span><span class="o">,</span> <span class="s1">&#39;&#39;</span><span class="p">).</span><span class="nx">trim</span><span class="p">();</span> <span class="c">// remove non-letter symbols</span>
+		<span class="p">}</span>
+		<span class="kd">var</span> <span class="nx">rdf</span> <span class="o">=</span> <span class="nx">jQuery</span><span class="p">.</span><span class="nx">rdf</span><span class="p">();</span>
+		
+		<span class="kd">var</span> <span class="nx">c</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">rdfc</span><span class="p">)</span> <span class="p">{</span>
+			<span class="nx">rdfc</span><span class="p">.</span><span class="nx">databank</span><span class="p">.</span><span class="nx">triples</span><span class="p">().</span><span class="nx">each</span><span class="p">(</span><span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
+				<span class="nx">rdf</span><span class="p">.</span><span class="nx">add</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+			<span class="p">});</span>
+			
+			<span class="kd">var</span> <span class="nx">children</span> <span class="o">=</span> <span class="nx">object</span><span class="p">.</span><span class="nx">find</span><span class="p">(</span><span class="s1">&#39;*&#39;</span><span class="p">);</span>
+			<span class="k">if</span> <span class="p">(</span><span class="nx">children</span><span class="p">.</span><span class="nx">length</span><span class="p">)</span> <span class="p">{</span>
+				<span class="nx">children</span><span class="p">.</span><span class="nx">each</span><span class="p">(</span><span class="kd">function</span> <span class="p">(</span><span class="nx">index</span><span class="p">)</span> <span class="p">{</span>
+					<span class="kd">var</span> <span class="nx">obj</span> <span class="o">=</span> <span class="nx">jQuery</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+					<span class="kd">var</span> <span class="nx">textc</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="o">;</span>
+					<span class="k">if</span> <span class="p">(</span><span class="nx">obj</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="mi">0</span><span class="p">).</span><span class="nx">tagName</span> <span class="o">&amp;&amp;</span> <span class="nx">obj</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="mi">0</span><span class="p">).</span><span class="nx">tagName</span> <span class="o">==</span> <span class="s1">&#39;TEXTAREA&#39;</span><span class="p">)</span> <span class="p">{</span>
+						<span class="nx">textc</span> <span class="o">=</span> <span class="nx">obj</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="mi">0</span><span class="p">).</span><span class="nx">val</span><span class="p">();</span>
+					<span class="p">}</span>
+					<span class="k">else</span> <span class="p">{</span>
+						<span class="nx">textc</span> <span class="o">=</span> <span class="nx">obj</span>
+					        <span class="p">.</span><span class="nx">clone</span><span class="p">()</span>    <span class="c">//clone the element</span>
+					        <span class="p">.</span><span class="nx">children</span><span class="p">()</span> <span class="c">//select all the children</span>
+					        <span class="p">.</span><span class="nx">remove</span><span class="p">()</span>   <span class="c">//remove all the children</span>
+					        <span class="p">.</span><span class="nx">end</span><span class="p">()</span>  <span class="c">//again go back to selected element</span>
+					        <span class="p">.</span><span class="nx">text</span><span class="p">()</span>    <span class="c">//get the text of element</span>
+					        <span class="p">.</span><span class="nx">replace</span><span class="p">(</span><span class="sr">/\s+/g</span><span class="o">,</span> <span class="s1">&#39; &#39;</span><span class="p">)</span> <span class="c">//collapse multiple whitespaces</span>
+					        <span class="p">.</span><span class="nx">replace</span><span class="p">(</span><span class="sr">/\0\b\n\r\f\t/g</span><span class="o">,</span> <span class="s1">&#39;&#39;</span><span class="p">).</span><span class="nx">trim</span><span class="p">();</span> <span class="c">// remove non-letter symbols</span>
+					<span class="p">}</span>
+					
+					<span class="kd">var</span> <span class="nx">c2</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">rdfc</span><span class="p">)</span> <span class="p">{</span>
+						<span class="nx">rdfc</span><span class="p">.</span><span class="nx">databank</span><span class="p">.</span><span class="nx">triples</span><span class="p">().</span><span class="nx">each</span><span class="p">(</span><span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
+							<span class="nx">rdf</span><span class="p">.</span><span class="nx">add</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+						<span class="p">});</span>
+					<span class="p">};</span>
+					
+					<span class="kd">var</span> <span class="nx">cFinal</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">rdfc</span><span class="p">)</span> <span class="p">{</span>
+						<span class="nx">rdfc</span><span class="p">.</span><span class="nx">databank</span><span class="p">.</span><span class="nx">triples</span><span class="p">().</span><span class="nx">each</span><span class="p">(</span><span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
+							<span class="nx">rdf</span><span class="p">.</span><span class="nx">add</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+						<span class="p">});</span>
+						<span class="nx">callback</span><span class="p">(</span><span class="nx">rdf</span><span class="p">);</span>
+					<span class="p">};</span>
+					
+					<span class="k">if</span> <span class="p">(</span><span class="nx">index</span> <span class="o">&lt;</span> <span class="p">(</span><span class="nx">children</span><span class="p">.</span><span class="nx">length</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span> <span class="p">{</span>
+						<span class="nx">stanbolConnector</span><span class="p">.</span><span class="nx">enhance</span><span class="p">(</span><span class="nx">textc</span><span class="o">,</span> <span class="nx">c2</span><span class="p">);</span>
+					<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+						<span class="nx">stanbolConnector</span><span class="p">.</span><span class="nx">enhance</span><span class="p">(</span><span class="nx">textc</span><span class="o">,</span> <span class="nx">cFinal</span><span class="p">);</span>
+					<span class="p">}</span>
+				<span class="p">});</span>
+			<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>		
+				<span class="nx">callback</span><span class="p">(</span><span class="nx">rdf</span><span class="p">);</span>
+			<span class="p">}</span>
+		<span class="p">};</span>
+		
+		<span class="nx">stanbolConnector</span><span class="p">.</span><span class="nx">enhance</span><span class="p">(</span><span class="nx">text</span><span class="o">,</span> <span class="nx">c</span><span class="p">);</span>
+	<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+		<span class="nx">jQuery</span><span class="p">.</span><span class="nx">VIE2</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&quot;error&quot;</span><span class="o">,</span> <span class="s2">&quot;VIE2.Connector(&quot;</span> <span class="o">+</span> <span class="k">this</span><span class="p">.</span><span class="nx">id</span> <span class="o">+</span> <span class="s2">&quot;)&quot;</span><span class="o">,</span> <span class="s2">&quot;Expected object, found: &#39;&quot;</span> <span class="o">+</span> <span class="p">(</span><span class="k">typeof</span> <span class="nx">object</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;&#39;&quot;</span><span class="p">);</span>
+		<span class="nx">callback</span><span class="p">(</span><span class="nx">jQuery</span><span class="p">.</span><span class="nx">rdf</span><span class="p">());</span>
+	<span class="p">}</span>
+	
+<span class="p">};</span>
+
+<span class="nx">stanbolConnector</span><span class="p">.</span><span class="nx">enhance</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">text</span><span class="o">,</span> <span class="nx">callback</span><span class="p">)</span> <span class="p">{</span>
+	<span class="k">if</span> <span class="p">(</span><span class="nx">text</span><span class="p">.</span><span class="nx">length</span> <span class="o">===</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span></pre></div>             </td>           </tr>                               <tr id="section-3">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-3">&#182;</a>               </div>               <p>empty text</p>             </td>             <td class="code">               <div class="highlight"><pre>		<span class="k">return</span> <span class="nx">jQuery</span><span class="p">.</span><span class="nx">rdf</span><span class="p">();</span>
+	<span class="p">}</span>
+	
+	<span class="kd">var</span> <span class="nx">c</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">data</span><span class="p">)</span> <span class="p">{</span>
+		<span class="k">if</span> <span class="p">(</span><span class="nx">data</span><span class="p">)</span> <span class="p">{</span>
+			<span class="k">try</span> <span class="p">{</span>
+			<span class="kd">var</span> <span class="nx">rdf</span> <span class="o">=</span> <span class="nx">jQuery</span><span class="p">.</span><span class="nx">rdf</span><span class="p">().</span><span class="nx">load</span><span class="p">(</span><span class="nx">data</span><span class="o">,</span> <span class="p">{});</span>
+			<span class="nx">callback</span><span class="p">(</span><span class="nx">rdf</span><span class="p">);</span>
+			<span class="p">}</span> <span class="k">catch</span> <span class="p">(</span><span class="nx">e</span><span class="p">)</span> <span class="p">{</span>
+				<span class="nx">jQuery</span><span class="p">.</span><span class="nx">VIE2</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&quot;error&quot;</span><span class="o">,</span> <span class="s2">&quot;VIE2.Connector(&quot;</span> <span class="o">+</span> <span class="k">this</span><span class="p">.</span><span class="nx">id</span> <span class="o">+</span> <span class="s2">&quot;)&quot;</span><span class="o">,</span> <span class="s2">&quot;Could not connect to stanbol enhancer.&quot;</span><span class="p">);</span>
+				<span class="nx">jQuery</span><span class="p">.</span><span class="nx">VIE2</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&quot;error&quot;</span><span class="o">,</span> <span class="s2">&quot;VIE2.Connector(&quot;</span> <span class="o">+</span> <span class="k">this</span><span class="p">.</span><span class="nx">id</span> <span class="o">+</span> <span class="s2">&quot;)&quot;</span><span class="o">,</span> <span class="nx">data</span><span class="p">);</span>
+				<span class="nx">callback</span><span class="p">(</span><span class="nx">jQuery</span><span class="p">.</span><span class="nx">rdf</span><span class="p">());</span>
+			<span class="p">}</span>
+		<span class="p">}</span>
+	<span class="p">};</span>
+	
+	<span class="nx">stanbolConnector</span><span class="p">.</span><span class="nx">queryEnhancer</span><span class="p">(</span><span class="nx">text</span><span class="o">,</span> <span class="nx">c</span><span class="p">);</span>
+<span class="p">};</span>
+
+<span class="nx">stanbolConnector</span><span class="p">.</span><span class="nx">queryEnhancer</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">text</span><span class="o">,</span> <span class="nx">callback</span><span class="p">)</span> <span class="p">{</span>
+
+	<span class="kd">var</span> <span class="nx">proxy</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">options</span><span class="p">.</span><span class="nx">proxy_url</span><span class="o">;</span>
+	<span class="kd">var</span> <span class="nx">enhancer_url</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">options</span><span class="p">.</span><span class="nx">enhancer_url</span><span class="o">;</span>
+
+	<span class="k">if</span> <span class="p">(</span><span class="nx">proxy</span><span class="p">)</span> <span class="p">{</span>
+		<span class="nx">jQuery</span><span class="p">.</span><span class="nx">ajax</span><span class="p">({</span>
+			<span class="nx">async</span><span class="o">:</span> <span class="kc">true</span><span class="o">,</span>
+			<span class="nx">success</span><span class="o">:</span> <span class="nx">callback</span><span class="o">,</span>
+			<span class="nx">error</span><span class="o">:</span> <span class="nx">callback</span><span class="o">,</span>
+			<span class="nx">type</span><span class="o">:</span> <span class="s2">&quot;POST&quot;</span><span class="o">,</span>
+			<span class="nx">url</span><span class="o">:</span> <span class="nx">proxy</span><span class="o">,</span>
+			<span class="nx">data</span><span class="o">:</span> <span class="p">{</span>
+    			<span class="nx">proxy_url</span><span class="o">:</span> <span class="nx">enhancer_url</span><span class="o">,</span> 
+    			<span class="nx">content</span><span class="o">:</span> <span class="nx">text</span><span class="o">,</span>
+    			<span class="nx">verb</span><span class="o">:</span> <span class="s2">&quot;POST&quot;</span><span class="o">,</span>
+    			<span class="nx">format</span><span class="o">:</span> <span class="s2">&quot;application/rdf+json&quot;</span>
+			<span class="p">}</span>
+		<span class="p">});</span>
+	<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+		<span class="nx">jQuery</span><span class="p">.</span><span class="nx">ajax</span><span class="p">({</span>
+			<span class="nx">async</span><span class="o">:</span> <span class="kc">true</span><span class="o">,</span>
+			<span class="nx">success</span><span class="o">:</span> <span class="nx">callback</span><span class="o">,</span>
+			<span class="nx">error</span><span class="o">:</span> <span class="nx">callback</span><span class="o">,</span>
+			<span class="nx">type</span><span class="o">:</span> <span class="s2">&quot;POST&quot;</span><span class="o">,</span>
+			<span class="nx">url</span><span class="o">:</span> <span class="nx">enhancer_url</span><span class="o">,</span>
+			<span class="nx">data</span><span class="o">:</span> <span class="nx">text</span><span class="o">,</span>
+			<span class="nx">dataType</span><span class="o">:</span> <span class="s2">&quot;application/rdf+json&quot;</span>
+		<span class="p">});</span>
+	<span class="p">}</span>
+<span class="p">};</span>
+
+<span class="nx">stanbolConnector</span><span class="p">.</span><span class="nx">query</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">uri</span><span class="o">,</span> <span class="nx">props</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">jQuery</span><span class="p">.</span><span class="nx">VIE2</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&quot;error&quot;</span><span class="o">,</span> <span class="s2">&quot;VIE2.Connector(&quot;</span> <span class="o">+</span> <span class="k">this</span><span class="p">.</span><span class="nx">id</span> <span class="o">+</span> <span class="s2">&quot;)&quot;</span><span class="o">,</span> <span class="s2">&quot;TO BE IMPLEMENTED:QUERY Entity Hub&quot;</span><span class="p">);</span>	
+	<span class="k">return</span> <span class="p">{};</span>
+<span class="p">};</span></pre></div>             </td>           </tr>                               <tr id="section-4">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-4">&#182;</a>               </div>               <p>stanbolConnector.fillWithEntityHubInfo = function (rdf) {
+jQuery.each(rdf.databank.objectIndex, function (uri) {
+    var uriStr = uri.toString().replace(/"/g, '').replace(/</, '').replace(/>/, '');
+    if (uriStr.match('^urn:.*')) {
+        //ignore these uris!
+        return jQuery.rdf();
+    }
+    var result = stanbolConnector.queryEntityHub(uriStr);
+    if (result.status == 200) {
+        var resultText = result.responseText;
+        var resultObj = jQuery.parseJSON(resultText);
+        rdf.load(resultObj);
+    };
+});
+return rdf;
+};</p>
+
+<p>stanbolConnector.queryEntityHub = function (uri) {
+var proxy = this.options.proxy<em>url;
+var entityhub</em>url = this.options.entityhub<em>url.replace(/\/$/, '');
+if (proxy) {
+    return jQuery.ajax({
+        async: false,
+        type: "POST",
+        url: proxy,
+        data: {
+               proxy</em>url: entityhub<em>url + "/sites/entity?id=" + uri, 
+               content: '',
+               verb: "GET",
+               format: "application/rdf+json"
+        }
+    });
+} else {
+    return jQuery.ajax({
+        async: false,
+        type: "GET",
+        url: entityhub</em>url + "/sites/entity?id=" + uri,
+        data: text,
+        dataType: "application/rdf+json"
+    });
+}
+};</p>             </td>             <td class="code">               <div class="highlight"><pre></pre></div>             </td>           </tr>                </tbody>     </table>   </div> </body> </html> 

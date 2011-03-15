@@ -5,29 +5,33 @@
 	    
     <property name="DOCS_DIR" value="./docs" description="API documentation"/>
     <property name="DIST_DIR" value="./dist"/>
+    <property name="DEMOS_DIR" value="./demos"/>
     <property name="LIB_DIR" value="./lib"/>
     <property name="SRC_DIR" value="./src"/>
     <property name="TOOLS_DIR" value="./utils"/>
-    <property name="JSDOC_TOOLKIT_DIR" value="${TOOLS_DIR}/jsdoc-toolkit/"/>
     <property name="YUI" value="${TOOLS_DIR}/yui-compressor/yuicompressor-2.4.2.jar" />
     
     <!-- Names for output -->
     <property name="JS" value="${DIST_DIR}/js/" />
     <property name="JS_MIN" value="${DIST_DIR}/min/" />
 	
-	<target name="doc" description="generates documentation for VIE^2">
-        <!-- jsdoc-toolkit ant taks is currently broken, so we directly run -->
-        <echo message="Generating Documentation:"/>
-        <java jar="${JSDOC_TOOLKIT_DIR}/jsrun.jar" fork="true" failonerror="true">
-            <arg value="${JSDOC_TOOLKIT_DIR}/app/run.js"/>
-            <arg value="-t=${JSDOC_TOOLKIT_DIR}/templates/jsdoc"/>
-            <arg value="-d=${DOCS_DIR}"/>
-            <arg value="${SRC_DIR}/core/util.js"/>
-            <arg value="${SRC_DIR}/core/entity.js"/>
-            <arg value="${SRC_DIR}/core/core.js"/>
-            <arg value="${SRC_DIR}/core/connector.js"/>
-            <arg value="${SRC_DIR}/core/mapping.js"/>
-        </java>
+	<target name="doc" description="Generates documentation for VIE^2 with Docco ">
+        <echo message="Generating Documentation"/>
+		<echo message="Attention: 'Docco' is needed for that. Make sure it is on your PATH or"/>
+		<echo message="get it from: http://jashkenas.github.com/docco/"/>
+		<exec executable="docco" dir=".">
+  			<arg value="${SRC_DIR}/core/connector.js" />
+  			<arg value="${SRC_DIR}/core/core.js" />
+  			<arg value="${SRC_DIR}/core/entity.js" />
+  			<arg value="${SRC_DIR}/core/mapping.js" />
+  			<arg value="${SRC_DIR}/core/util.js" />
+  			<arg value="${SRC_DIR}/mapping/entity.js" />
+  			<arg value="${SRC_DIR}/mapping/person.js" />
+  			<arg value="${SRC_DIR}/mapping/place.js" />
+  			<arg value="${SRC_DIR}/connector/dbpedia.js" />
+  			<arg value="${SRC_DIR}/connector/rdfa.js" />
+  			<arg value="${SRC_DIR}/connector/stanbol.js" />
+		</exec>
     </target>
 	
 	<target name="clean" description="Tidy up project.">
@@ -37,9 +41,9 @@
     </target>
 	
 	<target name="init" depends="clean">
-	        <mkdir dir="${DIST_DIR}" />
-	        <mkdir dir="${JS}" />
-	        <mkdir dir="${JS_MIN}" />
+        <mkdir dir="${DIST_DIR}" />
+        <mkdir dir="${JS}" />
+        <mkdir dir="${JS_MIN}" />
 	</target>
 	
     <target name="all" depends="init, doc, dist"/>
@@ -51,12 +55,16 @@
         <zip destfile="${DIST_DIR}/vie2-${VERSION}.zip">
             <zipfileset dir="${JS}" includes="*.js" prefix="${JS}"/>
             <zipfileset dir="${JS_MIN}" includes="*.js" prefix="${JS_MIN}"/>
+            <zipfileset dir="${SRC_DIR}" includes="**/**" prefix="${SRC_DIR}"/>
+            <zipfileset dir="${LIB_DIR}" includes="**/**" prefix="${LIB_DIR}"/>
+            <zipfileset dir="${TOOLS_DIR}" includes="**/**" prefix="${TOOLS_DIR}"/>
+            <zipfileset dir="${DEMOS_DIR}" includes="**/**" prefix="${DEMOS_DIR}"/>
             <zipfileset dir="${DOCS_DIR}" includes="**/**" prefix="${DOCS_DIR}"/>
         </zip>
     </target>
     
-    <target name="combine" description="combines .js files into one file">
-        <echo message="Building VIE2 Distribution" />
+    <target name="combine" description="combines core/*.js files into one file">
+        <echo message="Building VIE^2 Distribution" />
         <concat destfile="${JS}/vie2-${VERSION}.js">
         	<fileset dir="${SRC_DIR}" includes="core/connector.js"/>
         	<fileset dir="${SRC_DIR}" includes="core/mapping.js"/>

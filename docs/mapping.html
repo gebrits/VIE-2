@@ -1,0 +1,113 @@
+<!DOCTYPE html>  <html> <head>   <title>mapping.js</title>   <meta http-equiv="content-type" content="text/html; charset=UTF-8">   <link rel="stylesheet" media="all" href="docco.css" /> </head> <body>   <div id="container">     <div id="background"></div>            <div id="jump_to">         Jump To &hellip;         <div id="jump_wrapper">           <div id="jump_page">                                           <a class="source" href="dbpedia.html">                 dbpedia.js               </a>                                           <a class="source" href="rdfa.html">                 rdfa.js               </a>                                           <a class="source" href="stanbol.html">                 stanbol.js               </a>                                           <a class="source" href="connector.html">                 connector.js               </a>                                           <a class="source" href="core.html">                 core.js               </a>                                           <a class="source" href="entity.html">                 entity.js               </a>                                           <a class="source" href="mapping.html">                 mapping.js               </a>                                           <a class="source" href="util.html">                 util.js               </a>                                           <a class="source" href="entity.html">                 entity.js               </a>                                           <a class="source" href="person.html">                 person.js               </a>                                           <a class="source" href="place.html">                 place.js               </a>                        </div>         </div>       </div>          <table cellpadding="0" cellspacing="0">       <thead>         <tr>           <th class="docs">             <h1>               mapping.js             </h1>           </th>           <th class="code">           </th>         </tr>       </thead>       <tbody>                               <tr id="section-1">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-1">&#182;</a>               </div>                            </td>             <td class="code">               <div class="highlight"><pre><span class="c">/**</span>
+<span class="c"> * @fileOverview VIE^2</span>
+<span class="c"> * @author &lt;a href=&quot;mailto:sebastian.germesin@dfki.de&quot;&gt;Sebastian Germesin&lt;/a&gt;</span>
+<span class="c"> */</span></pre></div>             </td>           </tr>                               <tr id="section-2">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-2">&#182;</a>               </div>               <p>A <code>Mapping</code> provides functionality to map context knowledge
+to Javascript objects. This can either be accomplished by using the default
+functionality of the <code>filter</code> method, or by overwriting this.<br />
+In general, the mapping function should never be called directly but only
+through the core. </p>             </td>             <td class="code">               <div class="highlight"><pre></pre></div>             </td>           </tr>                               <tr id="section-3">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-3">&#182;</a>               </div>               <p><code>Constructor(id, [options]):</code> The constructor needs an id of type <code>string</code>.
+Exceptions are thrown if either no 'id' is given or the id is not of type string.
+Options are optional and may be passed after the id to the constructor.</p>             </td>             <td class="code">               <div class="highlight"><pre><span class="nx">Mapping</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">id</span><span class="o">,</span> <span class="nx">options</span><span class="p">)</span> <span class="p">{</span>
+	<span class="k">if</span> <span class="p">(</span><span class="nx">id</span> <span class="o">===</span> <span class="kc">undefined</span><span class="p">)</span> <span class="p">{</span>
+		<span class="k">throw</span> <span class="s2">&quot;The mapping constructor needs an &#39;id&#39;!&quot;</span><span class="o">;</span>
+	<span class="p">}</span>
+	
+	<span class="k">if</span> <span class="p">(</span><span class="k">typeof</span> <span class="nx">id</span> <span class="o">!==</span> <span class="s1">&#39;string&#39;</span><span class="p">)</span> <span class="p">{</span>
+		<span class="k">throw</span> <span class="s2">&quot;The mapping constructor needs an &#39;id&#39; of type &#39;string&#39;!&quot;</span><span class="o">;</span>
+	<span class="p">}</span>
+	<span class="k">this</span><span class="p">.</span><span class="nx">id</span> <span class="o">=</span> <span class="nx">id</span><span class="o">;</span>
+	
+	<span class="k">this</span><span class="p">.</span><span class="nx">options</span> <span class="o">=</span> <span class="nx">options</span><span class="o">;</span>
+	</pre></div>             </td>           </tr>                               <tr id="section-4">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-4">&#182;</a>               </div>               <p>automatically registers the mapping in VIE^2.</p>             </td>             <td class="code">               <div class="highlight"><pre>	<span class="nx">$</span><span class="p">.</span><span class="nx">VIE2</span><span class="p">.</span><span class="nx">registerMapping</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+<span class="p">};</span></pre></div>             </td>           </tr>                               <tr id="section-5">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-5">&#182;</a>               </div>               <p><code>filter(vie2, context, matches)</code><br />
+<i>returns</i> <strong>array of objects</strong></p>             </td>             <td class="code">               <div class="highlight"><pre><span class="nx">Mapping</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">filter</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">vie2</span><span class="o">,</span> <span class="nx">context</span><span class="o">,</span> <span class="nx">matches</span><span class="p">)</span> <span class="p">{</span></pre></div>             </td>           </tr>                               <tr id="section-6">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-6">&#182;</a>               </div>               <p>In the default functionality of this method, we can simply pass
+the option.mapping object to the constructor that is automatically parsed and
+used by the <code>filter</code> function. Let's have a look
+at the <i>place</i> mapper:
+    <code><pre>new Mapping('place', {
+        mapping :  {
+            'type' : {
+                'rdfa' : {
+                    'type' : 'rdf:type', 
+                    'value' : 'dbonto:PopulatedPlace'
+                }
+            },
+            'name' : {
+               'rdfa' : ['rdfs:label', 'foaf:name']
+            },
+            'long' : {
+                'rdfa' : '<http:// www.w3.org/2003/01/geo/wgs84_pos#long>'
+            },
+            'lat' : {
+                'rdfa' : 'geo:lat'
+            }
+       }
+    });</pre></code>
+We can see that the <code>mapping</code> option is a key value hashmap which needs
+a pre-given syntax. It is connector-specific in it's mapping and in the example,
+<code>'rdfa'</code> is the id of the RDFa connector.
+Filtering for entity types is specified in the <code>'type'</code> key which needs
+for each connector a <code>'type'</code> and <code>'value'</code> key, where
+<code>'value'</code> can also be an array of strings. In the example, we only search
+for elements that are of type <code>PopulatedPlace</code> from the dbPedia ontology.
+Notice: As long as VIE^2 was initialized with proper namespace mappings, these mappings
+can be used through the whole framework consistently.
+In the example, the <code>context</code> is scanned for all places and for each found
+entity, a new Javascript object is allocated with the keys <code>name, long, lat</code>.
+As we can see, the mapping also either applies to strings or arrays of strings. 
+Full URIs need to be enclosed by the <code>&lt;</code> and <code>&gt;</code> symbols.</p>             </td>             <td class="code">               <div class="highlight"><pre>	<span class="kd">var</span> <span class="nx">entities</span> <span class="o">=</span> <span class="p">[];</span>
+	<span class="kd">var</span> <span class="nx">that</span> <span class="o">=</span> <span class="k">this</span><span class="o">;</span>
+	
+	<span class="nx">jQuery</span><span class="p">.</span><span class="nx">each</span><span class="p">(</span><span class="nx">context</span><span class="o">,</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">connId</span><span class="o">,</span> <span class="nx">rdf</span><span class="p">)</span> <span class="p">{</span>
+		<span class="k">if</span> <span class="p">(</span><span class="nx">that</span><span class="p">.</span><span class="nx">options</span><span class="p">.</span><span class="nx">mapping</span><span class="p">.</span><span class="nx">type</span><span class="p">[</span><span class="nx">connId</span><span class="p">])</span> <span class="p">{</span>
+			<span class="c">/*TODO: if (typeof that.options.mapping.type[connId] === &#39;array&#39;)*/</span>
+			<span class="nx">rdf</span>
+			<span class="p">.</span><span class="nx">where</span><span class="p">(</span><span class="s1">&#39;?subject&#39;</span> <span class="o">+</span> <span class="s1">&#39; &#39;</span> <span class="o">+</span>
+					<span class="nx">that</span><span class="p">.</span><span class="nx">options</span><span class="p">.</span><span class="nx">mapping</span><span class="p">.</span><span class="nx">type</span><span class="p">[</span><span class="nx">connId</span><span class="p">].</span><span class="nx">type</span> <span class="o">+</span> <span class="s1">&#39; &#39;</span> <span class="o">+</span> 
+					<span class="nx">that</span><span class="p">.</span><span class="nx">options</span><span class="p">.</span><span class="nx">mapping</span><span class="p">.</span><span class="nx">type</span><span class="p">[</span><span class="nx">connId</span><span class="p">].</span><span class="nx">value</span><span class="p">)</span>
+			<span class="p">.</span><span class="nx">each</span><span class="p">(</span><span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
+				<span class="kd">var</span> <span class="nx">entity</span> <span class="o">=</span> <span class="p">{};</span>
+				<span class="kd">var</span> <span class="nx">subject</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">subject</span><span class="o">;</span>
+				<span class="kd">var</span> <span class="nx">triples</span> <span class="o">=</span> <span class="nx">rdf</span><span class="p">.</span><span class="nx">databank</span><span class="p">.</span><span class="nx">subjectIndex</span><span class="p">[</span><span class="nx">subject</span><span class="p">];</span>
+				<span class="nx">jQuery</span><span class="p">.</span><span class="nx">each</span><span class="p">(</span><span class="nx">that</span><span class="p">.</span><span class="nx">options</span><span class="p">.</span><span class="nx">mapping</span><span class="o">,</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">key</span><span class="o">,</span> <span class="nx">val</span><span class="p">)</span> <span class="p">{</span>
+					<span class="k">if</span> <span class="p">(</span><span class="nx">key</span> <span class="o">!==</span> <span class="s1">&#39;type&#39;</span><span class="p">)</span> <span class="p">{</span>
+						<span class="k">if</span> <span class="p">(</span><span class="nx">key</span> <span class="o">===</span> <span class="s1">&#39;*&#39;</span><span class="p">)</span> <span class="p">{</span>
+							<span class="c">/*TODO: key === &#39;*&#39; */</span>
+						<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+							<span class="nx">entity</span><span class="p">[</span><span class="nx">key</span><span class="p">]</span> <span class="o">=</span> <span class="p">[];</span>
+							<span class="kd">var</span> <span class="nx">property</span> <span class="o">=</span> <span class="nx">val</span><span class="p">[</span><span class="nx">connId</span><span class="p">];</span>
+							<span class="k">if</span> <span class="p">(</span><span class="nx">property</span><span class="p">)</span> <span class="p">{</span>
+								<span class="k">if</span> <span class="p">(</span><span class="k">typeof</span> <span class="nx">property</span> <span class="o">===</span> <span class="s1">&#39;string&#39;</span><span class="p">)</span> <span class="p">{</span>
+									<span class="nx">property</span> <span class="o">=</span> <span class="p">[</span><span class="nx">property</span><span class="p">];</span>
+								<span class="p">}</span>	
+								<span class="k">if</span> <span class="p">(</span><span class="nx">jQuery</span><span class="p">.</span><span class="nx">isArray</span><span class="p">(</span><span class="nx">property</span><span class="p">))</span> <span class="p">{</span>
+									<span class="nx">jQuery</span><span class="p">.</span><span class="nx">each</span><span class="p">(</span><span class="nx">property</span><span class="o">,</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">i</span><span class="o">,</span> <span class="nx">v</span><span class="p">)</span> <span class="p">{</span>
+										<span class="kd">var</span> <span class="nx">prop</span> <span class="o">=</span> <span class="nx">jQuery</span><span class="p">.</span><span class="nx">rdf</span><span class="p">.</span><span class="nx">resource</span><span class="p">(</span><span class="nx">v</span><span class="o">,</span> <span class="p">{</span> <span class="nx">namespaces</span><span class="o">:</span> <span class="nx">rdf</span><span class="p">.</span><span class="nx">databank</span><span class="p">.</span><span class="nx">namespaces</span> <span class="p">});</span>
+										<span class="nx">jQuery</span><span class="p">.</span><span class="nx">each</span><span class="p">(</span><span class="nx">triples</span><span class="o">,</span> <span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
+											<span class="k">if</span> <span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">property</span> <span class="o">===</span> <span class="nx">prop</span><span class="p">)</span> <span class="p">{</span>
+												<span class="nx">entity</span><span class="p">[</span><span class="nx">key</span><span class="p">].</span><span class="nx">push</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">object</span><span class="p">);</span>
+											<span class="p">}</span>
+										<span class="p">});</span>
+										<span class="c">/*TODO: gather this to reduce numer of calls*/</span>
+										<span class="k">if</span> <span class="p">(</span><span class="nx">entity</span><span class="p">[</span><span class="nx">key</span><span class="p">].</span><span class="nx">length</span> <span class="o">===</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span></pre></div>             </td>           </tr>                               <tr id="section-7">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-7">&#182;</a>               </div>               <p>As a speciality: The default filter method checks for all keys
+if there are no values found and if so, automatically queries
+VIE^2 for them to fill the gaps.</p>             </td>             <td class="code">               <div class="highlight"><pre>											<span class="kd">var</span> <span class="nx">queryResult</span> <span class="o">=</span> <span class="nx">vie2</span><span class="p">.</span><span class="nx">query</span><span class="p">(</span><span class="nx">subject</span><span class="o">,</span> <span class="p">[</span><span class="nx">prop</span><span class="p">]);</span>
+											<span class="k">if</span> <span class="p">(</span><span class="nx">queryResult</span><span class="p">[</span><span class="nx">prop</span><span class="p">])</span> <span class="p">{</span>
+												<span class="nx">jQuery</span><span class="p">.</span><span class="nx">extend</span><span class="p">(</span><span class="nx">entity</span><span class="p">[</span><span class="nx">key</span><span class="p">]</span><span class="o">,</span> <span class="nx">queryResult</span><span class="p">[</span><span class="nx">prop</span><span class="p">]);</span>
+											<span class="p">}</span>
+										<span class="p">}</span>
+									<span class="p">});</span>
+								<span class="p">}</span>
+							<span class="p">}</span>
+						<span class="p">}</span>
+					<span class="p">}</span>
+				<span class="p">});</span>
+				<span class="nx">entities</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">entity</span><span class="p">);</span>
+			<span class="p">});</span>
+		<span class="p">}</span>
+	<span class="p">});</span>
+	
+	<span class="k">return</span> <span class="nx">entities</span><span class="o">;</span>
+<span class="p">};</span>
+
+</pre></div>             </td>           </tr>                </tbody>     </table>   </div> </body> </html> 

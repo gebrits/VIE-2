@@ -94,8 +94,14 @@ stanbolConnector.enhance = function (text, callback) {
 	
 	var c = function (data) {
 		if (data) {
+			try {
 			var rdf = jQuery.rdf().load(data, {});
 			callback(rdf);
+			} catch (e) {
+				jQuery.VIE2.log("error", "VIE2.Connector(" + this.id + ")", "Could not connect to stanbol enhancer.");
+				jQuery.VIE2.log("error", "VIE2.Connector(" + this.id + ")", data);
+				callback(jQuery.rdf());
+			}
 		}
 	};
 	
@@ -111,6 +117,7 @@ stanbolConnector.queryEnhancer = function (text, callback) {
 		jQuery.ajax({
 			async: true,
 			success: callback,
+			error: callback,
 			type: "POST",
 			url: proxy,
 			data: {
@@ -124,6 +131,7 @@ stanbolConnector.queryEnhancer = function (text, callback) {
 		jQuery.ajax({
 			async: true,
 			success: callback,
+			error: callback,
 			type: "POST",
 			url: enhancer_url,
 			data: text,
