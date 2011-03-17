@@ -10,17 +10,28 @@
 Connector = function(id, options) {
 
 	this.id = id;
-	this.options = options;
+	this._options = (options)? options : {};
 	
-	$.VIE2.registerConnector(this);
+	jQuery.VIE2.registerConnector(this);
 };
 
-Connector.prototype.init = function() {};
-
-Connector.prototype.analyze = function (object, namespaces, callback) {
-	$.VIE2.log("info", "VIE^2.Connector(" + this.id + ")", "Not implemented: analyze();");
+//setter and getter for options
+Connector.prototype.options = function(values) {
+	if (values) {
+		//extend options
+		jQuery.extend(this._options, values);
+	} else {
+		//get options
+		return this._options;
+	}
 };
 
-Connector.prototype.query = function (uri, properties) {
-	$.VIE2.log("info", "VIE^2.Connector(" + this.id + ")", "Not implemented: query();");
+Connector.prototype.analyze = function (object, callback) {
+	jQuery.VIE2.log("info", "VIE2.Connector(" + this.id + ")", "Not implemented: analyze();");
+	callback(jQuery.rdf());
+};
+
+Connector.prototype.query = function (uri, properties, namespaces, callback) {
+	jQuery.VIE2.log("info", "VIE2.Connector(" + this.id + ")", "Not implemented: query();");
+	callback({});
 };

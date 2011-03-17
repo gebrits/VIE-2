@@ -3,23 +3,27 @@
  * @author <a href="mailto:sebastian.germesin@dfki.de">Sebastian Germesin</a>
  */
 
-var rdfaConnector = new Connector('rdfa');
+new Connector('rdfa');
 
-rdfaConnector.analyze = function (object, namespaces, callback) {
+jQuery.VIE2.getConnector('rdfa').analyze = function (object, callback) {
+	var rdf = jQuery.rdf();
+	
 	if (object == undefined) {
 		jQuery.VIE2.log ("warn", "VIE2.Connector('" + this.id + "')", "Given object is undefined!");
-		callback(jQuery.rdf());
+		callback(rdf);
 	} else if (typeof object === 'object') {
 		//does only work on objects that have the 'typeof' attribute set!
 		if (object.attr('typeof')) {
 			//use rdfQuery to analyze the object
-			var rdf = jQuery(object).rdfa();
+			//RDF.add() is broken -> workaround!
+			jQuery(object).rdfa().databank.triples().each(function () {
+				rdf.add(this);
+			});
 			
 			callback(rdf);
 		} else {
 			jQuery.VIE2.log("info", "VIE2.Connector(" + this.id + ")", "Object has no 'typeof' attribute! Trying to find children.");
 			
-			var rdf = jQuery.rdf();
 			object.find('[typeof]').each(function(i, e) {
 				var rdfa = jQuery(e).rdfa();
 				
@@ -32,6 +36,6 @@ rdfaConnector.analyze = function (object, namespaces, callback) {
 		}
 	} else {
 		jQuery.VIE2.log("error", "VIE2.Connector(" + this.id + ")", "Expected object, found: '" + (typeof object) + "'");
-		callback(jQuery.rdf());
+		callback(rdf);
 	}
 };

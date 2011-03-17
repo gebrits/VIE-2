@@ -182,7 +182,7 @@ class http {
         if ($verb == "POST") {
             $this->log .= "Variables will be POSTed<br />\n";
             $request = "POST ".$path." HTTP/1.0\r\n";
-	    if ($this->postvars["format"]) {
+	    if (array_key_exists("format", $this->postvars)) {
 	      $this->headers["Accept"] = $this->postvars["format"];
 	    }
             $post_string = "";
@@ -192,7 +192,11 @@ class http {
 	      }
             }
             $post_string = substr($post_string,1);
-            $this->headers["Content-Type"] = "application/x-www-form-urlencoded";
+	    if ($this->postvars["type"]) {
+                $this->headers["Content-Type"] = $this->postvars["type"];
+            } else {
+                $this->headers["Content-Type"] = "application/x-www-form-urlencoded";
+	    }
             $this->headers["Content-Length"] = strlen($post_string);
         } elseif (strlen($this->xmlrequest) > 0) {
             $this->log .= "XML request will be sent<br />\n";

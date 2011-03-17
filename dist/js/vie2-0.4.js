@@ -10,19 +10,30 @@
 Connector = function(id, options) {
 
 	this.id = id;
-	this.options = options;
+	this._options = (options)? options : {};
 	
-	$.VIE2.registerConnector(this);
+	jQuery.VIE2.registerConnector(this);
 };
 
-Connector.prototype.init = function() {};
-
-Connector.prototype.analyze = function (object, namespaces, callback) {
-	$.VIE2.log("info", "VIE^2.Connector(" + this.id + ")", "Not implemented: analyze();");
+//setter and getter for options
+Connector.prototype.options = function(values) {
+	if (values) {
+		//extend options
+		jQuery.extend(this._options, values);
+	} else {
+		//get options
+		return this._options;
+	}
 };
 
-Connector.prototype.query = function (uri, properties) {
-	$.VIE2.log("info", "VIE^2.Connector(" + this.id + ")", "Not implemented: query();");
+Connector.prototype.analyze = function (object, callback) {
+	jQuery.VIE2.log("info", "VIE2.Connector(" + this.id + ")", "Not implemented: analyze();");
+	callback(jQuery.rdf());
+};
+
+Connector.prototype.query = function (uri, properties, namespaces, callback) {
+	jQuery.VIE2.log("info", "VIE2.Connector(" + this.id + ")", "Not implemented: query();");
+	callback({});
 };
 /**
  * @fileOverview VIE^2
@@ -185,9 +196,30 @@ Mapping.prototype.filter = function (vie2, context, matches) {
     		contextchanged: jQuery.noop
     	},
     	
+    	_create: function () {
+    		var that = this;
+    		jQuery.each(this.options.namespaces, function(k, v) {
+    			that._cache.prefix(k, v);
+			});
+    	},
+    	
+    	//extends needs to be used as the default implementation would overwrite the namespaces
+    	_setOption: function (key, value) {
+    		if (key === 'namespaces') {
+    			jQuery.extend (true, this.options.namespaces, value);
+    			jQuery.each(this.options.namespaces, function(k, v) {
+    				this._cache.prefix(k, v);
+				});
+    		} else {
+    			jQuery.Widget.prototype._setOption.apply(this, [key, value]);
+    		}
+    	},
+    	
     	//<strong>_context</strong>: The private _context object stores for each connector
     	//the returned result. The values are <pre>rdfQuery objects</pre>.
     	_context: {},
+    	
+    	_cache : jQuery.rdf(),
 		
 		//<strong>_matches</strong>: The private _matches array stores the matches of the last 'filter' call.
 		_matches: [],
@@ -196,15 +228,9 @@ Mapping.prototype.filter = function (vie2, context, matches) {
 		//the last one.
 		_oldMatches: [],
     	
-		//<strong>_create</strong>: This initializes the VIE^2 object.
-    	_create: function() {
-			jQuery.VIE2.log("info", "VIE2.core", "Start " + this.element);
-			jQuery.VIE2.log("info", "VIE2.core", "End " + this.element);
-		},
-    	
-    	//<strong>analyze</strong>: The <code><pre>analyze(callback, options)</pre></code> function is one of the three
+    	//<strong>analyze</strong>: The <code><pre>analyze(callback)</pre></code> function is one of the three
 		//main functions of this library. Analyze iterates over all registered connectors and
-		//let them analyse and enrich with semantic entites. 
+		//let them analyze and enrich with semantic entities. 
 		//There are two ways of accessing the extracted knowledge:
 		
 		//1.  Via the callback method, e.g., <code><pre>.vie2('analyze', function () {
@@ -213,70 +239,82 @@ Mapping.prototype.filter = function (vie2, context, matches) {
 		//2.  By registering to the 'contextchanged' event, e.g., <code><pre>.bind('vie2contextchanged', function () {
 		//    var entities = $(this).vie2('filter', 'entity');
 		//})</pre></code>
-		analyze: function (callback, options) {
-			jQuery.VIE2.log("info", "VIE2.core", "Start analyze!");
+		analyze: function (callback) {
+			jQuery.VIE2.log("info", "VIE2.core", "Start: analyze()!");
+			
 			var that = this;
-			var queue = [];
+			var connectorQueue = [];
+			jQuery.each(jQuery.VIE2.connectors, function () {
+				//fill queue of connectors with 'id's to have an overview of running connectors.
+				//this supports the asynchronous calls.
+				connectorQueue.push(this.id);
+			});
 			
 			jQuery.each(jQuery.VIE2.connectors, function () {
-				queue.push(this.id);
- 				jQuery.VIE2.log("info", "VIE2.core", "Starting analysis with connector: '" + this.id + "'!");
 				var c = function (vie, conn) {
 					return function (rdf) {
+						//we add all namespaces to the rdfQuery object. 
+						//Attention: this might override namespaces that were added by the connector!
 						jQuery.each(vie.options.namespaces, function(k, v) {
 							rdf.prefix(k, v);
+							vie._cache.prefix(k, v);
 						});
+						
+						//add all triples to the local cache!
+						rdf.databank.triples().each(function () {
+							vie._cache.add(this);
+						});
+						
 						vie._context[conn.id] = rdf;
 						jQuery.VIE2.log("info", "VIE2.core", "Received RDF annotation from connector '" + conn.id + "'!");
-						removeElement(queue, conn.id);
+						
+						removeElement(connectorQueue, conn.id);
 						//everytime we receive annotations from each connector, we remove the connector's id from the
 						//queue and check whether the queue is empty.
-						if (queue.length === 0) {
+						if (connectorQueue.length === 0) {
 							//if the queue is empty, all connectors have successfully returned and we can call the
 							//callback function, as well as we can trigger the contextchanged event.
-							jQuery.VIE2.log("info", "VIE2.core", "Finished task: 'analyze'!");
+							jQuery.VIE2.log("info", "VIE2.core", "Finished task: 'analyze()'!");
 							that._trigger("contextchanged", null, {});
 							callback.call(that.element);
 						}
 					};
 				}(that, this);
 				//start analysis with the connector.
-				this.analyze(that.element, that.options.namespaces, c);
-				
+ 				jQuery.VIE2.log("info", "VIE2.core", "Starting analysis with connector: '" + this.id + "'!");
+				this.analyze(that.element, c);
 			});
 		},
 		
-		//<strong>filter</strong>: The filter function searches through the list of registered mappings and
-		//if a mapping class with the corresponding <code>id</code> is found, the filter function of that
-		//mapping is called. The result is first of all stored in the local _matches and returned as well.
-		//If no matches could be found, or no filter with the given ID is registered, an empty array is returned.
-		filter: function (filterId) {
-			if (filterId === undefined) {
-				jQuery.VIE2.log("warn", "VIE2.core", "Invoked 'filter' with undefined argument!");
-				return [];
-			} else if (typeof filterId === 'string') {
-				var that = this;
-				this._oldMatches = this._matches;
-				this._matches = [];
-				var foundMapping = false;
-				var matches = [];
-				$.each (jQuery.VIE2.mappings, function () {
-					if (this.id === filterId) {
-						foundMapping = true;
-						jQuery.VIE2.log("info", "VIE2.core", "Invoking mapping '" + this.id + "'!");
-						matches = this.filter(that, that._context, that._oldMatches);
-						that._matches = matches;
-					}
-				});
-				if (!foundMapping) {
-					jQuery.VIE2.log("warn", "VIE2.core", "filer(): Found no mapping with name '" + filterId + "'!");
-					return [];
-				} else {
-					return matches;
-				}
+		//<strong>filter</strong>: Offers an easy-to-use syntax to query for URIs of entities
+		//with special types.
+		filter: function (types) {
+
+			if (types === undefined) {
+				jQuery.VIE2.log("warn", "VIE2.core", "Invoked 'filter()' with undefined argument!");
+			} else if (typeof types === 'string' || jQuery.isArray(types)) {
+				return this.filter({'a' : types});
 			} else {
-				jQuery.VIE2.log("warn", "VIE2.core", "Invoked 'filter' with wrong argument: '" + filterId + "'!");
-				return [];
+				var that = this;
+				that._oldMatches = that._matches;
+				that._matches = [];
+				
+				jQuery.each(types, function (k, v) {
+					//convert to array if not already an array
+					v = (typeof v === 'array')? v : [v];
+
+					jQuery.each(v, function (index) {
+						var type = v[index];
+												
+						that._cache
+						.where('?subject ' + k + ' ' + type)
+						.each (function () {
+							that._matches.push(this.subject);
+						});
+					});
+				});
+				
+				return that._matches;				
 			}
 		},
 		
@@ -284,29 +322,77 @@ Mapping.prototype.filter = function (vie2, context, matches) {
 		//to be of type <code>jQuery.rdf</code> object and the property is either an array of strings
 		//or a simple string. The function iterates over all connectors that have <code>query()</code>
 		//implemented and collects data in an object.
-		query: function (uri, props) {
+		query: function (uri, props, options, callback) {
+			//TODO: look up this._cache first!
 			var ret = {};
-			if (uri === undefined) {
-				jQuery.VIE2.log("warn", "VIE2.core", "Invoked 'query' with undefined argument!");
+			if (uri === undefined || props === undefined) {
+				jQuery.VIE2.log("warn", "VIE2.core", "Invoked 'query()' with undefined argument(s)!");
+				callback(ret);
+				return;
+			} else if (typeof props === 'string') {
+				this.query(uri, [props], options, callback);
+				return;
 			}
-			if (uri instanceof jQuery.rdf.resource &&
-					uri.type === 'uri') {
+			if ((uri instanceof jQuery.rdf.resource &&
+					uri.type === 'uri' || typeof uri === 'string') && jQuery.isArray(props)) {
 				var that = this;
-
-				jQuery.each(props, function () {
-					ret[this] = [];
-				});
-
-				jQuery.each(jQuery.VIE2.connectors, function () {
-					var retTmp = this.query(uri, props);
-					if (retTmp) {
-						jQuery.extend(ret, retTmp);
+				//initialize the returning object
+				for (var i=0; i < props.length; i++) {
+					ret[props[i]] = [];
+				}
+				//look up for properties in _cache
+				//first check if we should ignore the cache!
+				if (!options || (options && !options.noCache)) {
+					for (var i=0; i < props.length; i++) {
+						that._cache
+						.where(jQuery.rdf.pattern(uri, props[i], '?object', { namespaces: that.options.namespaces}))
+						.each(function () {
+							ret[props[i]].push(this.object);
+						});
 					}
-
+				}
+				
+				//finish here if said so!
+				if (options && options.cacheOnly) {
+					callback(ret);
+					return;
+				}
+				
+				var connectorQueue = [];
+				jQuery.each(jQuery.VIE2.connectors, function () {
+					//fill queue of connectors with 'id's to have an overview of running connectors.
+					//this supports the asynchronous calls.
+					connectorQueue.push(this.id);
+				});
+				
+				//look up for properties in the connectors that
+				//implement/overwrite the query() method
+				jQuery.each(jQuery.VIE2.connectors, function () {
+					jQuery.VIE2.log("info", "VIE2.core", "Start 'query()' with connector '" + this.id + "'!");
+					var c = function (vie, conn) {
+						return function (data) {
+							jQuery.VIE2.log("info", "VIE2.core", "Received query information from connector '" + conn.id + "'!");
+							jQuery.extend(true, ret, data);
+							//TODO: add to cache!
+							
+							removeElement(connectorQueue, conn.id);
+							if (connectorQueue.length === 0) {
+								//if the queue is empty, all connectors have successfully returned and we can call the
+								//callback function, as well as we can trigger the contextchanged event.
+								jQuery.VIE2.log("info", "VIE2.core", "Finished task: 'query()'!");
+								callback.call(ret);
+							}
+						};
+					}(that, this);
+					this.query(uri, props, that.options.namespaces, c);
 				});
 			}
-			return ret;
 		},
+		
+		mapping: function (mappingId) {
+			//if _matches isempty => over all
+			//else => only over _matches!
+		},		
 		
 		//<strong>matches</strong>: A convenience method to access the matches from the last <pre>filter()</pre call.
 		matches: function () {
@@ -332,6 +418,7 @@ Mapping.prototype.filter = function (vie2, context, matches) {
 			this._matches = [];
 			this._oldMatches = [];
 			this._context = {};
+			this._cache = jQuery.rdf();
 			return this;
 		}
 		
@@ -375,19 +462,36 @@ jQuery.VIE2.registerConnector = function (connector) {
 		jQuery.VIE2.log("warn", "VIE2.core", "Did not register connector, as there is" +
 				"already a connector with the same id registered.");
 	}
-}
+};
 
-//<strong>$.VIE2.unregisterConnector</strong>: Unregistering of connectors. There is currently
-//no usecase for that, but it wasn't that hard to implement it ;)
-jQuery.VIE2.unregisterConnector = function (connector) {
+//<strong>$.VIE2.getConnector</strong>: Static method to get a connector.
+jQuery.VIE2.getConnector = function (connectorId) {
+	//first check if there is already 
+	//a connector with 'connector.id' registered
+	var connector = null;
 	jQuery.each(jQuery.VIE2.connectors, function () {
-		if (this.id === connector.id) {
-			jQuery.VIE2.connectors.splice(index, 1);
-			jQuery.VIE2.log("info", "VIE2.core", "De-registered connector '" + connector.id + "'");
+		if (this.id === connectorId) {
+			connector = this;
 			return false;
 		}
 	});
-}
+	return connector;
+};
+
+//<strong>$.VIE2.unregisterConnector</strong>: Unregistering of connectors. There is currently
+//no usecase for that, but it wasn't that hard to implement it ;)
+jQuery.VIE2.unregisterConnector = function (connectorId) {
+	var connector = null;
+	jQuery.each(jQuery.VIE2.connectors, function () {
+		if (this.id === connectorId) {
+			jQuery.VIE2.connectors.splice(index, 1);
+			jQuery.VIE2.log("info", "VIE2.core", "De-registered connector '" + connector.id + "'");
+			connector = this;
+			return false;
+		}
+	});
+	return connector;
+};
 
 //<strong>$.VIE2.mappings</strong>: Static array of all registered mappings.
 jQuery.VIE2.mappings = [];
@@ -411,19 +515,36 @@ jQuery.VIE2.registerMapping = function (mapping) {
 		jQuery.VIE2.log("warn", "VIE2.core", "Did not register mapping, as there is" +
 				"already a mapping with the same id registered.");
 	}
-}
+};
+
+//<strong>$.VIE2.getMapping</strong>: Static method to get a mapping.
+jQuery.VIE2.getMapping = function (mappingId) {
+	//first check if there is already 
+	//a mapping with 'mapping.id' registered
+	var mapping = null;
+	jQuery.each(jQuery.VIE2.mappings, function () {
+		if (this.id === mappingId) {
+			mapping = this;
+			return false;
+		}
+	});
+	return mapping;
+};
 
 //<strong>$.VIE2.unregisterMapping</strong>: Unregistering of mappings. There is currently
 //no usecase for that, but it wasn't that hard to implement it ;)
-jQuery.VIE2.unregisterMapping = function (mapping) {
+jQuery.VIE2.unregisterMapping = function (mappingId) {
+	var mapping = null;
 	jQuery.each(jQuery.VIE2.mappings, function (index) {
-		if (this.id === mapping.id) {
+		if (this.id === mappingId) {
 			jQuery.VIE2.mappings.splice(index, 1);
 			jQuery.VIE2.log("info", "VIE2.core", "De-registered mapping '" + mapping.id + "'");
+			mapping = this;
 			return;
 		}
 	});
-}/**
+	return mapping;
+};/**
  * @fileOverview VIE^2
  * @author <a href="mailto:sebastian.germesin@dfki.de">Sebastian Germesin</a>
  */
@@ -433,7 +554,7 @@ var JSONLDEntity = function (namespaces, uri, type, properties) {
 	var jsonld =  {
 		  "#": namespaces,
 		  "@": uri,
-		   "a": type
+		  "a": type
 	};
 	
 	for (var key in properties) {
@@ -441,6 +562,24 @@ var JSONLDEntity = function (namespaces, uri, type, properties) {
 	}
 	
 	return jsonld;
+};
+
+
+
+
+
+var SSO = function (uri, type, props, namespaces) {
+	
+	return  {
+		'name': {
+			type: 'foaf:name',
+			value: 'Testname'
+		},
+		'email': {
+			type : 'foaf:mbox',
+			value: 'test.name@gmx.de'
+		}
+	};
 };/**
  * @fileOverview VIE^2
  * @author <a href="mailto:sebastian.germesin@dfki.de">Sebastian Germesin</a>

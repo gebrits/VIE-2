@@ -22,6 +22,7 @@
 		
 		<!-- Connector plug-ins -->
 		<script type="text/javascript" src="../src/connector/stanbol.js"></script>
+		<script type="text/javascript" src="../src/connector/dbpedia.js"></script>
 		<script type="text/javascript" src="../src/connector/rdfa.js"></script>
 		
 		<!-- Mapping plug-ins -->
@@ -30,6 +31,18 @@
 		
 		<!-- How the API would look like! -->
 		<script type="text/javascript">
+		    $(function() {
+                $.VIE2.getConnector('stanbol').options({
+             	    "proxy_url" : "../utils/proxy/proxy.php",
+             	    "enhancer_url" : "http://stanbol.iksfordrupal.net:9000/engines/",
+             	    "entityhub_url" : "http://stanbol.iksfordrupal.net:9000/entityhub/"
+                });
+                
+                $.VIE2.getConnector('dbpedia').options({
+	                "proxy_url" : "../utils/proxy/proxy.php"
+                });
+            });
+            
 			function doit () {
 				var ns = {'google' : 'http://rdf.data-vocabulary.org/#'};
 				
@@ -44,14 +57,20 @@
 				.bind('vie2contextchanged', function () {
 					$('#loader').hide();
 					$('button').text('Done!');
-					var persons = $(this).vie2('filter', 'person');
-					console.info(persons);
+                    var that = $(this);
+					var persons = that.vie2('filter', {
+                        'a' : 'dbonto:Person',
+                        'a' : 'foaf:Person'
+                    });
+                    $.each(persons, function () {
+                       that.vie2('query', this, ['dbprop:party', 'dbonto:party', 'foaf:depiction', 'dbprop:district'], {'noCache': true}, function () {debugger;});
+                    });
+                    $('#result').show();
 					$('#numPersons').text(persons.length);
 				})
 				.vie2('analyze', function () {
-					var entities = $(this).vie2('filter', 'entity');
-					$('#numEntities').text(entities.length);
-					$('#result').show();
+                    var allentities = $(this).vie2('filter', '?x');
+					$('#numEntities').text(allentities.length);
 				});
 			};
 		</script>
@@ -60,7 +79,7 @@
 	<body>
 		<button onclick='doit();'>Click me to start the analysis!</button>
 		<img id="loader" src="./ajax-loader.gif" width="14px" style="display:none;"/><br />
-		<span id="test">This is a small test, where <span typeof="foaf:Person"><span property="foaf:name">Sebastian Germesin</span></span>, Michael Jackson and Barack Obama sing a song.</span><br />
+		<span id="test">This is a small test, where <span typeof="foaf:Person"><span property="foaf:name">Thomas Unknown</span></span>, Michael Jackson and Barack Obama sing a song.</span><br />
 		<span id="result" style="display:none;">Found <span id="numEntities"></span> entities. Out of which <span id="numPersons"></span> are persons.</span><br />
 		<br />
 	</body>

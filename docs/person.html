@@ -32,46 +32,19 @@
 <span class="p">};</span>
 
 <span class="nx">mappingPerson</span><span class="p">.</span><span class="nx">connectorMappers</span><span class="p">[</span><span class="s1">&#39;stanbol&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">rdf</span><span class="o">,</span> <span class="nx">matches</span><span class="p">)</span> <span class="p">{</span>
-    <span class="kd">var</span> <span class="nx">ret</span> <span class="o">=</span> <span class="p">[];</span></pre></div>             </td>           </tr>                               <tr id="section-3">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-3">&#182;</a>               </div>               <p>type == http://fise.iks-project.eu/ontology/TextAnnotation
-=> fise:start
-=> fise:end
-=> fise:selected-text
-=> fise:selection-context
-type == http://fise.iks-project.eu/ontology/EntityAnnotation
-=> fise:entity-reference
-=> entity-label
-=> fise:entity-type
-type == http://fise.iks-project.eu/ontology/Enhancement <br />
-=> fise:confidence <float>
-=> dc:type</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="nx">rdf</span>
-    <span class="p">.</span><span class="nx">where</span><span class="p">(</span><span class="s1">&#39;?subject a &lt;http://fise.iks-project.eu/ontology/EntityAnnotation&gt;&#39;</span><span class="p">)</span>
-    <span class="p">.</span><span class="nx">where</span><span class="p">(</span><span class="s1">&#39;?subject fise:entity-type &lt;http://dbpedia.org/ontology/Person&gt;&#39;</span><span class="p">)</span>
-    <span class="p">.</span><span class="nx">where</span><span class="p">(</span><span class="s1">&#39;?subject fise:confidence ?confidence&#39;</span><span class="p">)</span>
-    <span class="p">.</span><span class="nx">where</span><span class="p">(</span><span class="s1">&#39;?subject fise:entity-reference ?entity&#39;</span><span class="p">)</span>
-    <span class="p">.</span><span class="nx">where</span><span class="p">(</span><span class="s1">&#39;?subject dc:relation ?relation&#39;</span><span class="p">)</span>
-    <span class="p">.</span><span class="nx">where</span><span class="p">(</span><span class="s1">&#39;?relation a &lt;http://fise.iks-project.eu/ontology/TextAnnotation&gt;&#39;</span><span class="p">)</span>
-    <span class="p">.</span><span class="nx">where</span><span class="p">(</span><span class="s1">&#39;?relation fise:start ?start&#39;</span><span class="p">)</span>
-    <span class="p">.</span><span class="nx">where</span><span class="p">(</span><span class="s1">&#39;?relation fise:end ?end&#39;</span><span class="p">)</span>
+    <span class="kd">var</span> <span class="nx">ret</span> <span class="o">=</span> <span class="p">[];</span>
+    
+    <span class="nx">rdf</span>
+    <span class="p">.</span><span class="nx">where</span><span class="p">(</span><span class="s1">&#39;?subject a &lt;http://dbpedia.org/ontology/Person&gt;&#39;</span><span class="p">)</span>
+    <span class="p">.</span><span class="nx">where</span><span class="p">(</span><span class="s1">&#39;?subject fise:hasTextAnnotation ?textannot&#39;</span><span class="p">)</span>
+    <span class="p">.</span><span class="nx">where</span><span class="p">(</span><span class="s1">&#39;?subject fise:hasEntityAnnotation ?entityannot&#39;</span><span class="p">)</span>
+    <span class="p">.</span><span class="nx">where</span><span class="p">(</span><span class="s1">&#39;?entityannot fise:confidence ?confidence&#39;</span><span class="p">)</span>
+    <span class="p">.</span><span class="nx">where</span><span class="p">(</span><span class="s1">&#39;?textannot fise:start ?start&#39;</span><span class="p">)</span>
+    <span class="p">.</span><span class="nx">where</span><span class="p">(</span><span class="s1">&#39;?textannot fise:end ?end&#39;</span><span class="p">)</span>
+    <span class="p">.</span><span class="nx">where</span><span class="p">(</span><span class="s1">&#39;?textannot fise:selected-text ?selected-text&#39;</span><span class="p">)</span>
+    <span class="p">.</span><span class="nx">where</span><span class="p">(</span><span class="s1">&#39;?textannot fise:selection-context ?selection-context&#39;</span><span class="p">)</span>
     <span class="p">.</span><span class="nx">each</span> <span class="p">(</span><span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
-    	
-    	<span class="kd">var</span> <span class="nx">entity</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">entity</span><span class="p">.</span><span class="nx">toString</span><span class="p">();</span>
-    	<span class="kd">var</span> <span class="nx">start</span> <span class="o">=</span> <span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">start</span><span class="p">)</span><span class="o">?</span> <span class="k">this</span><span class="p">.</span><span class="nx">start</span><span class="p">.</span><span class="nx">value</span> <span class="o">:</span> <span class="kc">undefined</span><span class="o">;</span>
-    	<span class="kd">var</span> <span class="nx">end</span> <span class="o">=</span> <span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">end</span><span class="p">)</span><span class="o">?</span> <span class="k">this</span><span class="p">.</span><span class="nx">end</span><span class="p">.</span><span class="nx">value</span> <span class="o">:</span> <span class="kc">undefined</span><span class="o">;</span>
-    	<span class="kd">var</span> <span class="nx">confidence</span> <span class="o">=</span> <span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">confidence</span><span class="p">)</span><span class="o">?</span> <span class="k">this</span><span class="p">.</span><span class="nx">confidence</span><span class="p">.</span><span class="nx">value</span> <span class="o">:</span> <span class="kc">undefined</span><span class="o">;</span>
-    	
-    	<span class="kd">var</span> <span class="nx">r</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">JSONLDEntity</span><span class="p">(</span>
-    			<span class="nx">rdf</span><span class="p">.</span><span class="nx">databank</span><span class="p">.</span><span class="nx">namespaces</span><span class="o">,</span> 
-    			<span class="nx">entity</span><span class="o">,</span> 
-    			<span class="s1">&#39;&lt;http://dbpedia.org/ontology/Person&gt;&#39;</span><span class="o">,</span>
-    			<span class="p">{</span>
-    				<span class="s1">&#39;&lt;http://fise.iks-project.eu/ontology/confidence&gt;&#39;</span> <span class="o">:</span> <span class="nx">confidence</span><span class="o">,</span>
-    				<span class="s1">&#39;&lt;http://fise.iks-project.eu/ontology/start&gt;&#39;</span> <span class="o">:</span> <span class="nx">start</span><span class="o">,</span>
-    				<span class="s1">&#39;&lt;http://fise.iks-project.eu/ontology/end&gt;&#39;</span> <span class="o">:</span> <span class="nx">end</span>
-    			<span class="p">}</span>
-    		<span class="p">);</span>
-    	
-		<span class="nx">ret</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">r</span><span class="p">);</span>
-	<span class="p">});</span>
+    	</pre></div>             </td>           </tr>                               <tr id="section-3">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-3">&#182;</a>               </div>               <p>TODO!</p>             </td>             <td class="code">               <div class="highlight"><pre>	<span class="p">});</span>
     
 	<span class="k">return</span> <span class="nx">ret</span><span class="o">;</span>	
 <span class="p">};</span>

@@ -8,7 +8,7 @@ var JSONLDEntity = function (namespaces, uri, type, properties) {
 	var jsonld =  {
 		  "#": namespaces,
 		  "@": uri,
-		   "a": type
+		  "a": type
 	};
 	
 	for (var key in properties) {
@@ -16,4 +16,22 @@ var JSONLDEntity = function (namespaces, uri, type, properties) {
 	}
 	
 	return jsonld;
+};
+
+
+
+
+
+var SSO = function (uri, type, props, namespaces) {
+	
+	return  {
+		'name': {
+			type: 'foaf:name',
+			value: 'Testname'
+		},
+		'email': {
+			type : 'foaf:mbox',
+			value: 'test.name@gmx.de'
+		}
+	};
 };
