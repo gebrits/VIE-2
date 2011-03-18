@@ -8,7 +8,15 @@
 // 1. analyze: Analysis of the given object
 // 2. query: Querying for properties
 Connector = function(id, options) {
-
+	
+	if (id === undefined) {
+		throw "The connector constructor needs an 'id'!";
+	}
+	
+	if (typeof id !== 'string') {
+		throw "The connector constructor needs an 'id' of type 'string'!";
+	}
+	
 	this.id = id;
 	this._options = (options)? options : {};
 	
@@ -19,7 +27,7 @@ Connector = function(id, options) {
 Connector.prototype.options = function(values) {
 	if (values) {
 		//extend options
-		jQuery.extend(this._options, values);
+		jQuery.extend(true, this._options, values);
 	} else {
 		//get options
 		return this._options;
@@ -57,108 +65,93 @@ Mapping = function(id, options) {
 	if (typeof id !== 'string') {
 		throw "The mapping constructor needs an 'id' of type 'string'!";
 	}
-	this.id = id;
 	
-	this.options = options;
+	this.id = id;
+
+	this._options = (options)? options : {};
 	
 	//automatically registers the mapping in VIE^2.
-	$.VIE2.registerMapping(this);
+	jQuery.VIE2.registerMapping(this);
+};
+
+//setter and getter for options
+Mapping.prototype.options = function(values) {
+	if (values) {
+		//extend options
+		jQuery.extend(true, this._options, values);
+	} else {
+		//get options
+		return this._options;
+	}
 };
 
 //<code>filter(vie2, context, matches)</code><br />
 //<i>returns</i> <strong>array of objects</strong>
-Mapping.prototype.filter = function (vie2, context, matches) {
-	//In the default functionality of this method, we can simply pass
-	//the option.mapping object to the constructor that is automatically parsed and
-	//used by the <code>filter</code> function. Let's have a look
-	//at the <i>place</i> mapper:
-//	    <code><pre>new Mapping('place', {
-//	        mapping :  {
-//	            'type' : {
-//	                'rdfa' : {
-//	                    'type' : 'rdf:type', 
-//	                    'value' : 'dbonto:PopulatedPlace'
-//	                }
-//	            },
-//	            'name' : {
-//	               'rdfa' : ['rdfs:label', 'foaf:name']
-//	            },
-//	            'long' : {
-//	                'rdfa' : '<http:// www.w3.org/2003/01/geo/wgs84_pos#long>'
-//	            },
-//	            'lat' : {
-//	                'rdfa' : 'geo:lat'
-//	            }
-//	       }
-//	    });</pre></code>
-	//We can see that the <code>mapping</code> option is a key value hashmap which needs
-	//a pre-given syntax. It is connector-specific in it's mapping and in the example,
-	// <code>'rdfa'</code> is the id of the RDFa connector.
-	//Filtering for entity types is specified in the <code>'type'</code> key which needs
-	//for each connector a <code>'type'</code> and <code>'value'</code> key, where
-	//<code>'value'</code> can also be an array of strings. In the example, we only search
-	//for elements that are of type <code>PopulatedPlace</code> from the dbPedia ontology.
-	//Notice: As long as VIE^2 was initialized with proper namespace mappings, these mappings
-	//can be used through the whole framework consistently.
-	//In the example, the <code>context</code> is scanned for all places and for each found
-	//entity, a new Javascript object is allocated with the keys <code>name, long, lat</code>.
-	//As we can see, the mapping also either applies to strings or arrays of strings. 
-	//Full URIs need to be enclosed by the <code>&lt;</code> and <code>&gt;</code> symbols.
-	var entities = [];
-	var that = this;
-	
-	jQuery.each(context, function (connId, rdf) {
-		if (that.options.mapping.type[connId]) {
-			/*TODO: if (typeof that.options.mapping.type[connId] === 'array')*/
-			rdf
-			.where('?subject' + ' ' +
-					that.options.mapping.type[connId].type + ' ' + 
-					that.options.mapping.type[connId].value)
-			.each(function () {
-				var entity = {};
-				var subject = this.subject;
-				var triples = rdf.databank.subjectIndex[subject];
-				jQuery.each(that.options.mapping, function (key, val) {
-					if (key !== 'type') {
-						if (key === '*') {
-							/*TODO: key === '*' */
-						} else {
-							entity[key] = [];
-							var property = val[connId];
-							if (property) {
-								if (typeof property === 'string') {
-									property = [property];
-								}	
-								if (jQuery.isArray(property)) {
-									jQuery.each(property, function (i, v) {
-										var prop = jQuery.rdf.resource(v, { namespaces: rdf.databank.namespaces });
-										jQuery.each(triples, function () {
-											if (this.property === prop) {
-												entity[key].push(this.object);
-											}
-										});
-										/*TODO: gather this to reduce numer of calls*/
-										if (entity[key].length === 0) {
-											//As a speciality: The default filter method checks for all keys
-											//if there are no values found and if so, automatically queries
-											//VIE^2 for them to fill the gaps.
-											var queryResult = vie2.query(subject, [prop]);
-											if (queryResult[prop]) {
-												jQuery.extend(entity[key], queryResult[prop]);
-											}
-										}
-									});
+Mapping.prototype.mapto = function (vie2, callback) {
+	if (this.options().mapping) {
+		var map = this.options().mapping;
+
+		var ret = [];
+		var uris = vie2.filter(map['a']);
+		
+		var queue = [];
+
+		//fill queue first
+		jQuery.each(uris, function (i) {
+			var uri = uris[i];
+			
+			jQuery.each(map, function (k, v) {
+				if (k !== 'a') {
+					var props = (jQuery.isArray(v))? v : [v];
+					jQuery.each(props, function (j) {
+						var prop = props[j];
+						
+						var id = uri + "||" + prop;
+						queue.push(id);
+					});
+				}
+			});
+		});
+		
+		jQuery.each(uris, function (i) {
+			var uri = uris[i];
+			var sso = {
+				jsonld : {
+					'#' : vie2.options.namespaces,
+					'@' : uri.toString(),
+					'a' : [] //TODO: FILL!
+				}
+			};
+			ret.push(sso);
+			jQuery.each(map, function (k, v) {
+				if (k !== 'a') {
+					sso[k] = [];
+					var props = (jQuery.isArray(v))? v : [v];
+					jQuery.each(props, function (j) {
+						var prop = props[j];
+						sso.jsonld[prop] = [];
+						var id = uri + "||" + prop;
+						vie2.query(uri, prop, function (x, s, k, p) {
+							return function () {
+								var vals = this[p];
+			
+								jQuery.merge(s[k], vals);
+								jQuery.merge(s.jsonld[p], vals);
+								
+								removeElement(queue, x);
+								if (queue.length === 0) {
+									callback.call(ret);
 								}
 							}
-						}
-					}
-				});
-				entities.push(entity);
+						}(id, sso, k, prop));
+					});
+				}
 			});
-		}
-	});
-	
-	return entities;
+			
+		});
+	 } else {
+	    	callback({});
+	 }
 };/**
  * @fileOverview VIE^2
  * @author <a href="mailto:sebastian.germesin@dfki.de">Sebastian Germesin</a>
@@ -219,6 +212,8 @@ Mapping.prototype.filter = function (vie2, context, matches) {
     	//the returned result. The values are <pre>rdfQuery objects</pre>.
     	_context: {},
     	
+    	//<strong>_cache</strong>: The private _cache object stores all triples that
+    	//were retrieved so far. The values are <pre>rdfQuery objects</pre>.
     	_cache : jQuery.rdf(),
 		
 		//<strong>_matches</strong>: The private _matches array stores the matches of the last 'filter' call.
@@ -234,10 +229,10 @@ Mapping.prototype.filter = function (vie2, context, matches) {
 		//There are two ways of accessing the extracted knowledge:
 		
 		//1.  Via the callback method, e.g., <code><pre>.vie2('analyze', function () {
-		//    var entities = $(this).vie2('filter', 'entity');
+		//    $(this).vie2(...);
 		//})</pre></code>
 		//2.  By registering to the 'contextchanged' event, e.g., <code><pre>.bind('vie2contextchanged', function () {
-		//    var entities = $(this).vie2('filter', 'entity');
+		//    $(this).vie2(...);
 		//})</pre></code>
 		analyze: function (callback) {
 			jQuery.VIE2.log("info", "VIE2.core", "Start: analyze()!");
@@ -274,7 +269,7 @@ Mapping.prototype.filter = function (vie2, context, matches) {
 						if (connectorQueue.length === 0) {
 							//if the queue is empty, all connectors have successfully returned and we can call the
 							//callback function, as well as we can trigger the contextchanged event.
-							jQuery.VIE2.log("info", "VIE2.core", "Finished task: 'analyze()'!");
+							jQuery.VIE2.log("info", "VIE2.core", "Finished task: 'analyze()'! Cache holds now " + that._cache.databank.tripleStore.length + " triples!");
 							that._trigger("contextchanged", null, {});
 							callback.call(that.element);
 						}
@@ -287,7 +282,13 @@ Mapping.prototype.filter = function (vie2, context, matches) {
 		},
 		
 		//<strong>filter</strong>: Offers an easy-to-use syntax to query for URIs of entities
-		//with special types.
+		//with special types, e.g.:
+		//<code><pre>var persons = that.vie2('filter', {
+        //    'a' : ['dbonto:Person', 'foaf:Person]
+        //});</pre></code>
+		//<i>types</i> needs to be an object that maps properties ot values.
+		//if it is a 'string' or an array of strings, it is mapped to:
+		//{'a' : types}.
 		filter: function (types) {
 
 			if (types === undefined) {
@@ -301,11 +302,10 @@ Mapping.prototype.filter = function (vie2, context, matches) {
 				
 				jQuery.each(types, function (k, v) {
 					//convert to array if not already an array
-					v = (typeof v === 'array')? v : [v];
+					v = (jQuery.isArray(v))? v : [v];
 
 					jQuery.each(v, function (index) {
 						var type = v[index];
-												
 						that._cache
 						.where('?subject ' + k + ' ' + type)
 						.each (function () {
@@ -319,22 +319,26 @@ Mapping.prototype.filter = function (vie2, context, matches) {
 		},
 		
 		//<strong>query</strong>: The query function supports querying for properties. The uri needs
-		//to be of type <code>jQuery.rdf</code> object and the property is either an array of strings
+		//to be of type <code>jQuery.rdf</code> object or a simple string and the property is either an array of strings
 		//or a simple string. The function iterates over all connectors that have <code>query()</code>
 		//implemented and collects data in an object.
-		query: function (uri, props, options, callback) {
-			//TODO: look up this._cache first!
+		//The callback retrieves an object with the properties as keys and an array of results as their corresponding values.
+		//The <i>options</i> is an object that supports the following keys:
+		//options.cache : {'nocache', 'cacheonly'} -> nocache: do not use the cache but query for data online
+		// -> cacheonly: query offline only
+		query: function (uri, props, callback, options) {
 			var ret = {};
+
 			if (uri === undefined || props === undefined) {
 				jQuery.VIE2.log("warn", "VIE2.core", "Invoked 'query()' with undefined argument(s)!");
 				callback(ret);
 				return;
 			} else if (typeof props === 'string') {
-				this.query(uri, [props], options, callback);
+				this.query(uri, [props], callback, options);
 				return;
 			}
-			if ((uri instanceof jQuery.rdf.resource &&
-					uri.type === 'uri' || typeof uri === 'string') && jQuery.isArray(props)) {
+			if ((uri instanceof jQuery.rdf.blank || (uri instanceof jQuery.rdf.resource &&
+					uri.type === 'uri') || typeof uri === 'string') && jQuery.isArray(props)) {
 				var that = this;
 				//initialize the returning object
 				for (var i=0; i < props.length; i++) {
@@ -342,7 +346,7 @@ Mapping.prototype.filter = function (vie2, context, matches) {
 				}
 				//look up for properties in _cache
 				//first check if we should ignore the cache!
-				if (!options || (options && !options.noCache)) {
+				if (!options || (options && !options.cache === 'nocache')) {
 					for (var i=0; i < props.length; i++) {
 						that._cache
 						.where(jQuery.rdf.pattern(uri, props[i], '?object', { namespaces: that.options.namespaces}))
@@ -353,7 +357,7 @@ Mapping.prototype.filter = function (vie2, context, matches) {
 				}
 				
 				//finish here if said so!
-				if (options && options.cacheOnly) {
+				if (options && options.cache === 'cacheonly') {
 					callback(ret);
 					return;
 				}
@@ -368,30 +372,39 @@ Mapping.prototype.filter = function (vie2, context, matches) {
 				//look up for properties in the connectors that
 				//implement/overwrite the query() method
 				jQuery.each(jQuery.VIE2.connectors, function () {
-					jQuery.VIE2.log("info", "VIE2.core", "Start 'query()' with connector '" + this.id + "'!");
-					var c = function (vie, conn) {
+					jQuery.VIE2.log("info", "VIE2.core", "Start 'query()' with connector '" + this.id + "' for uri '" + uri + "'!");
+					var c = function (vie, conn, uri, namespaces, ret, callback) {
 						return function (data) {
-							jQuery.VIE2.log("info", "VIE2.core", "Received query information from connector '" + conn.id + "'!");
+							jQuery.VIE2.log("info", "VIE2.core", "Received query information from connector '" + conn.id + "' for uri '" + uri + "'!");
 							jQuery.extend(true, ret, data);
-							//TODO: add to cache!
 							
 							removeElement(connectorQueue, conn.id);
 							if (connectorQueue.length === 0) {
 								//if the queue is empty, all connectors have successfully returned and we can call the
 								//callback function, as well as we can trigger the contextchanged event.
-								jQuery.VIE2.log("info", "VIE2.core", "Finished task: 'query()'!");
+								
+								//adding new information to cache!
+								jQuery.each(ret, function (k, v) {
+									for (var i = 0; i < v.length; i++) {
+										that._cache.add(jQuery.rdf.triple(uri, k, v[i], {namespaces: namespaces}));
+									}
+								});
+								jQuery.VIE2.log("info", "VIE2.core", "Finished task: 'query()' for uri '" + uri + "'! Cache holds now " + that._cache.databank.tripleStore.length + " triples!");
 								callback.call(ret);
 							}
 						};
-					}(that, this);
+					}(that, this, uri, that.options.namespaces, ret, callback);
 					this.query(uri, props, that.options.namespaces, c);
 				});
+			} else {
+				callback(ret);
 			}
 		},
 		
-		mapping: function (mappingId) {
-			//if _matches isempty => over all
-			//else => only over _matches!
+		mapto: function (mappingId, callback) {
+			if (jQuery.VIE2.getMapping(mappingId)) {
+				jQuery.VIE2.getMapping(mappingId).mapto(this, callback);
+			}
 		},		
 		
 		//<strong>matches</strong>: A convenience method to access the matches from the last <pre>filter()</pre call.
@@ -544,42 +557,6 @@ jQuery.VIE2.unregisterMapping = function (mappingId) {
 		}
 	});
 	return mapping;
-};/**
- * @fileOverview VIE^2
- * @author <a href="mailto:sebastian.germesin@dfki.de">Sebastian Germesin</a>
- */
-
-var JSONLDEntity = function (namespaces, uri, type, properties) {
-	
-	var jsonld =  {
-		  "#": namespaces,
-		  "@": uri,
-		  "a": type
-	};
-	
-	for (var key in properties) {
-		jsonld[key] = properties[key]; 
-	}
-	
-	return jsonld;
-};
-
-
-
-
-
-var SSO = function (uri, type, props, namespaces) {
-	
-	return  {
-		'name': {
-			type: 'foaf:name',
-			value: 'Testname'
-		},
-		'email': {
-			type : 'foaf:mbox',
-			value: 'test.name@gmx.de'
-		}
-	};
 };/**
  * @fileOverview VIE^2
  * @author <a href="mailto:sebastian.germesin@dfki.de">Sebastian Germesin</a>

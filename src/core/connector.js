@@ -8,7 +8,15 @@
 // 1. analyze: Analysis of the given object
 // 2. query: Querying for properties
 Connector = function(id, options) {
-
+	
+	if (id === undefined) {
+		throw "The connector constructor needs an 'id'!";
+	}
+	
+	if (typeof id !== 'string') {
+		throw "The connector constructor needs an 'id' of type 'string'!";
+	}
+	
 	this.id = id;
 	this._options = (options)? options : {};
 	
@@ -19,7 +27,7 @@ Connector = function(id, options) {
 Connector.prototype.options = function(values) {
 	if (values) {
 		//extend options
-		jQuery.extend(this._options, values);
+		jQuery.extend(true, this._options, values);
 	} else {
 		//get options
 		return this._options;

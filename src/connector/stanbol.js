@@ -17,6 +17,13 @@
 // => fise:confidence <float>
 // => dc:type
 
+
+// The stanbol connector needs to be initialized like this:
+//$.VIE2.getConnector('stanbol').options({
+//    "proxy_url" : "../utils/proxy/proxy.php",
+//    "enhancer_url" : "http://stanbol.iksfordrupal.net:9000/engines/",
+//    "entityhub_url" : "http://stanbol.iksfordrupal.net:9000/entityhub/"
+//});
 new Connector('stanbol');
 
 jQuery.VIE2.getConnector('stanbol').analyze = function (object, callback) {
@@ -188,11 +195,12 @@ jQuery.VIE2.getConnector('stanbol').query = function (uri, props, namespaces, ca
 		this.query(uri, [props], namespaces, callback);
 		return;
 	}
-	if (uri.match("^urn:.*")) {
+	if ((typeof uri != 'string') || uri.match("^urn:.*")) {
 		jQuery.VIE2.log ("warn", "VIE2.Connector('" + this.id + "')", "Query does not support the given URI!");
 		callback({});
 		return;
 	}
+	var uri = uri.replace(/^</, '').replace(/>$/, '');
 	
 	//initialize the returning object
 	var ret = {};
@@ -208,7 +216,7 @@ jQuery.VIE2.getConnector('stanbol').query = function (uri, props, namespaces, ca
 				});
 				
 				for (var i=0; i < props.length; i++) {
-					var prop = props[i];
+					var prop = props[i].toString();
 					ret[prop] = [];
 					
 					rdfc

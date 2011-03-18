@@ -17,7 +17,6 @@
 		<script type="text/javascript" src="../src/core/util.js"></script>
 		<script type="text/javascript" src="../src/core/core.js"></script>
 		<script type="text/javascript" src="../src/core/connector.js"></script>
-		<script type="text/javascript" src="../src/core/entity.js"></script>
 		<script type="text/javascript" src="../src/core/mapping.js"></script>
 		
 		<!-- Connector plug-ins -->
@@ -26,7 +25,6 @@
 		<script type="text/javascript" src="../src/connector/rdfa.js"></script>
 		
 		<!-- Mapping plug-ins -->
-		<script type="text/javascript" src="../src/mapping/entity.js"></script>
 		<script type="text/javascript" src="../src/mapping/person.js"></script>
 		
 		<!-- How the API would look like! -->
@@ -58,20 +56,21 @@
 					$('#loader').hide();
 					$('button').text('Done!');
                     var that = $(this);
-					var persons = that.vie2('filter', {
-                        'a' : 'dbonto:Person',
-                        'a' : 'foaf:Person'
+					that.vie2('mapto', 'person', function () {
+                        var persons = this;
+                        jQuery.each(persons, function () {
+                            $('body').append('<div>NAME: ' + this.name[0] + '</div>');
+                        })
+                        $('#result').show();
+    					$('#numPersons').text(persons.length);
                     });
-                    $.each(persons, function () {
-                       that.vie2('query', this, ['dbprop:party', 'dbonto:party', 'foaf:depiction', 'dbprop:district'], {'noCache': true}, function () {debugger;});
-                    });
-                    $('#result').show();
-					$('#numPersons').text(persons.length);
 				})
 				.vie2('analyze', function () {
-                    var allentities = $(this).vie2('filter', '?x');
-					$('#numEntities').text(allentities.length);
-				});
+                    //ignore
+                    $(this).vie2('query', '<http://dbpedia.org/resource/Barack_Obama>', 'rdfs:label', function () {
+                     // debugger;  
+                    });
+                });
 			};
 		</script>
 		
@@ -79,7 +78,7 @@
 	<body>
 		<button onclick='doit();'>Click me to start the analysis!</button>
 		<img id="loader" src="./ajax-loader.gif" width="14px" style="display:none;"/><br />
-		<span id="test">This is a small test, where <span typeof="foaf:Person"><span property="foaf:name">Thomas Unknown</span></span>, Michael Jackson and Barack Obama sing a song.</span><br />
+		<span id="test">This is a small test, where <span typeof="foaf:Person"><span property="foaf:name">Thomas Unknown</span></span> and Barack Obama sing a song.</span><br />
 		<span id="result" style="display:none;">Found <span id="numEntities"></span> entities. Out of which <span id="numPersons"></span> are persons.</span><br />
 		<br />
 	</body>

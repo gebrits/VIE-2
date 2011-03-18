@@ -58,6 +58,8 @@
     	//the returned result. The values are <pre>rdfQuery objects</pre>.
     	_context: {},
     	
+    	//<strong>_cache</strong>: The private _cache object stores all triples that
+    	//were retrieved so far. The values are <pre>rdfQuery objects</pre>.
     	_cache : jQuery.rdf(),
 		
 		//<strong>_matches</strong>: The private _matches array stores the matches of the last 'filter' call.
@@ -73,10 +75,10 @@
 		//There are two ways of accessing the extracted knowledge:
 		
 		//1.  Via the callback method, e.g., <code><pre>.vie2('analyze', function () {
-		//    var entities = $(this).vie2('filter', 'entity');
+		//    $(this).vie2(...);
 		//})</pre></code>
 		//2.  By registering to the 'contextchanged' event, e.g., <code><pre>.bind('vie2contextchanged', function () {
-		//    var entities = $(this).vie2('filter', 'entity');
+		//    $(this).vie2(...);
 		//})</pre></code>
 		analyze: function (callback) {
 			jQuery.VIE2.log("info", "VIE2.core", "Start: analyze()!");
@@ -126,7 +128,13 @@
 		},
 		
 		//<strong>filter</strong>: Offers an easy-to-use syntax to query for URIs of entities
-		//with special types.
+		//with special types, e.g.:
+		//<code><pre>var persons = that.vie2('filter', {
+        //    'a' : ['dbonto:Person', 'foaf:Person]
+        //});</pre></code>
+		//<i>types</i> needs to be an object that maps properties ot values.
+		//if it is a 'string' or an array of strings, it is mapped to:
+		//{'a' : types}.
 		filter: function (types) {
 
 			if (types === undefined) {
@@ -140,11 +148,10 @@
 				
 				jQuery.each(types, function (k, v) {
 					//convert to array if not already an array
-					v = (typeof v === 'array')? v : [v];
+					v = (jQuery.isArray(v))? v : [v];
 
 					jQuery.each(v, function (index) {
 						var type = v[index];
-												
 						that._cache
 						.where('?subject ' + k + ' ' + type)
 						.each (function () {
@@ -158,22 +165,26 @@
 		},
 		
 		//<strong>query</strong>: The query function supports querying for properties. The uri needs
-		//to be of type <code>jQuery.rdf</code> object and the property is either an array of strings
+		//to be of type <code>jQuery.rdf</code> object or a simple string and the property is either an array of strings
 		//or a simple string. The function iterates over all connectors that have <code>query()</code>
 		//implemented and collects data in an object.
-		query: function (uri, props, options, callback) {
-			//TODO: look up this._cache first!
+		//The callback retrieves an object with the properties as keys and an array of results as their corresponding values.
+		//The <i>options</i> is an object that supports the following keys:
+		//options.cache : {'nocache', 'cacheonly'} -> nocache: do not use the cache but query for data online
+		// -> cacheonly: query offline only
+		query: function (uri, props, callback, options) {
 			var ret = {};
+
 			if (uri === undefined || props === undefined) {
 				jQuery.VIE2.log("warn", "VIE2.core", "Invoked 'query()' with undefined argument(s)!");
 				callback(ret);
 				return;
 			} else if (typeof props === 'string') {
-				this.query(uri, [props], options, callback);
+				this.query(uri, [props], callback, options);
 				return;
 			}
-			if ((uri instanceof jQuery.rdf.resource &&
-					uri.type === 'uri' || typeof uri === 'string') && jQuery.isArray(props)) {
+			if ((uri instanceof jQuery.rdf.blank || (uri instanceof jQuery.rdf.resource &&
+					uri.type === 'uri') || typeof uri === 'string') && jQuery.isArray(props)) {
 				var that = this;
 				//initialize the returning object
 				for (var i=0; i < props.length; i++) {
@@ -181,7 +192,7 @@
 				}
 				//look up for properties in _cache
 				//first check if we should ignore the cache!
-				if (!options || (options && !options.noCache)) {
+				if (!options || (options && !options.cache === 'nocache')) {
 					for (var i=0; i < props.length; i++) {
 						that._cache
 						.where(jQuery.rdf.pattern(uri, props[i], '?object', { namespaces: that.options.namespaces}))
@@ -192,7 +203,7 @@
 				}
 				
 				//finish here if said so!
-				if (options && options.cacheOnly) {
+				if (options && options.cache === 'cacheonly') {
 					callback(ret);
 					return;
 				}
@@ -208,7 +219,7 @@
 				//implement/overwrite the query() method
 				jQuery.each(jQuery.VIE2.connectors, function () {
 					jQuery.VIE2.log("info", "VIE2.core", "Start 'query()' with connector '" + this.id + "' for uri '" + uri + "'!");
-					var c = function (vie, conn, uri, namespaces) {
+					var c = function (vie, conn, uri, namespaces, ret, callback) {
 						return function (data) {
 							jQuery.VIE2.log("info", "VIE2.core", "Received query information from connector '" + conn.id + "' for uri '" + uri + "'!");
 							jQuery.extend(true, ret, data);
@@ -228,15 +239,18 @@
 								callback.call(ret);
 							}
 						};
-					}(that, this, uri, that.options.namespaces);
+					}(that, this, uri, that.options.namespaces, ret, callback);
 					this.query(uri, props, that.options.namespaces, c);
 				});
+			} else {
+				callback(ret);
 			}
 		},
 		
-		mapping: function (mappingId) {
-			//if _matches isempty => over all
-			//else => only over _matches!
+		mapto: function (mappingId, callback) {
+			if (jQuery.VIE2.getMapping(mappingId)) {
+				jQuery.VIE2.getMapping(mappingId).mapto(this, callback);
+			}
 		},		
 		
 		//<strong>matches</strong>: A convenience method to access the matches from the last <pre>filter()</pre call.

@@ -1,72 +1,20 @@
-<!DOCTYPE html>  <html> <head>   <title>person.js</title>   <meta http-equiv="content-type" content="text/html; charset=UTF-8">   <link rel="stylesheet" media="all" href="docco.css" /> </head> <body>   <div id="container">     <div id="background"></div>            <div id="jump_to">         Jump To &hellip;         <div id="jump_wrapper">           <div id="jump_page">                                           <a class="source" href="dbpedia.html">                 dbpedia.js               </a>                                           <a class="source" href="rdfa.html">                 rdfa.js               </a>                                           <a class="source" href="stanbol.html">                 stanbol.js               </a>                                           <a class="source" href="connector.html">                 connector.js               </a>                                           <a class="source" href="core.html">                 core.js               </a>                                           <a class="source" href="entity.html">                 entity.js               </a>                                           <a class="source" href="mapping.html">                 mapping.js               </a>                                           <a class="source" href="util.html">                 util.js               </a>                                           <a class="source" href="entity.html">                 entity.js               </a>                                           <a class="source" href="person.html">                 person.js               </a>                                           <a class="source" href="place.html">                 place.js               </a>                        </div>         </div>       </div>          <table cellpadding="0" cellspacing="0">       <thead>         <tr>           <th class="docs">             <h1>               person.js             </h1>           </th>           <th class="code">           </th>         </tr>       </thead>       <tbody>                               <tr id="section-1">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-1">&#182;</a>               </div>                            </td>             <td class="code">               <div class="highlight"><pre><span class="c">/**</span>
+<!DOCTYPE html>  <html> <head>   <title>person.js</title>   <meta http-equiv="content-type" content="text/html; charset=UTF-8">   <link rel="stylesheet" media="all" href="docco.css" /> </head> <body>   <div id="container">     <div id="background"></div>            <div id="jump_to">         Jump To &hellip;         <div id="jump_wrapper">           <div id="jump_page">                                           <a class="source" href="dbpedia.html">                 dbpedia.js               </a>                                           <a class="source" href="rdfa.html">                 rdfa.js               </a>                                           <a class="source" href="stanbol.html">                 stanbol.js               </a>                                           <a class="source" href="connector.html">                 connector.js               </a>                                           <a class="source" href="core.html">                 core.js               </a>                                           <a class="source" href="mapping.html">                 mapping.js               </a>                                           <a class="source" href="util.html">                 util.js               </a>                                           <a class="source" href="entity.html">                 entity.js               </a>                                           <a class="source" href="person.html">                 person.js               </a>                                           <a class="source" href="place.html">                 place.js               </a>                        </div>         </div>       </div>          <table cellpadding="0" cellspacing="0">       <thead>         <tr>           <th class="docs">             <h1>               person.js             </h1>           </th>           <th class="code">           </th>         </tr>       </thead>       <tbody>                               <tr id="section-1">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-1">&#182;</a>               </div>                            </td>             <td class="code">               <div class="highlight"><pre><span class="c">/**</span>
 <span class="c"> * @fileOverview VIE^2</span>
 <span class="c"> * @author &lt;a href=&quot;mailto:sebastian.germesin@dfki.de&quot;&gt;Sebastian Germesin&lt;/a&gt;</span>
 <span class="c"> */</span>
 
-<span class="kd">var</span> <span class="nx">mappingPerson</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Mapping</span><span class="p">(</span><span class="s1">&#39;person&#39;</span><span class="p">);</span>
-
-<span class="nx">mappingPerson</span><span class="p">.</span><span class="nx">connectorMappers</span> <span class="o">=</span> <span class="p">{};</span>
-
-<span class="nx">mappingPerson</span><span class="p">.</span><span class="nx">filter</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">vie2</span><span class="o">,</span> <span class="nx">context</span><span class="o">,</span> <span class="nx">matches</span><span class="p">)</span> <span class="p">{</span>
-	<span class="kd">var</span> <span class="nx">persons</span> <span class="o">=</span> <span class="p">[];</span>
-	<span class="nx">$</span><span class="p">.</span><span class="nx">each</span><span class="p">(</span><span class="nx">context</span><span class="o">,</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">connectorId</span><span class="o">,</span> <span class="nx">rdf</span><span class="p">)</span> <span class="p">{</span>
-		<span class="kd">var</span> <span class="nx">mapper</span> <span class="o">=</span> <span class="nx">mappingPerson</span><span class="p">.</span><span class="nx">connectorMappers</span><span class="p">[</span><span class="nx">connectorId</span><span class="p">];</span>
-		<span class="k">if</span> <span class="p">(</span><span class="nx">mapper</span><span class="p">)</span> <span class="p">{</span></pre></div>             </td>           </tr>                               <tr id="section-2">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-2">&#182;</a>               </div>               <p>check for duplicates (URI)</p>             </td>             <td class="code">               <div class="highlight"><pre>			<span class="kd">var</span> <span class="nx">entities</span> <span class="o">=</span> <span class="nx">mapper</span><span class="p">(</span><span class="nx">rdf</span><span class="o">,</span> <span class="nx">matches</span><span class="p">);</span>
-			<span class="nx">jQuery</span><span class="p">.</span><span class="nx">each</span><span class="p">(</span><span class="nx">entities</span><span class="o">,</span> <span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
-				<span class="kd">var</span> <span class="nx">contains</span> <span class="o">=</span> <span class="kc">false</span><span class="o">;</span>
-				<span class="kd">var</span> <span class="nx">entity</span> <span class="o">=</span> <span class="k">this</span><span class="o">;</span>
-				<span class="nx">jQuery</span><span class="p">.</span><span class="nx">each</span><span class="p">(</span><span class="nx">persons</span><span class="o">,</span> <span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
-					<span class="k">if</span> <span class="p">(</span><span class="k">this</span><span class="p">[</span><span class="s1">&#39;@&#39;</span><span class="p">]</span> <span class="o">===</span> <span class="nx">entity</span><span class="p">[</span><span class="s1">&#39;@&#39;</span><span class="p">])</span> <span class="p">{</span>
-						<span class="nx">contains</span> <span class="o">=</span> <span class="kc">true</span><span class="o">;</span>
-						<span class="k">return</span> <span class="kc">false</span><span class="o">;</span> <span class="c">//break!</span>
-					<span class="p">}</span>
-				<span class="p">});</span>
-				<span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">contains</span><span class="p">)</span> <span class="p">{</span>
-					<span class="nx">persons</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
-				<span class="p">}</span>
-			<span class="p">});</span>
-		<span class="p">}</span>
-	<span class="p">});</span>
-
-	<span class="k">return</span> <span class="nx">persons</span><span class="o">;</span>
-<span class="p">};</span>
-
-<span class="nx">mappingPerson</span><span class="p">.</span><span class="nx">connectorMappers</span><span class="p">[</span><span class="s1">&#39;stanbol&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">rdf</span><span class="o">,</span> <span class="nx">matches</span><span class="p">)</span> <span class="p">{</span>
-    <span class="kd">var</span> <span class="nx">ret</span> <span class="o">=</span> <span class="p">[];</span>
-    
-    <span class="nx">rdf</span>
-    <span class="p">.</span><span class="nx">where</span><span class="p">(</span><span class="s1">&#39;?subject a &lt;http://dbpedia.org/ontology/Person&gt;&#39;</span><span class="p">)</span>
-    <span class="p">.</span><span class="nx">where</span><span class="p">(</span><span class="s1">&#39;?subject fise:hasTextAnnotation ?textannot&#39;</span><span class="p">)</span>
-    <span class="p">.</span><span class="nx">where</span><span class="p">(</span><span class="s1">&#39;?subject fise:hasEntityAnnotation ?entityannot&#39;</span><span class="p">)</span>
-    <span class="p">.</span><span class="nx">where</span><span class="p">(</span><span class="s1">&#39;?entityannot fise:confidence ?confidence&#39;</span><span class="p">)</span>
-    <span class="p">.</span><span class="nx">where</span><span class="p">(</span><span class="s1">&#39;?textannot fise:start ?start&#39;</span><span class="p">)</span>
-    <span class="p">.</span><span class="nx">where</span><span class="p">(</span><span class="s1">&#39;?textannot fise:end ?end&#39;</span><span class="p">)</span>
-    <span class="p">.</span><span class="nx">where</span><span class="p">(</span><span class="s1">&#39;?textannot fise:selected-text ?selected-text&#39;</span><span class="p">)</span>
-    <span class="p">.</span><span class="nx">where</span><span class="p">(</span><span class="s1">&#39;?textannot fise:selection-context ?selection-context&#39;</span><span class="p">)</span>
-    <span class="p">.</span><span class="nx">each</span> <span class="p">(</span><span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
-    	</pre></div>             </td>           </tr>                               <tr id="section-3">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-3">&#182;</a>               </div>               <p>TODO!</p>             </td>             <td class="code">               <div class="highlight"><pre>	<span class="p">});</span>
-    
-	<span class="k">return</span> <span class="nx">ret</span><span class="o">;</span>	
-<span class="p">};</span>
-
-<span class="nx">mappingPerson</span><span class="p">.</span><span class="nx">connectorMappers</span><span class="p">[</span><span class="s1">&#39;rdfa&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">rdf</span><span class="o">,</span> <span class="nx">matches</span><span class="p">)</span> <span class="p">{</span>
-    <span class="kd">var</span> <span class="nx">ret</span> <span class="o">=</span> <span class="p">[];</span>
-   	
-    <span class="nx">rdf</span>
-    <span class="p">.</span><span class="nx">where</span><span class="p">(</span><span class="s1">&#39;?entity a foaf:Person&#39;</span><span class="p">)</span>
-    <span class="p">.</span><span class="nx">each</span> <span class="p">(</span><span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
-    	
-    	<span class="kd">var</span> <span class="nx">entity</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">entity</span><span class="p">.</span><span class="nx">toString</span><span class="p">();</span>
-    	
-    	<span class="kd">var</span> <span class="nx">r</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">JSONLDEntity</span><span class="p">(</span>
-    			<span class="nx">rdf</span><span class="p">.</span><span class="nx">databank</span><span class="p">.</span><span class="nx">namespaces</span><span class="o">,</span> 
-    			<span class="nx">entity</span><span class="o">,</span> 
-    			<span class="s1">&#39;foaf:Person&#39;</span>
-    		<span class="p">);</span>
-    	
-		<span class="nx">ret</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">r</span><span class="p">);</span>
-	<span class="p">});</span>
-	<span class="k">return</span> <span class="nx">ret</span><span class="o">;</span>	
-<span class="p">};</span>
+<span class="k">new</span> <span class="nx">Mapping</span><span class="p">(</span><span class="s1">&#39;person&#39;</span><span class="o">,</span> <span class="p">{</span>
+	<span class="nx">mapping</span> <span class="o">:</span>  <span class="p">{</span>
+		<span class="s1">&#39;a&#39;</span> <span class="o">:</span> <span class="p">{</span>
+			<span class="s1">&#39;a&#39;</span> <span class="o">:</span> <span class="p">[</span><span class="s1">&#39;foaf:Person&#39;</span><span class="o">,</span> <span class="s1">&#39;dbonto:Person&#39;</span><span class="p">]</span>
+		<span class="p">}</span><span class="o">,</span>
+		
+		<span class="s1">&#39;name&#39;</span> <span class="o">:</span> <span class="p">[</span><span class="s1">&#39;rdfs:label&#39;</span><span class="o">,</span> <span class="s1">&#39;foaf:name&#39;</span><span class="p">]</span><span class="o">,</span>
+		<span class="s1">&#39;url&#39;</span> <span class="o">:</span> <span class="s1">&#39;foaf:page&#39;</span><span class="o">,</span>
+		<span class="s1">&#39;depiction&#39;</span> <span class="o">:</span> <span class="s1">&#39;foaf:depiction&#39;</span><span class="o">,</span>
+		<span class="s1">&#39;long&#39;</span> <span class="o">:</span> <span class="s1">&#39;geo:long&gt;&#39;</span><span class="o">,</span>
+		<span class="s1">&#39;lat&#39;</span> <span class="o">:</span> <span class="s1">&#39;geo:lat&#39;</span>
+	<span class="p">}</span>
+<span class="p">});</span>
 
 </pre></div>             </td>           </tr>                </tbody>     </table>   </div> </body> </html> 

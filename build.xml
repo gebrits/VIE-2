@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <project name="VIE^2" basedir="." default="all">
     
-	<property name="VERSION" value="0.4"/>
+	<property name="VERSION" value="0.5"/>
 	    
     <property name="DOCS_DIR" value="./docs" description="API documentation"/>
     <property name="DIST_DIR" value="./dist"/>
@@ -22,7 +22,6 @@
 		<exec executable="docco" dir=".">
   			<arg value="${SRC_DIR}/core/connector.js" />
   			<arg value="${SRC_DIR}/core/core.js" />
-  			<arg value="${SRC_DIR}/core/entity.js" />
   			<arg value="${SRC_DIR}/core/mapping.js" />
   			<arg value="${SRC_DIR}/core/util.js" />
   			<arg value="${SRC_DIR}/mapping/entity.js" />
@@ -65,11 +64,10 @@
     
     <target name="combine" description="combines core/*.js files into one file">
         <echo message="Building VIE^2 Distribution" />
-        <concat destfile="${JS}/vie2-${VERSION}.js">
+        <concat destfile="${JS}/vie2-${VERSION}.debug.js">
         	<fileset dir="${SRC_DIR}" includes="core/connector.js"/>
         	<fileset dir="${SRC_DIR}" includes="core/mapping.js"/>
         	<fileset dir="${SRC_DIR}" includes="core/core.js"/>
-        	<fileset dir="${SRC_DIR}" includes="core/entity.js"/>
         	<fileset dir="${SRC_DIR}" includes="core/util.js"/>
        	</concat>
     </target>
@@ -78,8 +76,8 @@
         <echo message="Minimising VIE^2" />
 
         <antcall target="minimiseJSFile">
-            <param name="inputFile" value="${JS}/vie2-${VERSION}.js" />
-            <param name="outputFile" value="${JS_MIN}/vie2-${VERSION}.min.js" />
+            <param name="inputFile" value="${JS}/vie2-${VERSION}.debug.js" />
+            <param name="outputFile" value="${JS_MIN}/vie2-${VERSION}.js" />
         </antcall>
     </target>
 
