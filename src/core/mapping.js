@@ -44,6 +44,7 @@ Mapping.prototype.options = function(values) {
 //<i>returns</i> <strong>array of objects</strong>
 Mapping.prototype.mapto = function (vie2, callback) {
 	if (this.options().mapping) {
+		var that = this;
 		var map = this.options().mapping;
 
 		var ret = [];
@@ -71,6 +72,7 @@ Mapping.prototype.mapto = function (vie2, callback) {
 		jQuery.each(uris, function (i) {
 			var uri = uris[i];
 			var sso = {
+				'a' : that.id,
 				jsonld : {
 					'#' : vie2.options.namespaces,
 					'@' : uri.toString(),

@@ -10,10 +10,6 @@
     <property name="SRC_DIR" value="./src"/>
     <property name="TOOLS_DIR" value="./utils"/>
     <property name="YUI" value="${TOOLS_DIR}/yui-compressor/yuicompressor-2.4.2.jar" />
-    
-    <!-- Names for output -->
-    <property name="JS" value="${DIST_DIR}/js/" />
-    <property name="JS_MIN" value="${DIST_DIR}/min/" />
 	
 	<target name="doc" description="Generates documentation for VIE^2 with Docco ">
         <echo message="Generating Documentation"/>
@@ -41,8 +37,6 @@
 	
 	<target name="init" depends="clean">
         <mkdir dir="${DIST_DIR}" />
-        <mkdir dir="${JS}" />
-        <mkdir dir="${JS_MIN}" />
 	</target>
 	
     <target name="all" depends="init, doc, dist"/>
@@ -52,8 +46,7 @@
         <antcall target="minimise" />
         
         <zip destfile="${DIST_DIR}/vie2-${VERSION}.zip">
-            <zipfileset dir="${JS}" includes="*.js" prefix="${JS}"/>
-            <zipfileset dir="${JS_MIN}" includes="*.js" prefix="${JS_MIN}"/>
+            <zipfileset dir="${DIST_DIR}" includes="*.js" prefix="${DIST_DIR}"/>
             <zipfileset dir="${SRC_DIR}" includes="**/**" prefix="${SRC_DIR}"/>
             <zipfileset dir="${LIB_DIR}" includes="**/**" prefix="${LIB_DIR}"/>
             <zipfileset dir="${TOOLS_DIR}" includes="**/**" prefix="${TOOLS_DIR}"/>
@@ -64,21 +57,23 @@
     
     <target name="combine" description="combines core/*.js files into one file">
         <echo message="Building VIE^2 Distribution" />
-        <concat destfile="${JS}/vie2-${VERSION}.debug.js">
+        <concat destfile="${DIST_DIR}/vie2-${VERSION}.debug.js">
         	<fileset dir="${SRC_DIR}" includes="core/connector.js"/>
         	<fileset dir="${SRC_DIR}" includes="core/mapping.js"/>
         	<fileset dir="${SRC_DIR}" includes="core/core.js"/>
         	<fileset dir="${SRC_DIR}" includes="core/util.js"/>
        	</concat>
+        <copy file="${DIST_DIR}/vie2-${VERSION}.debug.js" tofile="${DIST_DIR}/vie2-latest.debug.js" overwrite="true" />
     </target>
 
     <target name="minimise">
         <echo message="Minimising VIE^2" />
 
         <antcall target="minimiseJSFile">
-            <param name="inputFile" value="${JS}/vie2-${VERSION}.debug.js" />
-            <param name="outputFile" value="${JS_MIN}/vie2-${VERSION}.js" />
+            <param name="inputFile" value="${DIST_DIR}/vie2-${VERSION}.debug.js" />
+            <param name="outputFile" value="${DIST_DIR}/vie2-${VERSION}.js" />
         </antcall>
+        <copy file="${DIST_DIR}/vie2-${VERSION}.js" tofile="${DIST_DIR}/vie2-latest.js" overwrite="true" />
     </target>
 
     <target name="minimiseJSFile">

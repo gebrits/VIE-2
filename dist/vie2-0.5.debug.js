@@ -89,6 +89,7 @@ Mapping.prototype.options = function(values) {
 //<i>returns</i> <strong>array of objects</strong>
 Mapping.prototype.mapto = function (vie2, callback) {
 	if (this.options().mapping) {
+		var that = this;
 		var map = this.options().mapping;
 
 		var ret = [];
@@ -116,6 +117,7 @@ Mapping.prototype.mapto = function (vie2, callback) {
 		jQuery.each(uris, function (i) {
 			var uri = uris[i];
 			var sso = {
+				'a' : that.id,
 				jsonld : {
 					'#' : vie2.options.namespaces,
 					'@' : uri.toString(),
@@ -181,8 +183,24 @@ Mapping.prototype.mapto = function (vie2, callback) {
 				'fise' : 'http://fise.iks-project.eu/ontology/',
 				'foaf' : 'http://xmlns.com/foaf/0.1/',
 				'dc' : 'http://purl.org/dc/terms/',
-				'geo' : 'http://www.w3.org/2003/01/geo/wgs84_pos#'
+				'geo' : 'http://www.w3.org/2003/01/geo/wgs84_pos#',
+				'google' : 'http://rdf.data-vocabulary.org/#'
 			},
+			//<strong>_context</strong>: The private _context object stores for each connector
+	    	//the returned result. The values are <pre>rdfQuery objects</pre>.
+	    	_context: {},
+	    	
+	    	//<strong>_cache</strong>: The private _cache object stores all triples that
+	    	//were retrieved so far. The values are <pre>rdfQuery objects</pre>.
+	    	_cache : jQuery.rdf(),
+			
+			//<strong>_matches</strong>: The private _matches array stores the matches of the last 'filter' call.
+			_matches: [],
+
+			//<strong>_oldMatches</strong>: The private _oldMatches array stores the matches of the 'filter' call before
+			//the last one.
+			_oldMatches: [],
+			
     		//<strong>contextchanged</strong>: the contextchanged event (triggered after analysis)
     		//you can bind to that event like this:
     		//<code><pre>$(...).vie2().bind('vie2contextchanged', function () {});</pre></code>
@@ -190,9 +208,11 @@ Mapping.prototype.mapto = function (vie2, callback) {
     	},
     	
     	_create: function () {
+    		console.log("CREATE!");
     		var that = this;
+    		this.options._cache = jQuery.rdf();
     		jQuery.each(this.options.namespaces, function(k, v) {
-    			that._cache.prefix(k, v);
+    			that.options._cache.prefix(k, v);
 			});
     	},
     	
@@ -201,27 +221,12 @@ Mapping.prototype.mapto = function (vie2, callback) {
     		if (key === 'namespaces') {
     			jQuery.extend (true, this.options.namespaces, value);
     			jQuery.each(this.options.namespaces, function(k, v) {
-    				this._cache.prefix(k, v);
+    				this.options._cache.prefix(k, v);
 				});
     		} else {
     			jQuery.Widget.prototype._setOption.apply(this, [key, value]);
     		}
     	},
-    	
-    	//<strong>_context</strong>: The private _context object stores for each connector
-    	//the returned result. The values are <pre>rdfQuery objects</pre>.
-    	_context: {},
-    	
-    	//<strong>_cache</strong>: The private _cache object stores all triples that
-    	//were retrieved so far. The values are <pre>rdfQuery objects</pre>.
-    	_cache : jQuery.rdf(),
-		
-		//<strong>_matches</strong>: The private _matches array stores the matches of the last 'filter' call.
-		_matches: [],
-
-		//<strong>_oldMatches</strong>: The private _oldMatches array stores the matches of the 'filter' call before
-		//the last one.
-		_oldMatches: [],
     	
     	//<strong>analyze</strong>: The <code><pre>analyze(callback)</pre></code> function is one of the three
 		//main functions of this library. Analyze iterates over all registered connectors and
@@ -235,6 +240,7 @@ Mapping.prototype.mapto = function (vie2, callback) {
 		//    $(this).vie2(...);
 		//})</pre></code>
 		analyze: function (callback) {
+    		console.info("GGGGGGGGGGGGGGGGGGGG" + $(':VIE2-vie2').length);
 			jQuery.VIE2.log("info", "VIE2.core", "Start: analyze()!");
 			
 			var that = this;
@@ -252,15 +258,15 @@ Mapping.prototype.mapto = function (vie2, callback) {
 						//Attention: this might override namespaces that were added by the connector!
 						jQuery.each(vie.options.namespaces, function(k, v) {
 							rdf.prefix(k, v);
-							vie._cache.prefix(k, v);
+							vie.options._cache.prefix(k, v);
 						});
 						
 						//add all triples to the local cache!
 						rdf.databank.triples().each(function () {
-							vie._cache.add(this);
+							vie.options._cache.add(this);
 						});
 						
-						vie._context[conn.id] = rdf;
+						vie.options._context[conn.id] = rdf;
 						jQuery.VIE2.log("info", "VIE2.core", "Received RDF annotation from connector '" + conn.id + "'!");
 						
 						removeElement(connectorQueue, conn.id);
@@ -269,7 +275,7 @@ Mapping.prototype.mapto = function (vie2, callback) {
 						if (connectorQueue.length === 0) {
 							//if the queue is empty, all connectors have successfully returned and we can call the
 							//callback function, as well as we can trigger the contextchanged event.
-							jQuery.VIE2.log("info", "VIE2.core", "Finished task: 'analyze()'! Cache holds now " + that._cache.databank.tripleStore.length + " triples!");
+							jQuery.VIE2.log("info", "VIE2.core", "Finished task: 'analyze()'! Cache holds now " + that.options._cache.databank.tripleStore.length + " triples!");
 							that._trigger("contextchanged", null, {});
 							callback.call(that.element);
 						}
@@ -297,8 +303,8 @@ Mapping.prototype.mapto = function (vie2, callback) {
 				return this.filter({'a' : types});
 			} else {
 				var that = this;
-				that._oldMatches = that._matches;
-				that._matches = [];
+				that.options._oldMatches = that.options._matches;
+				that.options._matches = [];
 				
 				jQuery.each(types, function (k, v) {
 					//convert to array if not already an array
@@ -306,15 +312,15 @@ Mapping.prototype.mapto = function (vie2, callback) {
 
 					jQuery.each(v, function (index) {
 						var type = v[index];
-						that._cache
+						that.options._cache
 						.where('?subject ' + k + ' ' + type)
 						.each (function () {
-							that._matches.push(this.subject);
+							that.options._matches.push(this.subject);
 						});
 					});
 				});
 				
-				return that._matches;				
+				return that.options._matches;				
 			}
 		},
 		
@@ -344,11 +350,11 @@ Mapping.prototype.mapto = function (vie2, callback) {
 				for (var i=0; i < props.length; i++) {
 					ret[props[i]] = [];
 				}
-				//look up for properties in _cache
+				//look up for properties in options._cache
 				//first check if we should ignore the cache!
 				if (!options || (options && !options.cache === 'nocache')) {
 					for (var i=0; i < props.length; i++) {
-						that._cache
+						that.options._cache
 						.where(jQuery.rdf.pattern(uri, props[i], '?object', { namespaces: that.options.namespaces}))
 						.each(function () {
 							ret[props[i]].push(this.object);
@@ -386,10 +392,10 @@ Mapping.prototype.mapto = function (vie2, callback) {
 								//adding new information to cache!
 								jQuery.each(ret, function (k, v) {
 									for (var i = 0; i < v.length; i++) {
-										that._cache.add(jQuery.rdf.triple(uri, k, v[i], {namespaces: namespaces}));
+										that.options._cache.add(jQuery.rdf.triple(uri, k, v[i], {namespaces: namespaces}));
 									}
 								});
-								jQuery.VIE2.log("info", "VIE2.core", "Finished task: 'query()' for uri '" + uri + "'! Cache holds now " + that._cache.databank.tripleStore.length + " triples!");
+								jQuery.VIE2.log("info", "VIE2.core", "Finished task: 'query()' for uri '" + uri + "'! Cache holds now " + that.options._cache.databank.tripleStore.length + " triples!");
 								callback.call(ret);
 							}
 						};
@@ -403,35 +409,38 @@ Mapping.prototype.mapto = function (vie2, callback) {
 		
 		mapto: function (mappingId, callback) {
 			if (jQuery.VIE2.getMapping(mappingId)) {
+				jQuery.VIE2.log("info", "VIE2.core", "Start 'mapto()' with mapping '" + mappingId + "'!");
 				jQuery.VIE2.getMapping(mappingId).mapto(this, callback);
+			} else {
+				jQuery.VIE2.log("warn", "VIE2.core", "Could not find mapping with id '" + mappingId + "'!");
 			}
 		},		
 		
 		//<strong>matches</strong>: A convenience method to access the matches from the last <pre>filter()</pre call.
 		matches: function () {
-			return this._matches;
+			return this.options._matches;
 		},
 		
-		//<strong>context</strong>: A convenience method to access the private object <pre>_context</pre>.
+		//<strong>context</strong>: A convenience method to access the private object <pre>options._context</pre>.
 		context: function (connId) {
-			if (this._context[connId]) {
-				return this._context[connId];
+			if (this.options._context[connId]) {
+				return this.options._context[connId];
 			}
 		},
 		
 		//<strong>undo</strong>: Reverts the last <pre>filter()</pre> call.
 		undo: function () {
-			this._matches = this._oldMatches;
-			this._oldMatches = [];
+			this.options._matches = this.options._oldMatches;
+			this.options._oldMatches = [];
 			return this;
 		},
 		
 		//<strong>clear</strong>: Clears the local context, the matches and oldMatches.
 		clear: function () {
-			this._matches = [];
-			this._oldMatches = [];
-			this._context = {};
-			this._cache = jQuery.rdf();
+			this.options._matches = [];
+			this.options._oldMatches = [];
+			this.options._context = {};
+			this.options._cache = jQuery.rdf();
 			return this;
 		}
 		

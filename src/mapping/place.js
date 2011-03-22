@@ -5,26 +5,14 @@
 
 new Mapping('place', {
 	mapping :  {
-		'type' : {
-			'rdfa' : {
-				'type' : 'rdf:type', 
-				'value' : 'dbonto:PopulatedPlace'
-			}
+		'a' : {
+			'a' : ['dbonto:Place']
 		},
-		'name' : {
-			'rdfa' : ['rdfs:label', 'foaf:name']
-		},
-		'url' : {
-			'rdfa' : 'foaf:page'
-		},
-		'depiction' : {
-			'rdfa' : 'foaf:depiction'
-		},
-		'long' : {
-			'rdfa' : '<http://www.w3.org/2003/01/geo/wgs84_pos#long>'
-		},
-		'lat' : {
-			'rdfa' : 'geo:lat'
-		}
+		
+		'name' : ['rdfs:label', 'foaf:name'],
+		'url' : 'foaf:page',
+		'depiction' : 'foaf:depiction',
+		'long' : '<http://www.w3.org/2003/01/geo/wgs84_pos#long>',
+		'lat' : 'geo:lat'
 	}
 });

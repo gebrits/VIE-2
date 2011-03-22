@@ -3,16 +3,15 @@
  * @author <a href="mailto:sebastian.germesin@dfki.de">Sebastian Germesin</a>
  */
 
-new Mapping('person', {
+new Mapping('organization', {
 	mapping :  {
 		'a' : {
-			'a' : ['foaf:Person', 'dbonto:Person']
+			'a' : ['google:Organization']
 		},
 		
 		'name' : ['rdfs:label', 'foaf:name'],
 		'url' : 'foaf:page',
 		'depiction' : 'foaf:depiction',
-		'long' : 'geo:long',
-		'lat' : 'geo:lat'
+		'flickr' : 'google:flickr'
 	}
 });

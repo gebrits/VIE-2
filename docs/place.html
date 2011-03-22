@@ -5,27 +5,15 @@
 
 <span class="k">new</span> <span class="nx">Mapping</span><span class="p">(</span><span class="s1">&#39;place&#39;</span><span class="o">,</span> <span class="p">{</span>
 	<span class="nx">mapping</span> <span class="o">:</span>  <span class="p">{</span>
-		<span class="s1">&#39;type&#39;</span> <span class="o">:</span> <span class="p">{</span>
-			<span class="s1">&#39;rdfa&#39;</span> <span class="o">:</span> <span class="p">{</span>
-				<span class="s1">&#39;type&#39;</span> <span class="o">:</span> <span class="s1">&#39;rdf:type&#39;</span><span class="o">,</span> 
-				<span class="s1">&#39;value&#39;</span> <span class="o">:</span> <span class="s1">&#39;dbonto:PopulatedPlace&#39;</span>
-			<span class="p">}</span>
+		<span class="s1">&#39;a&#39;</span> <span class="o">:</span> <span class="p">{</span>
+			<span class="s1">&#39;a&#39;</span> <span class="o">:</span> <span class="p">[</span><span class="s1">&#39;dbonto:Place&#39;</span><span class="p">]</span>
 		<span class="p">}</span><span class="o">,</span>
-		<span class="s1">&#39;name&#39;</span> <span class="o">:</span> <span class="p">{</span>
-			<span class="s1">&#39;rdfa&#39;</span> <span class="o">:</span> <span class="p">[</span><span class="s1">&#39;rdfs:label&#39;</span><span class="o">,</span> <span class="s1">&#39;foaf:name&#39;</span><span class="p">]</span>
-		<span class="p">}</span><span class="o">,</span>
-		<span class="s1">&#39;url&#39;</span> <span class="o">:</span> <span class="p">{</span>
-			<span class="s1">&#39;rdfa&#39;</span> <span class="o">:</span> <span class="s1">&#39;foaf:page&#39;</span>
-		<span class="p">}</span><span class="o">,</span>
-		<span class="s1">&#39;depiction&#39;</span> <span class="o">:</span> <span class="p">{</span>
-			<span class="s1">&#39;rdfa&#39;</span> <span class="o">:</span> <span class="s1">&#39;foaf:depiction&#39;</span>
-		<span class="p">}</span><span class="o">,</span>
-		<span class="s1">&#39;long&#39;</span> <span class="o">:</span> <span class="p">{</span>
-			<span class="s1">&#39;rdfa&#39;</span> <span class="o">:</span> <span class="s1">&#39;&lt;http://www.w3.org/2003/01/geo/wgs84_pos#long&gt;&#39;</span>
-		<span class="p">}</span><span class="o">,</span>
-		<span class="s1">&#39;lat&#39;</span> <span class="o">:</span> <span class="p">{</span>
-			<span class="s1">&#39;rdfa&#39;</span> <span class="o">:</span> <span class="s1">&#39;geo:lat&#39;</span>
-		<span class="p">}</span>
+		
+		<span class="s1">&#39;name&#39;</span> <span class="o">:</span> <span class="p">[</span><span class="s1">&#39;rdfs:label&#39;</span><span class="o">,</span> <span class="s1">&#39;foaf:name&#39;</span><span class="p">]</span><span class="o">,</span>
+		<span class="s1">&#39;url&#39;</span> <span class="o">:</span> <span class="s1">&#39;foaf:page&#39;</span><span class="o">,</span>
+		<span class="s1">&#39;depiction&#39;</span> <span class="o">:</span> <span class="s1">&#39;foaf:depiction&#39;</span><span class="o">,</span>
+		<span class="s1">&#39;long&#39;</span> <span class="o">:</span> <span class="s1">&#39;&lt;http://www.w3.org/2003/01/geo/wgs84_pos#long&gt;&#39;</span><span class="o">,</span>
+		<span class="s1">&#39;lat&#39;</span> <span class="o">:</span> <span class="s1">&#39;geo:lat&#39;</span>
 	<span class="p">}</span>
 <span class="p">});</span>
 

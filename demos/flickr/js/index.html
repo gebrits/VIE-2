@@ -1,0 +1,32 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML+RDFa 1.0//EN" "http://www.w3.org/MarkUp/DTD/xhtml-rdfa-1.dtd">
+<html 
+    xmlns:dbpedia = "http://dbpedia.org/resource/"
+    xmlns:dbonto = "http://dbpedia.org/ontology/">
+	<head>
+		<title>Demo</title>
+        
+        <!-- Demo-specific CSS -->
+        
+		<!-- 3rd-party libs -->
+		<script type="text/javascript" src="../../../lib/jquery/1.4/jquery-1.4.4.min.js"></script>
+		<script type="text/javascript" src="../../../lib/jquery-ui/1.8/js/jquery-ui-1.8.11.custom.min.js"></script>
+		
+		<!-- Load Demo specific JS... -->
+        <script type="text/javascript" src="test.js"></script>
+        
+        <script type="text/javascript">
+           $(function() {
+               $('#germi').click(function (event) {
+                   $(event.srcElement).example().example('germi');
+               });
+               $('#germi2').click(function (event) {
+                   $(event.srcElement).example().example('germi');
+               });
+           });
+        </script>
+    </head>
+    <body>
+    <span id="germi">Test</span><br />
+    <span id="germi2">Test2</span>
+    </body>
+</html>
