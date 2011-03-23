@@ -4,11 +4,10 @@
  */
 
 new Mapping('organization', {
+	'a' : {
+		'a' : ['google:Organization']
+	},
 	mapping :  {
-		'a' : {
-			'a' : ['google:Organization']
-		},
-		
 		'name' : ['rdfs:label', 'foaf:name'],
 		'url' : 'foaf:page',
 		'depiction' : 'foaf:depiction',

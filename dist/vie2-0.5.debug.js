@@ -208,7 +208,6 @@ Mapping.prototype.mapto = function (vie2, callback) {
     	},
     	
     	_create: function () {
-    		console.log("CREATE!");
     		var that = this;
     		this.options._cache = jQuery.rdf();
     		jQuery.each(this.options.namespaces, function(k, v) {
@@ -240,7 +239,6 @@ Mapping.prototype.mapto = function (vie2, callback) {
 		//    $(this).vie2(...);
 		//})</pre></code>
 		analyze: function (callback) {
-    		console.info("GGGGGGGGGGGGGGGGGGGG" + $(':VIE2-vie2').length);
 			jQuery.VIE2.log("info", "VIE2.core", "Start: analyze()!");
 			
 			var that = this;

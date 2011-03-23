@@ -4,11 +4,10 @@
  */
 
 new Mapping('place', {
+	'a' : {
+		'a' : ['dbonto:Place']
+	},
 	mapping :  {
-		'a' : {
-			'a' : ['dbonto:Place']
-		},
-		
 		'name' : ['rdfs:label', 'foaf:name'],
 		'url' : 'foaf:page',
 		'depiction' : 'foaf:depiction',

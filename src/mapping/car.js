@@ -4,11 +4,10 @@
  */
 
 new Mapping('car', {
+	'a' : {
+		'a' : ['<http://dbpedia.org/class/yago/Roadsters>']
+	},
 	mapping :  {
-		'a' : {
-			'a' : ['<http://dbpedia.org/class/yago/Roadsters>']
-		},
-		
 		'name' : ['dbprop:aka', 'dbprop:name', 'rdfs:label'],
 		'depiction' : ['dbonto:thumbnail', 'foaf:depiction']
 	}

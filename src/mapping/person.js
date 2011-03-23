@@ -4,15 +4,12 @@
  */
 
 new Mapping('person', {
-	mapping :  {
-		'a' : {
-			'a' : ['foaf:Person', 'dbonto:Person']
-		},
-		
-		'name' : ['rdfs:label', 'foaf:name'],
-		'url' : 'foaf:page',
-		'depiction' : 'foaf:depiction',
-		'long' : 'geo:long',
-		'lat' : 'geo:lat'
+	'a' : {
+		'a' : ['foaf:Person', 'dbonto:Person']
+	},
+	mapping : {
+		'vie2:name' : ['rdfs:label', 'foaf:name'],
+		'vie2:url' : 'foaf:page',
+		'vie2:depiction' : 'foaf:depiction'
 	}
 });

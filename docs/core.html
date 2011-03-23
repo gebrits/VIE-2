@@ -31,7 +31,6 @@ you can bind to that event like this:
     	<span class="p">}</span><span class="o">,</span>
     	
     	<span class="nx">_create</span><span class="o">:</span> <span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
-    		<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&quot;CREATE!&quot;</span><span class="p">);</span>
     		<span class="kd">var</span> <span class="nx">that</span> <span class="o">=</span> <span class="k">this</span><span class="o">;</span>
     		<span class="k">this</span><span class="p">.</span><span class="nx">options</span><span class="p">.</span><span class="nx">_cache</span> <span class="o">=</span> <span class="nx">jQuery</span><span class="p">.</span><span class="nx">rdf</span><span class="p">();</span>
     		<span class="nx">jQuery</span><span class="p">.</span><span class="nx">each</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">options</span><span class="p">.</span><span class="nx">namespaces</span><span class="o">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">k</span><span class="o">,</span> <span class="nx">v</span><span class="p">)</span> <span class="p">{</span>
@@ -59,7 +58,6 @@ $(this).vie2(...);
 $(this).vie2(...);
 })</pre></code></li>
 </ol>             </td>             <td class="code">               <div class="highlight"><pre>		<span class="nx">analyze</span><span class="o">:</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">callback</span><span class="p">)</span> <span class="p">{</span>
-    		<span class="nx">console</span><span class="p">.</span><span class="nx">info</span><span class="p">(</span><span class="s2">&quot;GGGGGGGGGGGGGGGGGGGG&quot;</span> <span class="o">+</span> <span class="nx">$</span><span class="p">(</span><span class="s1">&#39;:VIE2-vie2&#39;</span><span class="p">).</span><span class="nx">length</span><span class="p">);</span>
 			<span class="nx">jQuery</span><span class="p">.</span><span class="nx">VIE2</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&quot;info&quot;</span><span class="o">,</span> <span class="s2">&quot;VIE2.core&quot;</span><span class="o">,</span> <span class="s2">&quot;Start: analyze()!&quot;</span><span class="p">);</span>
 			
 			<span class="kd">var</span> <span class="nx">that</span> <span class="o">=</span> <span class="k">this</span><span class="o">;</span>

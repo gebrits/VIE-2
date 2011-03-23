@@ -22,7 +22,6 @@ Mapping = function(id, options) {
 	}
 	
 	this.id = id;
-
 	this._options = (options)? options : {};
 	
 	//automatically registers the mapping in VIE^2.
@@ -48,7 +47,7 @@ Mapping.prototype.mapto = function (vie2, callback) {
 		var map = this.options().mapping;
 
 		var ret = [];
-		var uris = vie2.filter(map['a']);
+		var uris = vie2.filter(this.options()['a']);
 		
 		var queue = [];
 
@@ -57,15 +56,13 @@ Mapping.prototype.mapto = function (vie2, callback) {
 			var uri = uris[i];
 			
 			jQuery.each(map, function (k, v) {
-				if (k !== 'a') {
-					var props = (jQuery.isArray(v))? v : [v];
-					jQuery.each(props, function (j) {
-						var prop = props[j];
-						
-						var id = uri + "||" + prop;
-						queue.push(id);
-					});
-				}
+				var props = (jQuery.isArray(v))? v : [v];
+				jQuery.each(props, function (j) {
+					var prop = props[j];
+					
+					var id = uri + "||" + prop;
+					queue.push(id);
+				});
 			});
 		});
 		
@@ -81,28 +78,26 @@ Mapping.prototype.mapto = function (vie2, callback) {
 			};
 			ret.push(sso);
 			jQuery.each(map, function (k, v) {
-				if (k !== 'a') {
-					sso[k] = [];
-					var props = (jQuery.isArray(v))? v : [v];
-					jQuery.each(props, function (j) {
-						var prop = props[j];
-						sso.jsonld[prop] = [];
-						var id = uri + "||" + prop;
-						vie2.query(uri, prop, function (x, s, k, p) {
-							return function () {
-								var vals = this[p];
-			
-								jQuery.merge(s[k], vals);
-								jQuery.merge(s.jsonld[p], vals);
-								
-								removeElement(queue, x);
-								if (queue.length === 0) {
-									callback.call(ret);
-								}
+				sso[k] = [];
+				var props = (jQuery.isArray(v))? v : [v];
+				jQuery.each(props, function (j) {
+					var prop = props[j];
+					sso.jsonld[prop] = [];
+					var id = uri + "||" + prop;
+					vie2.query(uri, prop, function (x, s, k, p) {
+						return function () {
+							var vals = this[p];
+		
+							jQuery.merge(s[k], vals);
+							jQuery.merge(s.jsonld[p], vals);
+							
+							removeElement(queue, x);
+							if (queue.length === 0) {
+								callback.call(ret);
 							}
-						}(id, sso, k, prop));
-					});
-				}
+						}
+					}(id, sso, k, prop));
+				});
 			});
 			
 		});
