@@ -39,6 +39,10 @@
                 $.VIE2.getConnector('dbpedia').options({
 	                "proxy_url" : "../utils/proxy/proxy.php"
                 });
+                
+                $.VIE2.Backbone['person']['collection'].bind('add', function (p) {
+                   debugger; 
+                });
             });
             
 			function analyzeText (elem) {

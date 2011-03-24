@@ -255,8 +255,7 @@ Mapping.prototype.mapto = function (vie2, callback) {
 							.each(function () {
 								types.push(this.type);
 							});
-							
-							jQuery.VIE2.entities.add({id : subject, a : types});
+							jQuery.VIE2.addEntity({id : subject, a : types});
 						});
 						
 						vie.options._context[conn.id] = rdf;
@@ -458,18 +457,29 @@ jQuery.VIE2.log = function (level, component, message) {
 // Backbone JS Models / Collections
 jQuery.VIE2.Backbone = {};
 jQuery.VIE2.Entity = Backbone.Model.extend({});
-jQuery.VIE2.EntitiesCollection = Backbone.Collection.extend({model: jQuery.VIE2.Entity});
-jQuery.VIE2.entities = new jQuery.VIE2.EntitiesCollection;
-jQuery.VIE2.entities.bind("add", function(entity) {
-	jQuery.VIE2.log("info", "VIE2.core", "Added entity '" + entity.get("id") + "' to entities collection!");
-	// if added -> sort into backbone collection
+
+jQuery.VIE2.addEntity = function (entity) {
 	jQuery.each(jQuery.VIE2.Backbone, function (i, e) {
-		if (jQuery.inArray(entity.get("a"), e["a"])) {
-			jQuery.VIE2.log("info", "VIE2.core", "Added entity '" + entity.get("id") + "' to collection of type '" + i + "'!");
+		var belongsHere = false;
+		jQuery.each(e['a'], function () {
+			jQuery.each(this['a'], function (k, v) {
+				if (jQuery.inArray(v, entity["a"])) {
+					belongsHere = true;
+					return false;
+				}
+			});
+			if (belongsHere) {
+				return false;
+			}
+		});
+		if (belongsHere) {
+			e['collection'].add(entity);
+			jQuery.VIE2.log("info", "VIE2.core", "Added entity '" + entity["id"] + "' to collection of type '" + i + "'!");
 			//TODO: fill with properties -> query();
+			return false;
 		}
 	});
-});
+};
 
 
 //<strong>$.VIE2.connectors</strong>: Static array of all registered connectors.
@@ -550,7 +560,8 @@ jQuery.VIE2.registerMapping = function (mapping) {
 			properties[k] = [];
 		});
 		var model = jQuery.VIE2.Entity.extend(properties);
-		var collection = Backbone.Collection.extend({model: model});
+		var Collection = Backbone.Collection.extend({model: model});
+		var collection = new Collection();
 		
 		jQuery.VIE2.Backbone[mapping.id] = {
 				"a" : (jQuery.isArray(mapping._options["a"]))? mapping._options["a"] : [mapping._options["a"]], 
