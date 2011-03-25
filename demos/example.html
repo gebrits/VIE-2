@@ -1,6 +1,15 @@
 <html
-	xmlns:foaf="http://xmlns.com/foaf/0.1/"
-	xmlns:germi="http://germi/">
+	xmlns:dbpedia = "http://dbpedia.org/resource/"
+	xmlns:dbprop = "http://dbpedia.org/property/"
+	xmlns:dbonto = "http://dbpedia.org/ontology/"
+	xmlns:rdf = "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+	xmlns:rdfs = "http://www.w3.org/2000/01/rdf-schema#"
+	xmlns:iks = "http://www.iks-project.eu/#"
+	xmlns:fise = "http://fise.iks-project.eu/ontology/"
+	xmlns:foaf = "http://xmlns.com/foaf/0.1/"
+	xmlns:dc = "http://purl.org/dc/terms/"
+	xmlns:geo = "http://www.w3.org/2003/01/geo/wgs84_pos#"
+	xmlns:google = "http://rdf.data-vocabulary.org/#">
 	<head>
 		<title>Example usage of VIE^2</title>
 		
@@ -42,7 +51,7 @@
 	                "proxy_url" : "../utils/proxy/proxy.php"
                 });
                 
-                $.VIE2.Backbone['person']['collection'].bind('add', function (p) {
+                $.VIE2.Backbone['person']['collection'].bind("add", function (p) {
                    //debugger; 
                 });
                 
@@ -63,7 +72,6 @@
                    var that = $(this);
 					that.vie2('mapto', 'person', function () {
                         var persons = this;
-                        debugger;
                         jQuery.each(persons, function () {
                             $('body').append('<div>NAME: ' + this['vie2:name'][0] + '</div>');
                         })

@@ -18,17 +18,7 @@
     		//<strong>namespaces</strong>: There are currently some default namespaces given, which
     		//can be overwritten and/or extended using the .vie2('option', ...) method.
     		namespaces: {
-				'dbpedia' : 'http://dbpedia.org/resource/',
-				'dbprop' : 'http://dbpedia.org/property/',
-				'dbonto' : 'http://dbpedia.org/ontology/',
-				'rdf' : 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
-				'rdfs' : 'http://www.w3.org/2000/01/rdf-schema#',
-				'iks' : 'http://www.iks-project.eu/#',
-				'fise' : 'http://fise.iks-project.eu/ontology/',
-				'foaf' : 'http://xmlns.com/foaf/0.1/',
-				'dc' : 'http://purl.org/dc/terms/',
-				'geo' : 'http://www.w3.org/2003/01/geo/wgs84_pos#',
-				'google' : 'http://rdf.data-vocabulary.org/#'
+				'vie2' : 'http://vie2/property/'
 			},
 			//<strong>_context</strong>: The private _context object stores for each connector
 	    	//the returned result. The values are <pre>rdfQuery objects</pre>.
@@ -50,6 +40,7 @@
     		var that = this;
     		this.options._cache = jQuery.rdf();
 
+    		//automatically scans for xmlns attributes in the html element
     		jQuery.each(jQuery('html').xmlns(), function (k, v) {
     			that.options.namespaces[k] = v.toString();
     		});
