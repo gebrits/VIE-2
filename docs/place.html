@@ -3,17 +3,8 @@
 <span class="c"> * @author &lt;a href=&quot;mailto:sebastian.germesin@dfki.de&quot;&gt;Sebastian Germesin&lt;/a&gt;</span>
 <span class="c"> */</span>
 
-<span class="k">new</span> <span class="nx">Mapping</span><span class="p">(</span><span class="s1">&#39;place&#39;</span><span class="o">,</span> <span class="p">{</span>
-	<span class="s1">&#39;a&#39;</span> <span class="o">:</span> <span class="p">{</span>
-		<span class="s1">&#39;a&#39;</span> <span class="o">:</span> <span class="p">[</span><span class="s1">&#39;dbonto:Place&#39;</span><span class="p">]</span>
-	<span class="p">}</span><span class="o">,</span>
-	<span class="nx">mapping</span> <span class="o">:</span>  <span class="p">{</span>
-		<span class="s1">&#39;name&#39;</span> <span class="o">:</span> <span class="p">[</span><span class="s1">&#39;rdfs:label&#39;</span><span class="o">,</span> <span class="s1">&#39;foaf:name&#39;</span><span class="p">]</span><span class="o">,</span>
-		<span class="s1">&#39;url&#39;</span> <span class="o">:</span> <span class="s1">&#39;foaf:page&#39;</span><span class="o">,</span>
-		<span class="s1">&#39;depiction&#39;</span> <span class="o">:</span> <span class="s1">&#39;foaf:depiction&#39;</span><span class="o">,</span>
-		<span class="s1">&#39;long&#39;</span> <span class="o">:</span> <span class="s1">&#39;&lt;http://www.w3.org/2003/01/geo/wgs84_pos#long&gt;&#39;</span><span class="o">,</span>
-		<span class="s1">&#39;lat&#39;</span> <span class="o">:</span> <span class="s1">&#39;geo:lat&#39;</span>
-	<span class="p">}</span>
-<span class="p">});</span>
+<span class="k">new</span> <span class="nx">Mapping</span><span class="p">(</span><span class="s1">&#39;place&#39;</span><span class="o">,</span> 
+		<span class="p">[</span><span class="s1">&#39;dbonto:Place&#39;</span><span class="p">]</span><span class="o">,</span> 
+		<span class="p">[</span><span class="s1">&#39;rdfs:label&#39;</span><span class="o">,</span> <span class="s1">&#39;foaf:name&#39;</span><span class="o">,</span> <span class="s1">&#39;foaf:page&#39;</span><span class="o">,</span> <span class="s1">&#39;foaf:depiction&#39;</span><span class="o">,</span> <span class="s1">&#39;geo:long&#39;</span><span class="o">,</span> <span class="s1">&#39;geo:lat&#39;</span><span class="p">]);</span>
 
 </pre></div>             </td>           </tr>                </tbody>     </table>   </div> </body> </html> 

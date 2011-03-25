@@ -35,11 +35,21 @@ Connector.prototype.options = function(values) {
 };
 
 Connector.prototype.analyze = function (object, callback) {
-	jQuery.VIE2.log("info", "VIE2.Connector(" + this.id + ")", "Not implemented: analyze();");
+	jQuery.VIE2.log("info", "VIE2.Connector(" + this.id + ")#analyze()", "Not overwritten!");
 	callback(jQuery.rdf());
 };
 
 Connector.prototype.query = function (uri, properties, namespaces, callback) {
-	jQuery.VIE2.log("info", "VIE2.Connector(" + this.id + ")", "Not implemented: query();");
+	jQuery.VIE2.log("info", "VIE2.Connector(" + this.id + ")#query()", "Not overwritten!");
+	callback({});
+};
+
+Connector.prototype.annotate = function (elem, triple, namespaces, callback) {
+	jQuery.VIE2.log("info", "VIE2.Connector(" + this.id + ")#annotate()", "Not overwritten!");
+	callback({});
+};
+
+Connector.prototype.remove = function (elem, triple, namespaces, callback) {
+	jQuery.VIE2.log("info", "VIE2.Connector(" + this.id + ")#remove()", "Not overwritten!");
 	callback({});
 };

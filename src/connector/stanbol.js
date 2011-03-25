@@ -26,7 +26,7 @@
 //});
 new Connector('stanbol');
 
-jQuery.VIE2.getConnector('stanbol').analyze = function (object, callback) {
+jQuery.VIE2.connectors['stanbol'].analyze = function (object, callback) {
 	var rdf = jQuery.rdf();
 	
 	//rules to add backwards-relations to the triples
@@ -111,10 +111,10 @@ jQuery.VIE2.getConnector('stanbol').analyze = function (object, callback) {
 					};
 					
 					if (index < (children.length - 1)) {
-						jQuery.VIE2.getConnector('stanbol').enhance(textc, c2);
+						jQuery.VIE2.connectors['stanbol'].enhance(textc, c2);
 					} else {
 						//TODO: this does not really work, use queue instead!
-						jQuery.VIE2.getConnector('stanbol').enhance(textc, cFinal);
+						jQuery.VIE2.connectors['stanbol'].enhance(textc, cFinal);
 					}
 				});
 			} else {
@@ -131,7 +131,7 @@ jQuery.VIE2.getConnector('stanbol').analyze = function (object, callback) {
 	
 };
 
-jQuery.VIE2.getConnector('stanbol').enhance = function (text, callback) {
+jQuery.VIE2.connectors['stanbol'].enhance = function (text, callback) {
 	if (text.length === 0) {
 		//empty text
 		return jQuery.rdf();
@@ -153,7 +153,7 @@ jQuery.VIE2.getConnector('stanbol').enhance = function (text, callback) {
 	this.queryEnhancer(text, c);
 };
 
-jQuery.VIE2.getConnector('stanbol').queryEnhancer = function (text, callback) {
+jQuery.VIE2.connectors['stanbol'].queryEnhancer = function (text, callback) {
 
 	var proxy = this.options().proxy_url;
 	var enhancer_url = this.options().enhancer_url;
@@ -185,7 +185,7 @@ jQuery.VIE2.getConnector('stanbol').queryEnhancer = function (text, callback) {
 	}
 };
 
-jQuery.VIE2.getConnector('stanbol').query = function (uri, props, namespaces, callback) {
+jQuery.VIE2.connectors['stanbol'].query = function (uri, props, namespaces, callback) {
 	if (uri instanceof jQuery.rdf.resource &&
 			uri.type === 'uri') {
 		this.query(uri.toString().replace(/^</, '').replace(/>$/, ''), props, namespaces, callback);
@@ -235,7 +235,7 @@ jQuery.VIE2.getConnector('stanbol').query = function (uri, props, namespaces, ca
 	this.queryEntityHub(uri, c);
 };
 
-jQuery.VIE2.getConnector('stanbol').queryEntityHub = function (uri, callback) {
+jQuery.VIE2.connectors['stanbol'].queryEntityHub = function (uri, callback) {
 	var proxy = this.options().proxy_url;
 	var entityhub_url = this.options().entityhub_url.replace(/\/$/, '');
 	

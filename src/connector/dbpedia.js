@@ -9,7 +9,7 @@
 //});
 new Connector('dbpedia');
 
-jQuery.VIE2.getConnector('dbpedia').query = function (uri, props, namespaces, callback) {
+jQuery.VIE2.connectors['dbpedia'].query = function (uri, props, namespaces, callback) {
 	if (uri instanceof jQuery.rdf.resource &&
 			uri.type === 'uri') {
 		this.query(uri.toString(), props, namespaces, callback);
@@ -68,7 +68,7 @@ jQuery.VIE2.getConnector('dbpedia').query = function (uri, props, namespaces, ca
 	this.queryDBPedia(url, c);
 };
 
-jQuery.VIE2.getConnector('dbpedia').queryDBPedia = function (url, callback) {
+jQuery.VIE2.connectors['dbpedia'].queryDBPedia = function (url, callback) {
 	var proxy = this.options().proxy_url;
 	
 	if (proxy) {

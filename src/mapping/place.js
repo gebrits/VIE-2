@@ -3,15 +3,6 @@
  * @author <a href="mailto:sebastian.germesin@dfki.de">Sebastian Germesin</a>
  */
 
-new Mapping('place', {
-	'a' : {
-		'a' : ['dbonto:Place']
-	},
-	mapping :  {
-		'name' : ['rdfs:label', 'foaf:name'],
-		'url' : 'foaf:page',
-		'depiction' : 'foaf:depiction',
-		'long' : '<http://www.w3.org/2003/01/geo/wgs84_pos#long>',
-		'lat' : 'geo:lat'
-	}
-});
+new Mapping('place', 
+		['dbonto:Place'], 
+		['rdfs:label', 'foaf:name', 'foaf:page', 'foaf:depiction', 'geo:long', 'geo:lat']);
