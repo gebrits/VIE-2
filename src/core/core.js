@@ -49,6 +49,11 @@
     	_create: function () {
     		var that = this;
     		this.options._cache = jQuery.rdf();
+
+    		jQuery.each(jQuery('html').xmlns(), function (k, v) {
+    			that.options.namespaces[k] = v.toString();
+    		});
+    		
     		jQuery.each(this.options.namespaces, function(k, v) {
     			that.options._cache.prefix(k, v);
 			});

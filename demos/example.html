@@ -1,5 +1,6 @@
 <html
-	xmlns:foaf="http://xmlns.com/foaf/0.1/">
+	xmlns:foaf="http://xmlns.com/foaf/0.1/"
+	xmlns:germi="http://germi/">
 	<head>
 		<title>Example usage of VIE^2</title>
 		
@@ -30,6 +31,7 @@
 		<!-- How the API would look like! -->
 		<script type="text/javascript">
 		    $(function() {
+                
                 $.VIE2.getConnector('stanbol').options({
              	    "proxy_url" : "../utils/proxy/proxy.php",
              	    "enhancer_url" : "http://stanbol.iksfordrupal.net:9000/engines/",
@@ -41,8 +43,9 @@
                 });
                 
                 $.VIE2.Backbone['person']['collection'].bind('add', function (p) {
-                   debugger; 
+                   //debugger; 
                 });
+                
             });
             
 			function analyzeText (elem) {
@@ -54,20 +57,19 @@
 				//start analysis
 				elem
 				.vie2({namespaces: ns})
-				.bind('vie2contextchanged', function () {
-					$('button').text('Done!');
-                    var that = $(this);
+				.vie2('analyze', function () {
+                   $('button').text('Done!');
+                   //ignore
+                   var that = $(this);
 					that.vie2('mapto', 'person', function () {
                         var persons = this;
+                        debugger;
                         jQuery.each(persons, function () {
-                            $('body').append('<div>NAME: ' + this.name[0] + '</div>');
+                            $('body').append('<div>NAME: ' + this['vie2:name'][0] + '</div>');
                         })
                         $('#result').show();
     					$('#numPersons').text(persons.length);
                     });
-				})
-				.vie2('analyze', function () {
-                    //ignore
                 });
 			};
 		</script>
