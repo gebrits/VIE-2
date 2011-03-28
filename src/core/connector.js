@@ -34,7 +34,7 @@ Connector.prototype.options = function(values) {
 	}
 };
 
-Connector.prototype.analyze = function (object, callback) {
+Connector.prototype.analyze = function (object, namespaces, callback) {
 	jQuery.VIE2.log("info", "VIE2.Connector(" + this.id + ")#analyze()", "Not overwritten!");
 	callback(jQuery.rdf());
 };

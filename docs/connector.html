@@ -24,7 +24,7 @@
 	<span class="p">}</span>
 <span class="p">};</span>
 
-<span class="nx">Connector</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">analyze</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">object</span><span class="o">,</span> <span class="nx">callback</span><span class="p">)</span> <span class="p">{</span>
+<span class="nx">Connector</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">analyze</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">object</span><span class="o">,</span> <span class="nx">namespaces</span><span class="o">,</span> <span class="nx">callback</span><span class="p">)</span> <span class="p">{</span>
 	<span class="nx">jQuery</span><span class="p">.</span><span class="nx">VIE2</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&quot;info&quot;</span><span class="o">,</span> <span class="s2">&quot;VIE2.Connector(&quot;</span> <span class="o">+</span> <span class="k">this</span><span class="p">.</span><span class="nx">id</span> <span class="o">+</span> <span class="s2">&quot;)#analyze()&quot;</span><span class="o">,</span> <span class="s2">&quot;Not overwritten!&quot;</span><span class="p">);</span>
 	<span class="nx">callback</span><span class="p">(</span><span class="nx">jQuery</span><span class="p">.</span><span class="nx">rdf</span><span class="p">());</span>
 <span class="p">};</span>

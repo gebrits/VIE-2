@@ -5,8 +5,8 @@
 
 new Connector('rdfa');
 
-jQuery.VIE2.connectors['rdfa'].analyze = function (object, callback) {
-	var rdf = jQuery.rdf();
+jQuery.VIE2.connectors['rdfa'].analyze = function (object, namespaces, callback) {
+	var rdf = jQuery.rdf({namespaces: namespaces});
 	
 	if (object === undefined) {
 		jQuery.VIE2.log ("warn", "VIE2.Connector('" + this.id + "')#analyze()", "Given object is undefined!");

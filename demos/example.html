@@ -18,8 +18,7 @@
 	xmlns:google = "http://rdf.data-vocabulary.org/#"
     xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
     xmlns:rdfcal="http://www.w3.org/2002/12/cal#"
-    xmlns:semdesk="http://www.semanticdesktop.org/ontologies/2007/03/22/nfo#"
-    xmlns:owl="http://www.w3.org/2002/07/owl#">
+    xmlns:demo="http://this.demo.eu/">
 	<head>
 		<title>Example usage of VIE^2</title>
 		
@@ -86,7 +85,7 @@
                             for (var x = 1; x < name.length; x++) {
                                 names += " aka. " + name[x].value;
                             }
-                            $(this.view.el).text(names);
+                            $(this.view.el).text(this.id + " " + names);
                         } else {
                             $(this.view.el).css('display', 'none');
                         }
@@ -100,16 +99,25 @@
                     initialize: function() {
                       this.model.bind('change', this.render);
                       this.model.view = this;
-                     $('.tasks').append($(this.el));
+                      $('.tasks').append($(this.el));
                     },
                     
                     render: function() {
-                        var agent = (this.get("rdfcal:hasAgent"))? this.get("rdfcal:hasAgent")[0].value : "";
+                        var agentUri = (this.get("rdfcal:hasAgent"))? this.get("rdfcal:hasAgent")[0].toString() : "";
+                        var agentName = "";
+                        
+                        var agentModel = $.VIE2.Backbone['person']['collection'].get(agentUri);
+                        if (agentModel && agentModel.get('foaf:name')[0]) {
+                            agentName = agentModel.get('foaf:name')[0].value;
+                        } else {
+                            agentName = agentUri;
+                        }
+                        
                         var name = (this.get("rdfcal:name"))? this.get("rdfcal:name")[0].value : "";
                         var startDate = (this.get("rdfcal:startDate"))? this.get("rdfcal:startDate")[0].value : "";
                         var targetDate = (this.get("rdfcal:targetDate"))? this.get("rdfcal:targetDate")[0].value : "";
 
-                        $(this.view.el).text(agent + " needs to " + name + " before " + targetDate + "!");
+                        $(this.view.el).html("<b>" + agentName + "</b> needs to <i>" + name + "</i> before " + targetDate + "!");
                         return this;
                     },
                 });
@@ -151,11 +159,11 @@
 	</head>
 	<body>
 		<button onclick='analyzeText($("#test"), this);'>Analyze the short text below!</button><br />
-		<span id="test">This is a small test, where <span about="[vie:Thomas_Unknown]" typeof="foaf:Person"><span property="foaf:name">Thomas Unknown</span></span> and Barack Obama sing a song.</span><br />
+		<span id="test">This is a small test, where <span about="[demo:Thomas_Unknown]" typeof="foaf:Person"><span property="foaf:name">Thomas Unknown</span></span> and Barack Obama sing a song.</span><br />
 		<span id="result" style="display:none;">Found <span id="numEntities"></span> entities. Out of which <span id="numPersons"></span> are persons.</span><br />
         <button onclick='addName();$(this).attr("disabled", "disabled")'>Add a fake name of B. Obama.</button><br /><br />
         
-        <button onclick='annotateAsTask($("#task"), "<vie:Thomas_Unkown>", "\"implement something cool\"", "\"2011-04-01\"^^xsd:date");$(this).attr("disabled", "disabled");'>Annotate the task below.</button><br />
+        <button onclick='annotateAsTask($("#task"), "<http://this.demo.eu/Thomas_Unknown>", "\"implement something cool\"", "\"2011-04-01\"^^xsd:date");$(this).attr("disabled", "disabled");'>Annotate the task below.</button><br />
         <span id="task"><span class=".person">Thomas Unknown</span> should implement something cool.</span><br />
 		
 		<br /><br />

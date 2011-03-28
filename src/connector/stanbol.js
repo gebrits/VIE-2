@@ -24,9 +24,14 @@
 //    "enhancer_url" : "http://stanbol.iksfordrupal.net:9000/engines/",
 //    "entityhub_url" : "http://stanbol.iksfordrupal.net:9000/entityhub/"
 //});
-new Connector('stanbol');
+new Connector('stanbol', {
+	namespaces: {
+	    semdesk : "http://www.semanticdesktop.org/ontologies/2007/03/22/nfo#",
+	    owl : "http://www.w3.org/2002/07/owl#"
+	}
+});
 
-jQuery.VIE2.connectors['stanbol'].analyze = function (object, callback) {
+jQuery.VIE2.connectors['stanbol'].analyze = function (object, namespaces, callback) {
 	var rdf = jQuery.rdf();
 	
 	//rules to add backwards-relations to the triples

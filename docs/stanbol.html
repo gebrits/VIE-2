@@ -18,9 +18,14 @@ $.VIE2.getConnector('stanbol').options({
    "proxy<em>url" : "../utils/proxy/proxy.php",
    "enhancer</em>url" : "http://stanbol.iksfordrupal.net:9000/engines/",
    "entityhub_url" : "http://stanbol.iksfordrupal.net:9000/entityhub/"
-});</p>             </td>             <td class="code">               <div class="highlight"><pre><span class="k">new</span> <span class="nx">Connector</span><span class="p">(</span><span class="s1">&#39;stanbol&#39;</span><span class="p">);</span>
+});</p>             </td>             <td class="code">               <div class="highlight"><pre><span class="k">new</span> <span class="nx">Connector</span><span class="p">(</span><span class="s1">&#39;stanbol&#39;</span><span class="o">,</span> <span class="p">{</span>
+	<span class="nx">namespaces</span><span class="o">:</span> <span class="p">{</span>
+	    <span class="nx">semdesk</span> <span class="o">:</span> <span class="s2">&quot;http://www.semanticdesktop.org/ontologies/2007/03/22/nfo#&quot;</span><span class="o">,</span>
+	    <span class="nx">owl</span> <span class="o">:</span> <span class="s2">&quot;http://www.w3.org/2002/07/owl#&quot;</span>
+	<span class="p">}</span>
+<span class="p">});</span>
 
-<span class="nx">jQuery</span><span class="p">.</span><span class="nx">VIE2</span><span class="p">.</span><span class="nx">connectors</span><span class="p">[</span><span class="s1">&#39;stanbol&#39;</span><span class="p">].</span><span class="nx">analyze</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">object</span><span class="o">,</span> <span class="nx">callback</span><span class="p">)</span> <span class="p">{</span>
+<span class="nx">jQuery</span><span class="p">.</span><span class="nx">VIE2</span><span class="p">.</span><span class="nx">connectors</span><span class="p">[</span><span class="s1">&#39;stanbol&#39;</span><span class="p">].</span><span class="nx">analyze</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">object</span><span class="o">,</span> <span class="nx">namespaces</span><span class="o">,</span> <span class="nx">callback</span><span class="p">)</span> <span class="p">{</span>
 	<span class="kd">var</span> <span class="nx">rdf</span> <span class="o">=</span> <span class="nx">jQuery</span><span class="p">.</span><span class="nx">rdf</span><span class="p">();</span>
 	</pre></div>             </td>           </tr>                               <tr id="section-4">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-4">&#182;</a>               </div>               <p>rules to add backwards-relations to the triples
 this makes querying for entities aaaa lot easier!</p>             </td>             <td class="code">               <div class="highlight"><pre>	<span class="kd">var</span> <span class="nx">rules</span> <span class="o">=</span> <span class="nx">jQuery</span><span class="p">.</span><span class="nx">rdf</span><span class="p">.</span><span class="nx">ruleset</span><span class="p">()</span>

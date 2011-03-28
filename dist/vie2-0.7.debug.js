@@ -34,7 +34,7 @@ Connector.prototype.options = function(values) {
 	}
 };
 
-Connector.prototype.analyze = function (object, callback) {
+Connector.prototype.analyze = function (object, namespaces, callback) {
 	jQuery.VIE2.log("info", "VIE2.Connector(" + this.id + ")#analyze()", "Not overwritten!");
 	callback(jQuery.rdf());
 };
@@ -115,16 +115,24 @@ Mapping = function(id, types, defaultProps) {
     		var that = this;
     		this.options._globalContext = jQuery.rdf();
     		
+    		
     		//automatically scans for xmlns attributes in the html element
     		//and adds them to the local this.options.namespaces object
     		jQuery.each(jQuery('html').xmlns(), function (k, v) {
     			that.options.namespaces[k] = v.toString();
     		});
     		
+    		//scan for connector-specific namespaces
+    		jQuery.each(jQuery.VIE2.connectors, function () {
+    			if (this.options()['namespaces']) {
+	    			jQuery.each(this.options()['namespaces'], function(k, v) {
+	    				that.options.namespaces[k] = v;
+	    			});
+	    		}
+    		});
+    		
     		//add all namespaces to the local cache at this.options._globalContext
-    		jQuery.each(this.options.namespaces, function(k, v) {
-    			that.options._globalContext.prefix(k, v);
-			});
+    		this._initNamespaces(that.options._globalContext);
     	},
     	
     	//extends needs to be used as the default implementation would overwrite the namespaces
@@ -139,10 +147,18 @@ Mapping = function(id, types, defaultProps) {
     		}
     	},
     	
+    	_initNamespaces : function (rdf) {
+    		jQuery.each(this.options.namespaces, function(k, v) {
+    			rdf.prefix(k, v);
+			});
+    	},
+    	
     	//<strong>analyze()</strong>: The <code><pre>analyze(elem, callback)</pre></code> function is used to
     	//analyze the given element <strong>elem</strong> with all connectors and - once finished - executes
     	//<strong>callback(elem)</strong>.
 		analyze: function (elem, callback) {
+			var that = this;
+			
 			if (elem === undefined) {
 				jQuery.VIE2.log("warn", "VIE2.core#analyze()", "No element specified, returning without action!");
 				callback.call(elem);
@@ -162,10 +178,11 @@ Mapping = function(id, types, defaultProps) {
 			jQuery.VIE2.log("info", "VIE2.core#analyze()", "Start.");
 			
 			//init element context
-			//TODO: add reference to elem!
-			this.options._localContext[elem.data('vie2-id')] = jQuery.rdf();
-			
-			var that = this;
+			this.options._localContext[elem.data('vie2-id')] = {
+					rdf: jQuery.rdf(),
+					elem: elem
+			};
+			that._initNamespaces(that.options._localContext[elem.data('vie2-id')]['rdf']);
 			
 			//as the connectors work asynchronously, we need a queue to listen if all connectors are finished.
 			var connectorQueue = [];
@@ -179,21 +196,18 @@ Mapping = function(id, types, defaultProps) {
 				var connectorCallback = function (vie2, conn, elem) {
 					return function (rdf) {
 						jQuery.VIE2.log("info", "VIE2.core#analyze()", "Received RDF annotation from connector '" + conn.id + "'!");
+						console.log(rdf);
 						
 						//we add all namespaces to the rdfQuery object. 
 						//Attention: this might override namespaces that were added by the connector!
 						//but keeps consistency through the VIE^2.
-						//TODO: handle connector-specific namespaces!
-						jQuery.each(vie2.options.namespaces, function(k, v) {
-							rdf.prefix(k, v);
-							vie2.options._globalContext.prefix(k, v);
-						});
+						that._initNamespaces(rdf);
 						
 						rdf.databank.triples().each(function () {
 							//add all triples to the global cache!
 							vie2.options._globalContext.add(this);
 							//fill element-specific context
-							that.options._localContext[elem.data('vie2-id')].add(this);
+							that.options._localContext[elem.data('vie2-id')]['rdf'].add(this);
 						});
 						
 						//add all subjects to the corresponding backbone collection(s)
@@ -226,16 +240,13 @@ Mapping = function(id, types, defaultProps) {
 				
 				//start analysis with the connector.
  				jQuery.VIE2.log("info", "VIE2.core#analyze()", "Starting analysis with connector: '" + this.id + "'!");
-				this.analyze(elem, connectorCallback);
+				this.analyze(elem, that.options.namespaces, connectorCallback);
 			});
 		},
 		
-		//<strong>annotate(elem, triples)</strong>: Supports the (manual) annotation of the element <strong>elem</strong>
+		//<strong>annotate(triples, elem)</strong>: Supports the (manual) annotation of the element <strong>elem</strong>
 		// with the (semantic) data, stored in <strong>triple</strong>.
-		//<strong>triple</strong> can be a <i>String</i>, an array of <i>String</i>, an <i>rdfQuery.triple</i> or
-		// an array of <i>rdfQuery.triple</i>.
-		//This function forwards the triple and element to all connector's <strong>annotate</strong> method and
-		//keeps the corresponding backbone JS models and all context in sync.
+		//<strong>triple</strong> needs to be a <i>String</i> or an array of <i>String</i>.
 		annotate: function (triples, elem) {
 			var that = this;
 			
@@ -277,11 +288,14 @@ Mapping = function(id, types, defaultProps) {
 			//(2) put it into that.options._localContext
 			if (elem !== undefined) {
 				if (!that.options._localContext[elem.data('vie2-id')]) {
-					that.options._localContext[elem.data('vie2-id')] = rdf;
+					that.options._localContext[elem.data('vie2-id')] = {
+							rdf: rdf,
+							elem: elem
+					};
 				}
 				else {
 					rdf.databank.triples().each(function () {
-						that.options._localContext[elem.data('vie2-id')].add(this);
+						that.options._localContext[elem.data('vie2-id')]['rdf'].add(this);
 					});
 				}
 			}
@@ -329,7 +343,7 @@ Mapping = function(id, types, defaultProps) {
 			jQuery.VIE2.log("info", "VIE2.core#annotate()", "End.");
 			jQuery.VIE2.log("info", "VIE2.core#annotate()", "Global cache holds now " + that.options._globalContext.databank.triples().length + " triples!");
 			if (elem !== undefined) {
-				jQuery.VIE2.log("info", "VIE2.core#annotate()", "Local cache of element '" + elem.data('vie2-id') + "' holds now " + that.options._localContext[elem.data('vie2-id')].databank.triples().length + " triples!");
+				jQuery.VIE2.log("info", "VIE2.core#annotate()", "Local cache of element '" + elem.data('vie2-id') + "' holds now " + that.options._localContext[elem.data('vie2-id')]['rdf'].databank.triples().length + " triples!");
 			}
 			return this;
 		},
@@ -522,6 +536,7 @@ jQuery.VIE2.registerConnector = function (connector) {
 	if (!jQuery.VIE2.connectors[connector.id]) {
 		jQuery.VIE2.connectors[connector.id] = connector;
 		jQuery.VIE2.log("info", "VIE2.core#registerConnector()", "Registered connector '" + connector.id + "'");
+		
 	} else {
 		jQuery.VIE2.log("warn", "VIE2.core#registerConnector()", "Did not register connector, as there is" +
 				"already a connector with the same id registered.");
