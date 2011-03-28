@@ -16,8 +16,10 @@
 	xmlns:dc = "http://purl.org/dc/terms/"
 	xmlns:geo = "http://www.w3.org/2003/01/geo/wgs84_pos#"
 	xmlns:google = "http://rdf.data-vocabulary.org/#"
-    xmlns:xsd="http://www.w3.org/2001/XMLSchema"
-    xmlns:prj="http://purl.org/stuff/project/">
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+    xmlns:rdfcal="http://www.w3.org/2002/12/cal#"
+    xmlns:semdesk="http://www.semanticdesktop.org/ontologies/2007/03/22/nfo#"
+    xmlns:owl="http://www.w3.org/2002/07/owl#">
 	<head>
 		<title>Example usage of VIE^2</title>
 		
@@ -27,7 +29,10 @@
 		<script type="text/javascript" src="../lib/rdfquery/latest/jquery.rdfquery.rules.js"></script>
 		<script type="text/javascript" src="../lib/underscoreJS/underscore.js"></script>
 		<script type="text/javascript" src="../lib/backboneJS/backbone.js"></script>
-		
+        
+        <!-- VIE -->
+		<script type="text/javascript" src="../lib/vie/vie.js"></script>
+        
 		<!-- VIE^2 -->
 		<script type="text/javascript" src="../src/core/util.js"></script>
 		<script type="text/javascript" src="../src/core/core.js"></script>
@@ -41,6 +46,7 @@
 		
 		<!-- Mapping plug-ins -->
 		<script type="text/javascript" src="../src/mapping/person.js"></script>
+		<script type="text/javascript" src="../src/mapping/task.js"></script>
 		
 		<!-- How the API would look like! -->
 		<script type="text/javascript">
@@ -57,56 +63,93 @@
                 });
                 
                 $.VIE2.Backbone['person']['collection'].bind("add", function (p) {
-                   p.bind('change:foaf:name', function () {
-                       debugger;
-                        $('body').append('<div>NAME: ' + this.get('foaf:name') + '</div>');
+                    new PersonView({id: 'person-' + PseudoGuid.GetNew(), model: p});
+                });
+                
+                $.VIE2.Backbone['task']['collection'].bind("add", function (t) {
+                     new TaskView({id: 'task-' + PseudoGuid.GetNew(), model: t});
+                    t.bind('change:rdfcal:name', function () {
+                        var agent = (t.get('rdfcal:hasAgent'))? t.get('rdfcal:hasAgent').value : "";
+                        var name = (t.get('rdfcal:name'))? t.get('rdfcal:name').toString() : "";
+                       $('body').append('<div>NEW TASK(' + t.get('id') + "): " + agent + " has to " + name  + '</div>');
                    });
+                });
+                
+                var PersonView = Backbone.View.extend({
+                    initialize: function() {
+                      this.model.bind('change', this.render);
+                      this.model.view = this;
+                      $('body').append($(this.el));
+                    },
+                    
+                    render: function() {
+                        var name = this.get("foaf:name");
+                        if (name && name[0]) {
+                            var names = name[0].toString();
+                            for (var x = 1; x < name.length; x++) {
+                                names += " aka. " + name[x].toString();
+                            }
+                            $(this.view.el).text(this.id + ": " + names);
+                        }
+                      return this;
+                    },
+                });
+                
+                var TaskView = Backbone.View.extend({
+                    initialize: function() {
+                      this.model.bind('change', this.render);
+                      this.model.view = this;
+                      $('body').append($(this.el));
+                    },
+                    
+                    render: function() {
+                        var agent = (this.get("rdfcal:hasAgent"))? this.get("rdfcal:hasAgent")[0].toString() : "";
+                        var name = (this.get("rdfcal:name"))? this.get("rdfcal:name")[0].toString() : "";
+                        var startDate = (this.get("rdfcal:startDate"))? this.get("rdfcal:startDate")[0].toString() : "";
+                        var targetDate = (this.get("rdfcal:targetDate"))? this.get("rdfcal:targetDate")[0].toString() : "";
+
+                        $(this.view.el).text(agent + " needs to " + name + " before " + targetDate + "!");
+                        return this;
+                    },
                 });
             });
             
-			function analyzeText (elem) {
+			function analyzeText (elem, button) {
 				//disable button
-				//$('button').attr('disabled', 'disabled');
+				$(button).attr('disabled', 'disabled');
+                $(button).text('Analyzing...');
 				
 				//start analysis
-				VIE2.vie2('analyze', elem, function () {
-                  // $('button').text('Done!');
-                   //ignore
-                   /*var that = $(this);
-					that.vie2('mapto', 'person', function () {
-                        var persons = this;
-                        jQuery.each(persons, function () {
-                           
-                        })
-                        $('#result').show();
-    					$('#numPersons').text(persons.length);
-                    });*/
+				VIE2.vie2('analyze', elem, function (status) {
+                    if (status === 'ok') {
+                        $(button).text('Done!');
+                    }
                 });
 			};
                         
             function annotateAsTask (elem, agent, todo, targetDate, startDate) {
                 var x = $.rdf.blank('[]');
-                VIE2.vie2('annotate', elem, 
+                VIE2.vie2('annotate',
                   [
-                  x + ' a prj:Task',
-                  x + ' prj:hasAgent ' + ((agent === '' || agent === undefined)? '[]' : agent),
-                  x + ' prj:name ' + ((todo === '' || todo === undefined)? '' : todo),
-                  x + ' prj:startDate ' + ((startDate === '' || startDate === undefined)? '\"now\"' : startDate), //TODO: figure out how to write proper date
-                  x + ' prj:targetDate ' + ((targetDate === '' || targetDate === undefined)? '\"tonight\"' : targetDate) //TODO: figure out how to write proper date
-                  ]);
-              debugger;
+                  x + ' a rdfcal:Task',
+                  x + ' rdfcal:hasAgent ' + ((agent === '' || agent === undefined)? '[]' : agent),
+                  x + ' rdfcal:name ' + ((todo === '' || todo === undefined)? '' : todo),
+                  x + ' rdfcal:startDate ' + ((startDate === '' || startDate === undefined)? '\"now\"' : startDate), //TODO: figure out how to write proper date
+                  x + ' rdfcal:targetDate ' + ((targetDate === '' || targetDate === undefined)? '\"tonight\"' : targetDate) //TODO: figure out how to write proper date
+                  ], 
+                  elem);
             };
             
             
             function addName () {
-                VIE2.vie2('annotate', $('#task'), 
+                VIE2.vie2('annotate',
                   '<http://dbpedia.org/resource/Barack_Obama> foaf:name "B B Obama"');
-            }
+            };
 		</script>
 		
 	</head>
 	<body>
-		<button onclick='analyzeText($("#test"));'>Click me to start the analysis!</button>
+		<button onclick='analyzeText($("#test"), this);'>Click me to start the analysis!</button>
 		<span id="test">This is a small test, where <span about="[vie:Thomas_Unknown]" typeof="foaf:Person"><span property="foaf:name">Thomas Unknown</span></span> and Barack Obama sing a song.</span><br />
 		<span id="result" style="display:none;">Found <span id="numEntities"></span> entities. Out of which <span id="numPersons"></span> are persons.</span><br />
 		<br />
@@ -114,7 +157,7 @@
         <button onclick='annotateAsTask($("#task"), "<vie:Thomas_Unkown>", "\"implement something cool\"", "\"2011-04-01\"^^xsd:date");'>Click me to annotate the task.</button><br />
         <span id="task"><span class=".person">Thomas Unknown</span> should implement something cool.</span><br />
 		
-		<button onclick='addName();'>Click me to add name.</button><br />
+		<button onclick='addName();'>Click me to add name of B. Obama.</button><br />
         
 	</body>
 </html>

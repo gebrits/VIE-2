@@ -154,7 +154,8 @@ class http {
         $server = $parts[2];
         $port = $parts[4];
         $path = $parts[5];
-        if ($port == "") {
+        $post_string = "";
+		if ($port == "") {
             if (strtolower($protocol) == "https://") {
                 $port = "443";
             } else {
@@ -204,7 +205,7 @@ class http {
             $this->headers["Content-Length"] = strlen($this->xmlrequest);
         } else {
 	    $request = $verb." ".$path." HTTP/1.0\r\n";
-	    if ($this->postvars["format"]) {
+	    if (array_key_exists("format", $this->postvars)) {
 	      $this->headers["Accept"] = $this->postvars["format"];
 	    }
         }

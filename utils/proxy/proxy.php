@@ -46,7 +46,7 @@ if (!$h->fetch($h->url,$h->verb)) {
 }
 
 // Forward the headers to the client.
-$ary_headers = split("\n", $h->header);
+$ary_headers = preg_split("/\n/", $h->header);
 foreach($ary_headers as $hdr) { header($hdr); }
 
 // Send the response body to the client.

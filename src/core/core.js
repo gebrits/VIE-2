@@ -25,6 +25,9 @@
 	    	//were retrieved so far. The values are <pre>rdfQuery objects</pre>.
 	    	_globalContext : jQuery.rdf(),
 	    	
+	    	//<strong>_localContext</strong>: The private _localContext object stores all triples that
+	    	//were retrieved so far for each element. The keys are the id of the element and
+	    	//the values are <pre>rdfQuery objects</pre>.
 	    	_localContext: {}
     	},
     	
@@ -70,20 +73,21 @@
 				callback.call(elem);
 				return;
 			}
-			if (!elem.attr('id')) {
+			if (!elem.data('vie2-id')) {
 				jQuery.VIE2.log("warn", "VIE2.core#analyze()", "No element id specified, generate one dynamically and add it!");
 				var tempId = PseudoGuid.GetNew();
 				jQuery.VIE2.log("warn", "VIE2.core#analyze()", "Generated id: '" + tempId + "'!");
-				elem.attr('id', tempId);
+				elem.data('vie2-id', tempId);
 			}
 			jQuery.VIE2.log("info", "VIE2.core#analyze()", "Start.");
 			
 			//init element context
-			this.options._localContext[elem.attr('id')] = jQuery.rdf();
+			//TODO: add reference to elem!
+			this.options._localContext[elem.data('vie2-id')] = jQuery.rdf();
 			
 			var that = this;
 			
-			//as the conectors work asynchronously, we need a queue to listen if all connectors are finished.
+			//as the connectors work asynchronously, we need a queue to listen if all connectors are finished.
 			var connectorQueue = [];
 			jQuery.each(jQuery.VIE2.connectors, function () {
 				//fill queue of connectors with 'id's to have an overview of running connectors.
@@ -99,6 +103,7 @@
 						//we add all namespaces to the rdfQuery object. 
 						//Attention: this might override namespaces that were added by the connector!
 						//but keeps consistency through the VIE^2.
+						//TODO: handle connector-specific namespaces!
 						jQuery.each(vie2.options.namespaces, function(k, v) {
 							rdf.prefix(k, v);
 							vie2.options._globalContext.prefix(k, v);
@@ -108,21 +113,21 @@
 							//add all triples to the global cache!
 							vie2.options._globalContext.add(this);
 							//fill element-specific context
-							that.options._localContext[elem.attr('id')].add(this);
+							that.options._localContext[elem.data('vie2-id')].add(this);
 						});
 						
-						//add all subjects to the entities backbone collection
+						//add all subjects to the corresponding backbone collection(s)
 						jQuery.each(rdf.databank.subjectIndex, function (subject, v) {
 							var types = [];
 							
-							//an entity of id 'id' can only be added once to a backbone JS collection
+							//an entity of id 'subject' can only be added once to a backbone JS collection
 							//hence, we need to collect all types of that entity first in an array.
 							rdf
 							.where(subject + ' a ?type')
 							.each(function () {
-								types.push(this.type);
+								var curie = jQuery.createCurie(this.type.value, {namespaces : that.options.namespaces});
+								types.push(curie);
 							});
-							
 							jQuery.VIE2.addBBEntity({id : subject, a : types});
 						});
 						
@@ -133,7 +138,8 @@
 							//if the queue is empty, all connectors have successfully returned and we can execute the
 							//callback function.
 							jQuery.VIE2.log("info", "VIE2.core#analyze()", "Finished! Cache holds now " + that.options._globalContext.databank.triples().length + " triples!");
-							callback.call(elem);
+							//provide a status field in the callback object: status = {'ok', 'error'};
+							callback.call(elem, 'ok');
 						}
 					};
 				}(that, this, elem);
@@ -150,108 +156,102 @@
 		// an array of <i>rdfQuery.triple</i>.
 		//This function forwards the triple and element to all connector's <strong>annotate</strong> method and
 		//keeps the corresponding backbone JS models and all context in sync.
-		annotate: function (elem, triples) {
-			if (elem !== undefined && !elem.attr('id')) {
+		annotate: function (triples, elem) {
+			var that = this;
+			
+			if (elem !== undefined && !elem.data('vie2-id')) {
 				jQuery.VIE2.log("warn", "VIE2.core#annotate()", "No element id specified, generate one dynamically and add it!");
 				var tempId = PseudoGuid.GetNew();
 				jQuery.VIE2.log("warn", "VIE2.core#annotate()", "Generated id: '" + tempId + "'!");
-				elem.attr('id', tempId);
+				elem.data('vie2-id', tempId);
 			}
 			if (triples === undefined) {
 				jQuery.VIE2.log("warn", "VIE2.core#annotate()", "No triple specified, returning without action!");
 				return this;
 			}
-			if (!jQuery.isArray(triples)) {
-				return this.annotate(elem, [triples]);
-			}
 			
+			//allocate temporary rdfQuery object
+			var rdf = jQuery.rdf({namespaces : that.options.namespaces});
+			
+			if (!jQuery.isArray(triples)) {
+				return this.annotate([triples], elem);
+			}
+			else {
+				jQuery.each(triples, function (i, t) {
+					var triple = triples[i];
+					if (typeof triple === 'string') {
+						triple = jQuery.rdf.triple(triple, {namespaces: that.options.namespaces});
+					} else {
+						//TODO?
+					}
+					rdf.add(triple);					
+				});
+			}
 			jQuery.VIE2.log("info", "VIE2.core#annotate()", "Start.");
 			
-			var that = this;
-			
-			jQuery.each(triples, function (i, t) {
-				var triple = triples[i];
-
-				if (typeof triple === 'string') {
-					triple = jQuery.rdf.triple(triple, {namespaces: that.options.namespaces});
-				}
-				
-				//(1) put it into this.options._globalContext
-				that.options._globalContext.add(triple);
-				
-				//(2) put it into this.options._localContext
-				if (elem !== undefined) {
-					if (!that.options._localContext[elem.attr('id')]) {
-						that.options._localContext[elem.attr('id')] = jQuery.rdf();
-					}
-					that.options._localContext[elem.attr('id')].add(triple);
-				}
-				
-				//(3) iterate over all connectors to serialize the new annotation
-				jQuery.each(jQuery.VIE2.connectors, function () {
-					
-					var connectorCallback = function (vie2, conn, elem, triple) {
-						return function () {
-							//TODO
-						};
-					}(that, this, elem, triple);
-	
-					this.annotate(elem, triple, that.options.namespaces, connectorCallback);
-				});
-				
-				//(4) look for backbone model(s) and update them as well.				
-				jQuery.each(jQuery.VIE2.Backbone, function (k, v) {
-					var e = this;
-					var ent = e['collection'].get(triple.subject.toString());
-					if (ent) {
-						//TODO: test if key actually belongs to BB Model! -> be careful of curies!
-						//TODO: at best convert to curie!
-						var key = triple.property.toString();
-						ent.set({key : triple.object});
-						jQuery.VIE2.log("info", "VIE2.core#annotate()", "Added value to entity '" + ent.id + "' '" + key + "' '" + triple.object.toString() + "'!");
-					}
-				});
-				jQuery.VIE2.log("info", "VIE2.core#annotate()", "End. Cache holds now " + that.options._globalContext.databank.tripleStore.length + " triples!");
+			//(1) put it into that.options._globalContext
+			rdf.databank.triples().each(function () {
+				that.options._globalContext.add(this);
 			});
-			return this;
-		},
-		
-		
-		//<strong>filter</strong>: Offers an easy-to-use syntax to query for URIs of entities
-		//with special types, e.g.:
-		//<code><pre>var persons = that.vie2('filter', {
-        //    'a' : ['dbonto:Person', 'foaf:Person]
-        //});</pre></code>
-		//<i>types</i> needs to be an object that maps properties ot values.
-		//if it is a 'string' or an array of strings, it is mapped to:
-		//{'a' : types}.
-		filter: function (types) {
-			if (types === undefined) {
-				jQuery.VIE2.log("warn", "VIE2.core", "Invoked 'filter()' with undefined argument!");
-				return [];
-			}
-			if (typeof types === 'string' || jQuery.isArray(types)) {
-				return this.filter({'a' : types});
-			}
 
-			var that = this;
-			var matches = [];
+			//(2) put it into that.options._localContext
+			if (elem !== undefined) {
+				if (!that.options._localContext[elem.data('vie2-id')]) {
+					that.options._localContext[elem.data('vie2-id')] = rdf;
+				}
+				else {
+					rdf.databank.triples().each(function () {
+						that.options._localContext[elem.data('vie2-id')].add(this);
+					});
+				}
+			}
 			
-			jQuery.each(types, function (k, v) {
-				//convert to array if not already an array
-				v = (jQuery.isArray(v))? v : [v];
+			//(3) look for backbone model(s) and update their attributes.
+			jQuery.each(rdf.databank.subjectIndex, function (subject, v) {
+				var triples = this;
+				jQuery.each(triples, function (i) {
+					var triple = triples[i];
+					jQuery.each(jQuery.VIE2.Backbone, function (k, v) {
+						var ent = this['collection'].get(subject.toString());
 
-				jQuery.each(v, function (index) {
-					var type = v[index];
-					that.options._globalContext
-					.where('?subject ' + k + ' ' + type)
-					.each (function () {
-						matches.push(this.subject);
+						if (ent) {
+							//only update the backbone entity if the property is a
+							//default property!
+							var curie = jQuery.createCurie(triple.property.value, {namespaces: that.options.namespaces});
+							if (ent.defaults[curie]) {
+								ent.change();
+								jQuery.VIE2.log("info", "VIE2.core#annotate()", "Added value to entity '" + ent.id + "' '" + curie + "' '" + triple.object.toString() + "'!");
+							}
+						}
 					});
 				});
 			});
 			
-			return matches;
+			// (4) register new entity/ies as backbone model(s)
+			//this needs to be done *after* the properties have been loaded into
+			//the cache, as 'addBBEntity() already performs a query for the entities'
+			//properties.
+			jQuery.each(rdf.databank.subjectIndex, function (subject, v) {
+				var types = [];
+				
+				//an entity of id 'id' can only be added once to a backbone JS collection
+				//hence, we need to collect all types of that entity first in an array.
+				rdf
+				.where(subject + ' a ?type')
+				.each(function () {
+					var curie = jQuery.createCurie(this.type.value, {namespaces : that.options.namespaces});
+					types.push(curie);
+				});
+				
+				jQuery.VIE2.addBBEntity({id : subject, a : types});
+			});
+
+			jQuery.VIE2.log("info", "VIE2.core#annotate()", "End.");
+			jQuery.VIE2.log("info", "VIE2.core#annotate()", "Global cache holds now " + that.options._globalContext.databank.triples().length + " triples!");
+			if (elem !== undefined) {
+				jQuery.VIE2.log("info", "VIE2.core#annotate()", "Local cache of element '" + elem.data('vie2-id') + "' holds now " + that.options._localContext[elem.data('vie2-id')].databank.triples().length + " triples!");
+			}
+			return this;
 		},
 		
 		//<strong>query</strong>: The query function supports querying for properties. The uri needs
@@ -267,15 +267,15 @@
 			jQuery.VIE2.log("info", "VIE2.core#query()", "Start!");
 
 			if (uri === undefined || props === undefined) {
-				jQuery.VIE2.log("warn", "VIE2.core", "Invoked 'query()' with undefined argument(s)!");
+				jQuery.VIE2.log("warn", "VIE2.core#query()", "Invoked 'query()' with undefined argument(s)!");
 				callback(ret);
 				return;
-			} else if (typeof props === 'string') {
+			} else if (!jQuery.isArray(props)) {
 				this.query(uri, [props], callback, options);
 				return;
 			}
-			if ((uri instanceof jQuery.rdf.blank || (uri instanceof jQuery.rdf.resource &&
-					uri.type === 'uri') || typeof uri === 'string') && jQuery.isArray(props)) {
+			
+			if (typeof uri === 'string' && jQuery.isArray(props)) {
 				var that = this;
 				//initialize the returning object
 				for (var i=0; i < props.length; i++) {
@@ -286,7 +286,7 @@
 				if (!options || (options && !options.cache === 'nocache')) {
 					for (var i=0; i < props.length; i++) {
 						that.options._globalContext
-						.where(jQuery.rdf.pattern(uri, props[i], '?object', { namespaces: that.options.namespaces}))
+						.where(jQuery.rdf.pattern(uri, props[i], '?object', {namespaces: that.options.namespaces}))
 						.each(function () {
 							ret[props[i]].push(this.object);
 						});
@@ -309,10 +309,10 @@
 				//look up for properties in the connectors that
 				//implement/overwrite the query() method
 				jQuery.each(jQuery.VIE2.connectors, function () {
-					jQuery.VIE2.log("info", "VIE2.core", "Start 'query()' with connector '" + this.id + "' for uri '" + uri + "'!");
+					jQuery.VIE2.log("info", "VIE2.core#query()", "Start with connector '" + this.id + "' for uri '" + uri + "'!");
 					var c = function (vie, conn, uri, namespaces, ret, callback) {
 						return function (data) {
-							jQuery.VIE2.log("info", "VIE2.core", "Received query information from connector '" + conn.id + "' for uri '" + uri + "'!");
+							jQuery.VIE2.log("info", "VIE2.core#query()", "Received query information from connector '" + conn.id + "' for uri '" + uri + "'!");
 							jQuery.extend(true, ret, data);
 							
 							removeElement(connectorQueue, conn.id);
@@ -326,7 +326,7 @@
 										that.options._globalContext.add(jQuery.rdf.triple(uri, k, v[i], {namespaces: namespaces}));
 									}
 								});
-								jQuery.VIE2.log("info", "VIE2.core", "Finished task: 'query()' for uri '" + uri + "'! Cache holds now " + that.options._globalContext.databank.tripleStore.length + " triples!");
+								jQuery.VIE2.log("info", "VIE2.core#query()", "Finished task: 'query()' for uri '" + uri + "'! Cache holds now " + that.options._globalContext.databank.tripleStore.length + " triples!");
 								callback.call(ret);
 							}
 						};
@@ -338,16 +338,18 @@
 			}
 		},
 		
-		// returns BackboneJS collections
-		mapto: function (mappingId, callback) {
-			if (jQuery.VIE2.mappings[mappingId]) {
-				jQuery.VIE2.log("info", "VIE2.core", "Start 'mapto()' with mapping '" + mappingId + "'!");
-				jQuery.VIE2.mappings[mappingId].mapto(this, callback);
-			} else {
-				jQuery.VIE2.log("warn", "VIE2.core", "Could not find mapping with id '" + mappingId + "'!");
-			}
+		get: function (uri, prop) {
+			//get data from global storage!
+			var ret = [];
+			var that = this;
+			that.options._globalContext
+			.where(jQuery.rdf.pattern(uri, prop, '?object', {namespaces: that.options.namespaces}))
+			.each(function () {
+				ret.push(this.object);
+			});
+			
+			return ret;
 		},
-		
 		
 		//<strong>clear</strong>: Clears the local context and the cache.
 		clear: function () {
@@ -376,25 +378,54 @@ jQuery.VIE2.log = function (level, component, message) {
 
 // Backbone JS Models / Collections
 jQuery.VIE2.Backbone = {};
-jQuery.VIE2.Entity = Backbone.Model.extend({
+jQuery.VIE2.Entity = VIE.RDFEntity.extend({
+	
+	lookup: function (props) {
+		if (!jQuery.isArray(props)) {
+			this.lookup([props]);
+		} else {
+			//query connectors for properties
+			VIE2.vie2('query', this.id, props, function (entity) {
+				return function () {
+					entity.change();
+				};
+			}(this));
+		}
+	},
+	
 	get: function (attr) {
-		//forward to query();
-		return VIE2.vie2('query', this.id, attr);
+		return VIE2.vie2('get', this.id, attr);
+	},
+	
+	set: function (attrs, opts) {
+		//TODO: call VIE2.annotate(this.id, attrs);!
+		Backbone.Model.prototype.set.call(this, attrs, opts);
 	}
+
 });
 
 jQuery.VIE2.addBBEntity = function (entity) {
 	jQuery.each(jQuery.VIE2.Backbone, function (i, e) {
+		var belongsHere = false;
 		jQuery.each(e['a'], function () {
-			if (jQuery.inArray(this, entity["a"])) {
+			var ans = jQuery.inArray(this.toString(), entity["a"]);
+			if (jQuery.inArray(this.toString(), entity["a"]) >= 0) {
 				belongsHere = true;
 				return false;
 			}
 		});
 		if (belongsHere) {
-			e['collection'].add(entity);
-			jQuery.VIE2.log("info", "VIE2.core", "Added entity '" + entity["id"] + "' to collection of type '" + i + "'!");
-			//TODO: fill with properties -> query();
+			var tmpModel = e['collection'].model;
+			var bbModel = new tmpModel(entity);
+			e['collection'].add(bbModel);
+			jQuery.VIE2.log("info", "VIE2.core#addBBEntity()", "Added entity '" + entity["id"] + "' to collection of type '" + i + "'!");
+			var mapping = jQuery.VIE2.mappings[i];
+			//query for default properties to make them available in the offline storage
+			VIE2.vie2('query', bbModel.id, mapping.defaultProps, function (bbModel) {
+				return function () {
+					bbModel.change();
+				};
+			}(bbModel));
 		}
 	});
 };
@@ -410,9 +441,9 @@ jQuery.VIE2.registerConnector = function (connector) {
 	//a connector with 'connector.id' registered
 	if (!jQuery.VIE2.connectors[connector.id]) {
 		jQuery.VIE2.connectors[connector.id] = connector;
-		jQuery.VIE2.log("info", "VIE2.core", "Registered connector '" + connector.id + "'");
+		jQuery.VIE2.log("info", "VIE2.core#registerConnector()", "Registered connector '" + connector.id + "'");
 	} else {
-		jQuery.VIE2.log("warn", "VIE2.core", "Did not register connector, as there is" +
+		jQuery.VIE2.log("warn", "VIE2.core#registerConnector()", "Did not register connector, as there is" +
 				"already a connector with the same id registered.");
 	}
 };
@@ -432,26 +463,25 @@ jQuery.VIE2.registerMapping = function (mapping) {
 	//first check if there is already 
 	//a mapping with 'mapping.id' registered	
 	if (!jQuery.VIE2.mappings[mapping.id]) {
-		jQuery.VIE2.log("info", "VIE2.core", "Registered mapping '" + mapping.id + "'");
-		jQuery.VIE2.mappings[mapping.id, mapping];
+		jQuery.VIE2.log("info", "VIE2.core#registerMapping()", "Registered mapping '" + mapping.id + "'");
+		jQuery.VIE2.mappings[mapping.id] = mapping;
 		
 		//backboneJS mapping		
 		var props = {};
 		jQuery.each(mapping.defaultProps, function (i) {
-			props[mapping.defaultProps[i]] = undefined;
+			props[mapping.defaultProps[i]] = [];
 		});
-		var model = jQuery.VIE2.Entity.extend(props);
-		var Collection = Backbone.Collection.extend({model: model});
+		var Model = jQuery.VIE2.Entity.extend({defaults: props});
+		var Collection = VIE.RDFEntityCollection.extend({model: Model});
 		
 		jQuery.VIE2.Backbone[mapping.id] = {
-				"a" : (jQuery.isArray(mapping.types))? mapping.types : [mapping.types], 
-				"model" : model,
+				"a" : (jQuery.isArray(mapping.types))? mapping.types : [mapping.types],
 				"collection" : new Collection()
 		};
 		
-		jQuery.VIE2.log("info", "VIE2.core", "Registered mapping '" + mapping.id + "' finished!");
+		jQuery.VIE2.log("info", "VIE2.core#registerMapping()", "Registered mapping '" + mapping.id + "' finished!");
 	} else {
-		jQuery.VIE2.log("warn", "VIE2.core", "Did not register mapping, as there is" +
+		jQuery.VIE2.log("warn", "VIE2.core#registerMapping()", "Did not register mapping, as there is" +
 				"already a mapping with the same id registered.");
 	}
 };
@@ -465,4 +495,5 @@ jQuery.VIE2.unregisterMapping = function (mappingId) {
 //init
 $(window).load(function () {
 	VIE2 = $(document).vie2();
+	jQuery.VIE2.log("info", "VIE2.core", "VIE2 is fully instantiated and ready!");
 });
