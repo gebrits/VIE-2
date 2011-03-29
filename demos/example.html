@@ -85,10 +85,32 @@
                             for (var x = 1; x < name.length; x++) {
                                 names += " aka. " + name[x].value;
                             }
-                            $(this.view.el).text(this.id + " " + names);
+                            $(this.view.el).text(names);
                         } else {
                             $(this.view.el).css('display', 'none');
                         }
+                      return this;
+                    }
+                });
+                
+                var AgentView = Backbone.View.extend({
+                    
+                    tagName: 'b',
+                    
+                    initialize: function() {
+                      this.model.bind('change', this.render);
+                      this.model.view = this;
+                    },
+                    
+                    render: function() {
+                        var name = this.get("foaf:name");
+                        
+                        if (name && name[0]) {
+                            name = name[0].value;
+                        } else {
+                            name = this.id.replace(/</, "&lt;");
+                        }
+                        $(this.view.el).text(name);
                       return this;
                     }
                 });
@@ -107,17 +129,15 @@
                         var agentName = "";
                         
                         var agentModel = $.VIE2.Backbone['person']['collection'].get(agentUri);
-                        if (agentModel && agentModel.get('foaf:name')[0]) {
-                            agentName = agentModel.get('foaf:name')[0].value;
-                        } else {
-                            agentName = agentUri;
-                        }
+                        debugger;
+                        var agentView = new AgentView({id: 'agent-' + PseudoGuid.GetNew(), model: agentModel});
+                        
                         
                         var name = (this.get("rdfcal:name"))? this.get("rdfcal:name")[0].value : "";
                         var startDate = (this.get("rdfcal:startDate"))? this.get("rdfcal:startDate")[0].value : "";
                         var targetDate = (this.get("rdfcal:targetDate"))? this.get("rdfcal:targetDate")[0].value : "";
 
-                        $(this.view.el).html("<b>" + agentName + "</b> needs to <i>" + name + "</i> before " + targetDate + "!");
+                        $(this.view.el).html(agentVie.el + " needs to <i>" + name + "</i> before " + targetDate + "!");
                         return this;
                     },
                 });
