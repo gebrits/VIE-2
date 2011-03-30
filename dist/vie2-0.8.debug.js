@@ -544,8 +544,8 @@ jQuery.VIE2.registerConnector = function (connector) {
     		jQuery.each(connector._options["namespaces"], function(k, v) {
     			jQuery.VIE2.globalContext.prefix(k, v);
     			//also add to all known VIE^2 elements' context!
-    			$('.VIE2-vie2').vie2('option', 'localContext').prefix(k, v);
     		});
+			$('.VIE2-vie2').vie2('option', 'namespaces', connector._options["namespaces"]);
     	}
     	jQuery.VIE2.log("info", "VIE2.core#registerConnector()", "Registered connector '" + connector.id + "'");
     	
