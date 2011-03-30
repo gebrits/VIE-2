@@ -683,7 +683,10 @@ jQuery.VIE2.registerMapping = function (mapping) {
 //no usecase for that, but it wasn't that hard to implement ;)
 jQuery.VIE2.unregisterMapping = function (mappingId) {
 	jQuery.VIE2.Backbone[mappingId] = undefined;
-};/**
+};
+
+//calling this once for convenience
+$(document).vie2();/**
  * @fileOverview VIE^2
  * @author <a href="mailto:sebastian.germesin@dfki.de">Sebastian Germesin</a>
  */

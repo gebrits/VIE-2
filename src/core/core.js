@@ -604,3 +604,6 @@ jQuery.VIE2.registerMapping = function (mapping) {
 jQuery.VIE2.unregisterMapping = function (mappingId) {
 	jQuery.VIE2.Backbone[mappingId] = undefined;
 };
+
+//calling this once for convenience
+$(document).vie2();
