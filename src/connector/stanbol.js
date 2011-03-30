@@ -27,7 +27,9 @@
 new Connector('stanbol', {
 	namespaces: {
 	    semdesk : "http://www.semanticdesktop.org/ontologies/2007/03/22/nfo#",
-	    owl : "http://www.w3.org/2002/07/owl#"
+	    owl : "http://www.w3.org/2002/07/owl#",
+	    gml : "http://www.opengis.net/gml/_",
+	    geonames : "http://www.geonames.org/ontology#"
 	}
 });
 
@@ -138,8 +140,8 @@ jQuery.VIE2.connectors['stanbol'].analyze = function (object, namespaces, callba
 
 jQuery.VIE2.connectors['stanbol'].enhance = function (text, callback) {
 	if (text.length === 0) {
-		//empty text
-		return jQuery.rdf();
+		jQuery.VIE2.log("warn", "VIE2.Connector(" + this.id + ")", "Empty text.");
+		callback(jQuery.rdf());
 	}
 	
 	var c = function (data) {

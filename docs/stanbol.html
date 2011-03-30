@@ -21,7 +21,9 @@ $.VIE2.getConnector('stanbol').options({
 });</p>             </td>             <td class="code">               <div class="highlight"><pre><span class="k">new</span> <span class="nx">Connector</span><span class="p">(</span><span class="s1">&#39;stanbol&#39;</span><span class="o">,</span> <span class="p">{</span>
 	<span class="nx">namespaces</span><span class="o">:</span> <span class="p">{</span>
 	    <span class="nx">semdesk</span> <span class="o">:</span> <span class="s2">&quot;http://www.semanticdesktop.org/ontologies/2007/03/22/nfo#&quot;</span><span class="o">,</span>
-	    <span class="nx">owl</span> <span class="o">:</span> <span class="s2">&quot;http://www.w3.org/2002/07/owl#&quot;</span>
+	    <span class="nx">owl</span> <span class="o">:</span> <span class="s2">&quot;http://www.w3.org/2002/07/owl#&quot;</span><span class="o">,</span>
+	    <span class="nx">gml</span> <span class="o">:</span> <span class="s2">&quot;http://www.opengis.net/gml/_&quot;</span><span class="o">,</span>
+	    <span class="nx">geonames</span> <span class="o">:</span> <span class="s2">&quot;http://www.geonames.org/ontology#&quot;</span>
 	<span class="p">}</span>
 <span class="p">});</span>
 
@@ -125,7 +127,9 @@ this makes querying for entities aaaa lot easier!</p>             </td>         
 <span class="p">};</span>
 
 <span class="nx">jQuery</span><span class="p">.</span><span class="nx">VIE2</span><span class="p">.</span><span class="nx">connectors</span><span class="p">[</span><span class="s1">&#39;stanbol&#39;</span><span class="p">].</span><span class="nx">enhance</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">text</span><span class="o">,</span> <span class="nx">callback</span><span class="p">)</span> <span class="p">{</span>
-	<span class="k">if</span> <span class="p">(</span><span class="nx">text</span><span class="p">.</span><span class="nx">length</span> <span class="o">===</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span></pre></div>             </td>           </tr>                               <tr id="section-7">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-7">&#182;</a>               </div>               <p>empty text</p>             </td>             <td class="code">               <div class="highlight"><pre>		<span class="k">return</span> <span class="nx">jQuery</span><span class="p">.</span><span class="nx">rdf</span><span class="p">();</span>
+	<span class="k">if</span> <span class="p">(</span><span class="nx">text</span><span class="p">.</span><span class="nx">length</span> <span class="o">===</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+		<span class="nx">jQuery</span><span class="p">.</span><span class="nx">VIE2</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&quot;warn&quot;</span><span class="o">,</span> <span class="s2">&quot;VIE2.Connector(&quot;</span> <span class="o">+</span> <span class="k">this</span><span class="p">.</span><span class="nx">id</span> <span class="o">+</span> <span class="s2">&quot;)&quot;</span><span class="o">,</span> <span class="s2">&quot;Empty text.&quot;</span><span class="p">);</span>
+		<span class="nx">callback</span><span class="p">(</span><span class="nx">jQuery</span><span class="p">.</span><span class="nx">rdf</span><span class="p">());</span>
 	<span class="p">}</span>
 	
 	<span class="kd">var</span> <span class="nx">c</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">data</span><span class="p">)</span> <span class="p">{</span>
@@ -192,7 +196,7 @@ this makes querying for entities aaaa lot easier!</p>             </td>         
 		<span class="k">return</span><span class="o">;</span>
 	<span class="p">}</span>
 	<span class="kd">var</span> <span class="nx">uri</span> <span class="o">=</span> <span class="nx">uri</span><span class="p">.</span><span class="nx">replace</span><span class="p">(</span><span class="sr">/^&lt;/</span><span class="o">,</span> <span class="s1">&#39;&#39;</span><span class="p">).</span><span class="nx">replace</span><span class="p">(</span><span class="sr">/&gt;$/</span><span class="o">,</span> <span class="s1">&#39;&#39;</span><span class="p">);</span>
-	</pre></div>             </td>           </tr>                               <tr id="section-8">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-8">&#182;</a>               </div>               <p>initialize the returning object</p>             </td>             <td class="code">               <div class="highlight"><pre>	<span class="kd">var</span> <span class="nx">ret</span> <span class="o">=</span> <span class="p">{};</span>
+	</pre></div>             </td>           </tr>                               <tr id="section-7">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-7">&#182;</a>               </div>               <p>initialize the returning object</p>             </td>             <td class="code">               <div class="highlight"><pre>	<span class="kd">var</span> <span class="nx">ret</span> <span class="o">=</span> <span class="p">{};</span>
 	
 	<span class="kd">var</span> <span class="nx">c</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">data</span><span class="p">)</span> <span class="p">{</span>
 		<span class="k">if</span> <span class="p">(</span><span class="nx">data</span> <span class="o">&amp;&amp;</span> <span class="nx">data</span><span class="p">.</span><span class="nx">status</span> <span class="o">===</span> <span class="mi">200</span><span class="p">)</span> <span class="p">{</span>
