@@ -142,6 +142,7 @@ jQuery.VIE2.connectors['stanbol'].enhance = function (text, callback) {
 	if (text.length === 0) {
 		jQuery.VIE2.log("warn", "VIE2.Connector(" + this.id + ")", "Empty text.");
 		callback(jQuery.rdf());
+		return;
 	}
 	
 	var c = function (data) {

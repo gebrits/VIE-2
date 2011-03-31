@@ -31,9 +31,7 @@
     	// default options
     	options: {
     		
-    		//<strong>localContext</strong>: The variable **localContext** stores element-specific triples
-    		//that were retrieved so far for the corresponding element in an *rdfQuery object*.
-    		localContext: jQuery.rdf()
+    		localEntities : []
     	},
     	
     	//<strong>_create()</strong>: The private method **_create():** is called implicitly when
@@ -58,9 +56,9 @@
     		
     		//generates a unique id for VIE^2
     		if (!that.element.data('vie2-id')) {
-    			jQuery.VIE2.log("warn", "VIE2.core#analyze()", "No element id specified, generate one dynamically and add it!");
+    			jQuery.VIE2.log("info", "VIE2.core#create()", "No element id specified, generate one dynamically and add it!");
     			var tempId = PseudoGuid.GetNew();
-    			jQuery.VIE2.log("warn", "VIE2.core#analyze()", "Generated id: '" + tempId + "'!");
+    			jQuery.VIE2.log("info", "VIE2.core#create()", "Generated id: '" + tempId + "'!");
     			that.element.data('vie2-id', tempId);
     		}
     		
@@ -75,7 +73,6 @@
     			//would overwrite the namespaces
     			jQuery.extend (true, jQuery.VIE2.namespaces, value);
     			this._initNamespaces(jQuery.VIE2.globalContext);
-    			this._initNamespaces(this.options.localContext);
     		} else {
     			//super._setOption()...
     			jQuery.Widget.prototype._setOption.apply(this, [key, value]);
@@ -94,8 +91,7 @@
     	//them analyze the content. The connectors' methods are asynchronous calls and once all connectors
     	//returned the found enrichments in the form of *jQuery.rdf* objects, the *callback* method is
     	//executed (in the scope of the callback function, *this* refers to the element).<br />
-    	//The returned enrichments are written into the element's local context (this.options.localContext)
-    	//and also to the global context (jQuery.VIE2.globalContext).<br />
+    	//The returned enrichments are written into the global context (jQuery.VIE2.globalContext).<br />
     	//Furthermore, each found subject in the returned knowledge is checked if there is a mapping to 
     	//backbone JS available and if so, the entity is added to the corresponding backbone collection(s).
     	analyze: function (callback) {
@@ -126,12 +122,10 @@
     					//Attention: this might override namespaces that were added by the connector!
     					//but needed to keep consistency through VIE^2.
     					that._initNamespaces(rdf);
-    					
+    				                        
     					rdf.databank.triples().each(function () {
     						//add all triples to the global cache!
     						jQuery.VIE2.globalContext.add(this);
-    						//fill element-specific context
-    						that.options.localContext.add(this);
     					});
     					
     					//add all subjects to the corresponding backbone collection(s)
@@ -147,6 +141,11 @@
     							var curie = jQuery.createCurie(this.type.value, {namespaces : jQuery.VIE2.namespaces});
     							types.push(curie);
     						});
+                            
+                            var subjStr = subject.toString();
+                            if (that.options.localEntities.indexOf(subjStr) === -1) {
+                            that.options.localEntities.push(subjStr);
+                        }
     						jQuery.VIE2.addBBEntity({id : subject, a : types});
     					});
     					
@@ -157,6 +156,7 @@
     						//if the queue is empty, all connectors have successfully returned and we can execute the
     						//callback function.
     						jQuery.VIE2.log("info", "VIE2.core#analyze()", "Finished! Global context holds now " + jQuery.VIE2.globalContext.databank.triples().length + " triples!");
+    						jQuery.VIE2.log("info", "VIE2.core#analyze()", "Finished! Local context holds now "  + that.options.localEntities.length + " entities!");
     						//provide a status field in the callback object: status = {'ok', 'error'};
     						if (callback) {
     							callback.call(elem, 'ok');
@@ -173,7 +173,7 @@
     	},
     	
     	//<strong>annotate(triples)</strong>: Supports the (manual) annotation of knowledge with (semantic) data.
-    	//the triples are written to both, the local context and global context. 
+    	//the triples are written to the global context. 
     	//*triples* need to be either a *string* or an *array of strings*, containing the triplified data
     	//in the rdfQuery triple format.
     	annotate: function (triples) {
@@ -206,22 +206,10 @@
     		}
     		jQuery.VIE2.log("info", "VIE2.core#annotate()", "Start.");
     		
-    		//(1) put the annotation into that.options.globalContext
+    		//(1) put the annotation into the global context
     		rdf.databank.triples().each(function () {
     			jQuery.VIE2.globalContext.add(this);
     		});
-
-    		//(2) put the annotation into that.options.localContext
-    		if (elem) {
-    			if (!that.options.localContext) {
-    				that.options.localContext = rdf;
-    			}
-    			else {
-    				rdf.databank.triples().each(function () {
-    					that.options.localContext.add(this);
-    				});
-    			}
-    		}
     		
     		//(3) look for backbone model(s) and update their attributes with each subject contained in the annotations.
     		jQuery.each(rdf.databank.subjectIndex, function (subject, v) {
@@ -229,7 +217,11 @@
     			jQuery.each(triples, function (i) {
     				var triple = triples[i];
     				jQuery.each(jQuery.VIE2.Backbone, function (k, v) {
-    					var ent = this['collection'].get(subject.toString());
+                        var subjStr = subject.toString();
+    					var ent = this['collection'].get(subjStr);
+                        if (that.options.localEntities.indexOf(subjStr) === -1) {
+                            that.options.localEntities.push(subjStr);
+                        }
 
     					if (ent) {
     						//only update the backbone entity if the property is a default property!
@@ -266,32 +258,21 @@
 
     		jQuery.VIE2.log("info", "VIE2.core#annotate()", "End.");
     		jQuery.VIE2.log("info", "VIE2.core#annotate()", "Global context holds now " + jQuery.VIE2.globalContext.databank.triples().length + " triples!");
-    		if (elem !== undefined) {
-    			jQuery.VIE2.log("info", "VIE2.core#annotate()", "Local cache of element '" + elem.data('vie2-id') + "' holds now " + that.options.localContext.databank.triples().length + " triples!");
+    		if (elem ) {
+    			jQuery.VIE2.log("info", "VIE2.core#annotate()", "Local cache of element '" + elem.data('vie2-id') + "' holds now " + that.options.localEntities.length + " entities!");
     		}
     		return this;
     	},
-    	
-    	
-    	//<strong>get(uri, prop)</strong>: Retrive properties from the given *uri* directly from the
-    	//element's context. Does *not* retrieve information from the global context. 
-    	get: function (uri, prop) {
-    		//get data from local storage!
-    		var ret = [];
-    		var that = this;
-    		that.options.localContext
-    		.where(jQuery.rdf.pattern(uri, prop, '?object', {namespaces: jQuery.VIE2.namespaces}))
-    		.each(function () {
-    			ret.push(this.object);
-    		});
-    		
-    		return ret;
-    	},
+        
+        //TODO: docu!
+        uris: function () {
+            return this.options.localEntities;
+        },
     	
     	
     	//<strong>copy(tar)</strong>: Copies all local knowledge to the target element(s).
     	//Basically calls: <pre>
-		//$(tar).vie2().vie2('annotate', that.options.localContext.databank.triples());
+		//$(tar).vie2().vie2('option', 'localEntities', that.options.localEntities);
     	//</pre>
     	copy: function (tar) {
     		//copy all knowledge from src to target
@@ -301,10 +282,11 @@
     			return;
     		}
 			jQuery.VIE2.log("info", "VIE2.core#copy()", "Start.");
-			jQuery.VIE2.log("info", "VIE2.core#copy()", "Found " + that.options.localContext.databank.triples().length + " triples for source (" + that.element.data('vie2-id') + ").");
+			jQuery.VIE2.log("info", "VIE2.core#copy()", "Found " + this.options.localEntities.length + " entities for source (" + this.element.data('vie2-id') + ").");
 			
-			$(tar).vie2().vie2('annotate', that.options.localContext.databank.triples());
+			$(tar).vie2().vie2('option', 'localEntities', this.options.localEntities);
 			jQuery.VIE2.log("info", "VIE2.core#copy()", "Finished.");
+			jQuery.VIE2.log("info", "VIE2.core#copy()", "Target element has now " + $(tar).vie2('option', 'localEntities') + " entities.");
 			return this;
     	},
     	
@@ -329,7 +311,7 @@ jQuery.VIE2.namespaces = {};
 //available via $.VIE2.globalContext, it is highly discouraged to access it directly.
 jQuery.VIE2.globalContext = jQuery.rdf({namespaces: jQuery.VIE2.namespaces});
 
-//<strong>get(uri, prop)</strong>: Retrive properties from the given *uri* directly from the
+//<strong>$.VIE2.getFromGlobalContext(uri, prop)</strong>: Retrive properties from the given *uri* directly from the
 //element's context. Does *not* retrieve information from the global context. 
 jQuery.VIE2.getFromGlobalContext = function (uri, prop) {
 	//get data from local storage!
@@ -344,6 +326,13 @@ jQuery.VIE2.getFromGlobalContext = function (uri, prop) {
 	return ret;
 };
 
+
+jQuery.VIE2.setPropertyInGlobalContext = function (uri, prop, newVals) {
+    var oldVals = jQuery.VIE2.getFromGlobalContext(uri, prop);
+    
+	//TODO
+};
+
 //<strong>$.VIE2.query(uri, props, callback, otions)</strong>: The query function supports querying for properties. The uri needs
 //to be of type <code>jQuery.rdf</code> object or a simple string and the property is either an array of strings
 //or a simple string. The function iterates over all connectors that have <code>query()</code>
@@ -353,7 +342,7 @@ jQuery.VIE2.getFromGlobalContext = function (uri, prop) {
 //options.cache : {'nocache', 'cacheonly'} -> nocache: do not use the cache but query for data online
 //-> cacheonly: query offline only
 //TODO: update usage of options!
-jQuery.VIE2.query = function (uri, props, callback, options) {
+jQuery.VIE2.query = function (uri, props, callback, options, elem) {
 	var ret = {};
 	jQuery.VIE2.log("info", "$.VIE2.query()", "Start!");
 
@@ -400,7 +389,7 @@ jQuery.VIE2.query = function (uri, props, callback, options) {
 		//implement/overwrite the query() method
 		jQuery.each(jQuery.VIE2.connectors, function () {
 			jQuery.VIE2.log("info", "$.VIE2.query()", "Start with connector '" + this.id + "' for uri '" + uri + "'!");
-			var c = function (conn, uri, ret, callback) {
+			var c = function (conn, uri, ret, callback, elem) {
 				return function (data) {
 					jQuery.VIE2.log("info", "$.VIE2.query()", "Received query information from connector '" + conn.id + "' for uri '" + uri + "'!");
 					jQuery.extend(true, ret, data);
@@ -418,11 +407,14 @@ jQuery.VIE2.query = function (uri, props, callback, options) {
 						});
 						jQuery.VIE2.log("info", "$.VIE2.query()", "Finished task: 'query()' for uri '" + uri + "'!");
 						jQuery.VIE2.log("info", "$.VIE2.query()", "Global context now holds " + jQuery.VIE2.globalContext.databank.triples().length + " triples!");
+                        if (elem) {
+    			            jQuery.VIE2.log("info", "$.VIE2.query()", "Local cache of element '" + elem.data('vie2-id') + "' holds now " + elem.vie2('option', 'localContext').databank.triples().length + " triples!");
+                        }
 						console.log(ret);
 						callback.call(ret);
 					}
 				};
-			}(this, uri, ret, callback);
+			}(this, uri, ret, callback, elem);
 			this.query(uri, props, jQuery.VIE2.namespaces, c);
 		});
 	} else {
@@ -481,12 +473,27 @@ jQuery.VIE2.unregisterConnector = function (connectorId) {
     jQuery.VIE2.connectors[connector.id] = undefined;
 };
 
+jQuery.VIE2.Entities = {};
+
 //<strong>$.VIE2.Backbone</strong>: Contains for all registered mappings (mapping.id is the key), the
 //following items:<br/>
 //* jQuery.VIE2.Backbone[id].a -> an array of strings (curies) of the corresponding type.
 //* jQuery.VIE2.Backbone[id].mapping -> the mapping itself
 //* jQuery.VIE2.Backbone[id].collection -> the backbone JS collection, that has the Model registered. 
 jQuery.VIE2.Backbone = {};
+
+jQuery.VIE2.Collection = VIE.RDFEntityCollection.extend({
+	
+	add: function (models, opts) {
+		//TODO: ??
+		VIE.RDFEntityCollection.prototype.add.call(this, models, opts);
+	},
+	
+	remove: function (models, opts) {
+		//TODO: ??
+		VIE.RDFEntityCollection.prototype.remove.call(this, models, opts);
+	}
+});
 
 //<strong>$.VIE2.Entity</strong>: The parent backbone entity class for all other entites.
 //Inherits from VIE.RDFEntity.
@@ -507,26 +514,50 @@ jQuery.VIE2.Entity = VIE.RDFEntity.extend({
     		}(this));
     	}
     },
-
-    //TODO: overwrite 'set();'
-    //TODO: overwrite 'unset();'
-    //TODO: overwrite 'clear();'
     
+    //overwritten to directly access the global context
     get: function (attr) {
     	return jQuery.VIE2.getFromGlobalContext(this.id, attr);
     },
     
+    //extending 'set()' to allow updating the context through backbone model.
+    //if updating a specific property, you have to set opts.oldAttrs and pass
+    //the old attributes there (what you get from model.get(...)). In this
+    //way, we can figure out which triples to update.
     set: function (attrs, opts) {
     	//forward VIE2.annotate(this.id, attrs);!
-    	Backbone.Model.prototype.set.call(this, attrs, opts);
-    	//TODO!
-    	/*var triples = [];
-    	var that = this;
-    	jQuery.each(attrs, function (k, v) {
-    		var triple = that.id + ' ' + k + ' ' + v;
-    		triples.push(triple);
-    	});
-    	VIE2.vie2('annotate', triples);*/
+    	
+    	if (!opts || !opts.silent) {
+            var that = this;
+            jQuery.each(attrs, function (prop, newV) {
+                jQuery.VIE2.setPropertyInGlobalContext(that.id, prop, newV);
+                //trigger the change event for the property
+                that.trigger('change:' + prop);
+            });
+    	    that.change();
+    	} else {
+    		VIE.RDFEntity.prototype.set.call(this, attrs, opts);
+    	}
+    },
+    
+    //removes the property of the specific entity from the global context.
+    unset: function (attr, opts) {
+    	VIE.RDFEntity.prototype.unset.call(this, attr, opts);
+    	//TODO: remove from globalContext
+    	//TODO: remove from localContext
+    	//jQuery.each(this.attrs, function (k) {k !== 'a' && k !== 'id'});
+    },
+    
+    destroy: function (opts) {
+    	//TODO: remove entity from triple store and from all collections!
+    	VIE.RDFEntity.prototype.destroy.call(this, opts);
+    },
+    
+    clear: function (opts) {
+    	VIE.RDFEntity.prototype.clear.call(this, opts);
+    	//TODO: remove from globalContext
+    	//TODO: remove from localContext
+    	//jQuery.each(this.attrs, function (k) {k !== 'a' && k !== 'id'});
     }
 
 });
@@ -551,6 +582,7 @@ jQuery.VIE2.addBBEntity = function (entity) {
 	    		var Model = e['collection'].model;
 	    		//instantiating model
 	    		var modelInstance = new Model(entity);
+                jQuery.VIE2.Entities[modelInstance.id] = modelInstance;
 	    		//adding model instance to collection
 	    		e['collection'].add(modelInstance);
 	    		jQuery.VIE2.log("info", "VIE2.core#addBBEntity()", "Added entity '" + entity["id"] + "' to collection of type '" + i + "'!");
@@ -584,7 +616,7 @@ jQuery.VIE2.registerMapping = function (mapping) {
     	});
     	
     	var Model = jQuery.VIE2.Entity.extend({defaults: props});
-    	var Collection = VIE.RDFEntityCollection.extend({model: Model});
+    	var Collection = jQuery.VIE2.Collection.extend({model: Model});
     	
     	jQuery.VIE2.Backbone[mapping.id] = {
     			"a" : (jQuery.isArray(mapping.types))? mapping.types : [mapping.types],

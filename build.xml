@@ -57,10 +57,10 @@
     <target name="combine" description="combines core/*.js files into one file">
         <echo message="Building VIE^2 Distribution" />
         <concat destfile="${DIST_DIR}/vie2-${VERSION}.debug.js">
+        	<fileset dir="${SRC_DIR}" includes="core/util.js"/>
         	<fileset dir="${SRC_DIR}" includes="core/connector.js"/>
         	<fileset dir="${SRC_DIR}" includes="core/mapping.js"/>
         	<fileset dir="${SRC_DIR}" includes="core/core.js"/>
-        	<fileset dir="${SRC_DIR}" includes="core/util.js"/>
        	</concat>
         <copy file="${DIST_DIR}/vie2-${VERSION}.debug.js" tofile="${DIST_DIR}/vie2-latest.debug.js" overwrite="true" />
     </target>
