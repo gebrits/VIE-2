@@ -113,7 +113,9 @@ jQuery.VIE2.connectors['stanbol'].analyze = function (object, namespaces, callba
 						rdfx.databank.triples().each(function () {
 							rdf.add(this);
 						});
+		                jQuery.VIE2.log("info", "VIE2.Connector(" + this.id + ")", "Start reasoning '" + (rdf.databank.triples().length) + "'");
 						rdf.reason(rules);
+		                jQuery.VIE2.log("info", "VIE2.Connector(" + this.id + ")", "End   reasoning '" + (rdf.databank.triples().length) + "'");
 						callback(rdf);
 					};
 					

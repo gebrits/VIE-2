@@ -184,7 +184,7 @@
     			jQuery.VIE2.log("warn", "VIE2.core#annotate()", "No triple specified, returning without action!");
     			return this;
     		}
-    		
+            
     		//allocate temporary *jQuery.rdf* object with all known namespaces
     		var rdf = jQuery.rdf({namespaces : jQuery.VIE2.namespaces});
     		
@@ -492,7 +492,19 @@ jQuery.VIE2.Collection = VIE.RDFEntityCollection.extend({
 	remove: function (models, opts) {
 		//TODO: ??
 		VIE.RDFEntityCollection.prototype.remove.call(this, models, opts);
-	}
+	},
+    
+    comparator: function (model) {
+        var confidence = model.get('fise:confidence');
+        
+        if (confidence.length > 0) {
+            confidence = confidence[0].value;
+        } else {
+            confidence = 1.0;
+        }
+        
+        return confidence;
+    }
 });
 
 //<strong>$.VIE2.Entity</strong>: The parent backbone entity class for all other entites.
