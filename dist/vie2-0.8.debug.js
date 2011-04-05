@@ -318,6 +318,12 @@ Mapping = function(id, types, defaultProps) {
     		
     		//(1) put the annotation into the global context
     		rdf.databank.triples().each(function () {
+                var triple = this;
+                if (triple.object.type === 'literal') {
+                    var needsUpdate = false;
+                    var query = rdf.where(triple.subject.toString() + " " + triple.property.toString() + " " + triple.object.toString());
+                    console.log("GGGGGG" + query.length);
+                }
     			jQuery.VIE2.globalContext.add(this);
     		});
     		
@@ -464,7 +470,7 @@ jQuery.VIE2.query = function (uri, props, callback, options, elem) {
 		jQuery.VIE2.query(uri, [props], callback, options);
 		return;
 	}
-	
+
 	if (typeof uri === 'string' && jQuery.isArray(props)) {
 		//initialize the returning object
 		for (var i=0; i < props.length; i++) {
@@ -474,6 +480,10 @@ jQuery.VIE2.query = function (uri, props, callback, options, elem) {
 		//first check if we should ignore the cache!
 		if (!options || (options && !options.cache === 'nocache')) {
 			for (var i=0; i < props.length; i++) {
+                //_:b01
+                //<http://dbpedia.org/Eiffel>
+                //dbpedia:Eiffel
+                //[dbpedia:Eiffel]
 				jQuery.VIE2.globalContext
 				.where(jQuery.rdf.pattern(uri, props[i], '?object', {namespaces: jQuery.VIE2.namespaces}))
 				.each(function () {
@@ -583,7 +593,9 @@ jQuery.VIE2.unregisterConnector = function (connectorId) {
     jQuery.VIE2.connectors[connector.id] = undefined;
 };
 
-jQuery.VIE2.Entities = {};
+//just for convenience, will be removed in a later revision
+VIE.EntityManager.initializeCollection();
+jQuery.VIE2.Entities = VIE.EntityManager.entities;
 
 //<strong>$.VIE2.Backbone</strong>: Contains for all registered mappings (mapping.id is the key), the
 //following items:<br/>
@@ -602,19 +614,7 @@ jQuery.VIE2.Collection = VIE.RDFEntityCollection.extend({
 	remove: function (models, opts) {
 		//TODO: ??
 		VIE.RDFEntityCollection.prototype.remove.call(this, models, opts);
-	},
-    
-    comparator: function (model) {
-        var confidence = model.get('fise:confidence');
-        
-        if (confidence.length > 0) {
-            confidence = confidence[0].value;
-        } else {
-            confidence = 1.0;
-        }
-        
-        return confidence;
-    }
+	}
 });
 
 //<strong>$.VIE2.Entity</strong>: The parent backbone entity class for all other entites.
@@ -639,7 +639,7 @@ jQuery.VIE2.Entity = VIE.RDFEntity.extend({
     
     //overwritten to directly access the global context
     get: function (attr) {
-    	return jQuery.VIE2.getFromGlobalContext(this.id, attr);
+    	return jQuery.VIE2.getFromGlobalContext(this.getSubject(), attr);
     },
     
     //extending 'set()' to allow updating the context through backbone model.
@@ -686,6 +686,13 @@ jQuery.VIE2.Entity = VIE.RDFEntity.extend({
 
 //<strong>$.VIE2.addBBEntity(entity)</strong>: Add a backbone model to the corresponding collection(s).
 jQuery.VIE2.addBBEntity = function (entity) {
+    //check whether we already have this entity registered
+    if (VIE.EntityManager.getBySubject(entity["id"]) !== undefined) {
+        $.VIE2.log("info", "$.VIE2.addBBEntity()", "Entity " + entity["id"] + " already registered, no need to add it.");
+        return;
+    }
+    $.VIE2.log("info", "$.VIE2.addBBEntity()", "Entity " + entity["id"] + " needs to be registered.");
+    
     jQuery.each(jQuery.VIE2.Backbone, function (i, e) {
     	var belongsHere = false;
     	jQuery.each(e['a'], function () {
@@ -704,14 +711,17 @@ jQuery.VIE2.addBBEntity = function (entity) {
 	    		var Model = e['collection'].model;
 	    		//instantiating model
 	    		var modelInstance = new Model(entity);
-                jQuery.VIE2.Entities[modelInstance.id] = modelInstance;
+                
+                VIE.EntityManager.registerModel(modelInstance);
+                
 	    		//adding model instance to collection
 	    		e['collection'].add(modelInstance);
 	    		jQuery.VIE2.log("info", "VIE2.core#addBBEntity()", "Added entity '" + entity["id"] + "' to collection of type '" + i + "'!");
 	    		var mapping = e['mapping'];
+                
 	    		//query for default properties to make them available in the offline storage
 	    		jQuery.VIE2.log("info", "VIE2.core#addBBEntity()", "Querying for default properties for entity '" + entity["id"] + "': [" + mapping.defaultProps.join(", ") + "]!");
-	    		jQuery.VIE2.query(modelInstance.id, mapping.defaultProps, function (id, defProps, modelInstance) {
+                jQuery.VIE2.query(modelInstance.getSubject(), mapping.defaultProps, function (id, defProps, modelInstance) {
 	    			return function () {
 	    	    		jQuery.VIE2.log("info", "VIE2.core#addBBEntity()", "Finished querying for default properties for entity '" + id + "': [" + defProps.join(", ") + "]!");
 	    				//trigger change when finished

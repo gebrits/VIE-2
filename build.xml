@@ -25,6 +25,7 @@
   			<arg value="${SRC_DIR}/connector/dbpedia.js" />
   			<arg value="${SRC_DIR}/connector/rdfa.js" />
   			<arg value="${SRC_DIR}/connector/stanbol.js" />
+  			<arg value="${TOOLS_DIR}/proxy/node_proxy.js" />
 		</exec>
     </target>
 	
