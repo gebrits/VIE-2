@@ -114,22 +114,25 @@ Mapping = function(id, types, defaultProps) {
  */
 
 //VIE^2 is the semantic enrichment layer on top of VIE.
-//Its acronym stands for <b>V</b>ienna <b>I</b>KS <b>E</b>ntities <b>E</b>ditable.
+//Its acronym stands for <b>V</b>ienna <b>I</b>KS <b>E</b>ditable <b>E</b>ntities.
 
 //With the help of VIE^2, you can bring entites in your
 //content (aka. semantic lifting) and furthermore interact
 //with this knowledge in a MVC manner - using Backbone JS models
-//and collections.
+//and collections. It is important to say that VIE^2 helps you to
+//automatically annotate data but also let's you enable users
+//to change/add/remove entities and their properties at the users
+//wish.
 //VIE^2 has two main principles: 
 
 //*  Connectors:
-//   Connecting VIE^2 with <strong>backend</strong> services, that
+//   Connecting VIE^2 with **backend** services, that
 //   can either analyse and enrich the content sent to them (e.g., using
 //   Apache Stanbol or Zemanta), can act as knowledge databases (e.g., DBPedia)
 //   or as serializer (e.g., RDFa).
 //*  Mappings:
 //   In a mapping, a web developer can specify a mapping from ontological entities
-//   to backbone JS models. The developer can easily add types of enties and
+//   to backbone JS models. The developer can easily add types of entities and
 //   also default attributes that are automatically filled with the help of the 
 //   available connectors.
 
@@ -183,6 +186,7 @@ Mapping = function(id, types, defaultProps) {
     	//The returned enrichments are written into the global context (jQuery.VIE2.globalContext).<br />
     	//Furthermore, each found subject in the returned knowledge is checked if there is a mapping to 
     	//backbone JS available and if so, the entity is added to the corresponding backbone collection(s).
+        //TODO: use options!
     	analyze: function (callback) {
     		var that = this;
     		//analyze() does not actually need a callback method, but it is usually good to use it 
@@ -263,14 +267,15 @@ Mapping = function(id, types, defaultProps) {
     		});
     	},
                 
-        //TODO: document me!
+        //<strong>uris()</strong>: Returns a list of all uris, that are within the scope of
+        //the current element!
         uris: function () {
             return this.options.localEntities;
         },
     	    	
     	//<strong>copy(tar)</strong>: Copies all local knowledge to the target element(s).
     	//Basically calls: <pre>
-		//$(tar).vie2().vie2('option', 'localEntities', that.options.localEntities);
+		//$(tar).vie2().vie2('option', 'localEntities', this.options.localEntities);
     	//</pre>
     	copy: function (tar) {
     		//copy all knowledge from src to target
@@ -297,10 +302,11 @@ Mapping = function(id, types, defaultProps) {
     });
 }(jQuery));
 
-//<strong>$.VIE2.namespaces</strong>: There are currently *no* default namespaces, though
+//<strong>$.VIE2.namespaces</strong>: This map contains all namespaces known to VIE2.
+//There are currently *no* default namespaces, though
 //we might want to change this in a future release.
 //Namespaces can be overridden directly using jQuery.VIE2.namespaces[x] = y but
-//are parsed from the &lt;html> tag and element-specific xmlns: attribute anyway during initialization.
+//are parsed from the &lt;html> tag's xmlns: attribute anyway during initialization.
 jQuery.VIE2.namespaces = {};
 
 //<strong>$.VIE2.globalContext</strong>: The variable **globalContext** stores all knowledge in
@@ -334,7 +340,8 @@ jQuery.VIE2.getFromGlobalContext = function (uri, prop) {
 	return ret;
 };
 
-//TODO: document me
+//<strong>$.VIE2.removeFromGlobalContext(uri, prop)</strong>: Removes
+//all properties of the given uri from the global context.
 jQuery.VIE2.removeFromGlobalContext = function (uri, prop) {
     
     if (uri === undefined) {
@@ -355,7 +362,7 @@ jQuery.VIE2.removeFromGlobalContext = function (uri, prop) {
     jQuery.VIE2.log("info", "$.VIE2.core#removeFromGlobalContext()", "Global context holds now " + jQuery.VIE2.globalContext.databank.triples().length + " triples!");
 };
 
-//TODO: document me
+//<strong>$.VIE2.addToGlobalContext(uri, prop, values)</strong>:
 jQuery.VIE2.addToGlobalContext = function (uri, prop, values) {
     
     if (uri === undefined) {
@@ -382,7 +389,7 @@ jQuery.VIE2.addToGlobalContext = function (uri, prop, values) {
     jQuery.VIE2.log("info", "$.VIE2.core#addToGlobalContext()", "Global context holds now " + jQuery.VIE2.globalContext.databank.triples().length + " triples!");
 };
 
-//<strong>$.VIE2.query(uri, props, callback, otions)</strong>: The query function supports querying for properties. The uri needs
+//<strong>$.VIE2.query(uri, props, callback, otions, elem)</strong>: The query function supports querying for properties. The uri needs
 //to be of type <code>jQuery.rdf</code> object or a simple string and the property is either an array of strings
 //or a simple string. The function iterates over all connectors that have <code>query()</code>
 //implemented and collects data in an object.
@@ -391,7 +398,7 @@ jQuery.VIE2.addToGlobalContext = function (uri, prop, values) {
 //options.cache : {'nocache', 'cacheonly'} -> nocache: do not use the cache but query for data online
 //-> cacheonly: query offline only
 //TODO: update usage of options!
-jQuery.VIE2.query = function (uri, props, callback, options, elem) {
+jQuery.VIE2.query = function (uri, props, callback, options) {
 	var ret = {};
 	jQuery.VIE2.log("info", "$.VIE2.query()", "Start!");
 
@@ -442,7 +449,7 @@ jQuery.VIE2.query = function (uri, props, callback, options, elem) {
 		//implement/overwrite the query() method
 		jQuery.each(jQuery.VIE2.connectors, function () {
 			jQuery.VIE2.log("info", "$.VIE2.query()", "Start with connector '" + this.id + "' for uri '" + uri + "'!");
-			var c = function (conn, uri, ret, callback, elem) {
+			var c = function (conn, uri, ret, callback) {
 				return function (data) {
 					jQuery.VIE2.log("info", "$.VIE2.query()", "Received query information from connector '" + conn.id + "' for uri '" + uri + "'!");
 					jQuery.extend(true, ret, data);
@@ -460,13 +467,9 @@ jQuery.VIE2.query = function (uri, props, callback, options, elem) {
 						});
 						jQuery.VIE2.log("info", "$.VIE2.query()", "Finished task: 'query()' for uri '" + uri + "'!");
 						jQuery.VIE2.log("info", "$.VIE2.query()", "Global context now holds " + jQuery.VIE2.globalContext.databank.triples().length + " triples!");
-                        if (elem) {
-    			            jQuery.VIE2.log("info", "$.VIE2.query()", "Local cache of element '" + elem.data('vie2-id') + "' holds now " + elem.vie2('option', 'localContext').databank.triples().length + " triples!");
-                        }
-						callback.call(ret);
 					}
 				};
-			}(this, uri, ret, callback, elem);
+			}(this, uri, ret, callback);
 			this.query(uri, props, jQuery.VIE2.namespaces, c);
 		});
 	} else {
