@@ -389,14 +389,11 @@ jQuery.VIE2.addToGlobalContext = function (uri, prop, values) {
     jQuery.VIE2.log("info", "$.VIE2.core#addToGlobalContext()", "Global context holds now " + jQuery.VIE2.globalContext.databank.triples().length + " triples!");
 };
 
-//<strong>$.VIE2.query(uri, props, callback, otions, elem)</strong>: The query function supports querying for properties. The uri needs
+//<strong>$.VIE2.query(uri, props, callback, otions)</strong>: The query function supports querying for properties. The uri needs
 //to be of type <code>jQuery.rdf</code> object or a simple string and the property is either an array of strings
 //or a simple string. The function iterates over all connectors that have <code>query()</code>
 //implemented and collects data in an object.
 //The callback retrieves an object with the properties as keys and an array of results as their corresponding values.
-//The <i>options</i> is an object that supports the following keys:
-//options.cache : {'nocache', 'cacheonly'} -> nocache: do not use the cache but query for data online
-//-> cacheonly: query offline only
 //TODO: update usage of options!
 jQuery.VIE2.query = function (uri, props, callback, options) {
 	var ret = {};
@@ -467,7 +464,8 @@ jQuery.VIE2.query = function (uri, props, callback, options) {
 						});
 						jQuery.VIE2.log("info", "$.VIE2.query()", "Finished task: 'query()' for uri '" + uri + "'!");
 						jQuery.VIE2.log("info", "$.VIE2.query()", "Global context now holds " + jQuery.VIE2.globalContext.databank.triples().length + " triples!");
-					}
+					    callback(ret);
+                    }
 				};
 			}(this, uri, ret, callback);
 			this.query(uri, props, jQuery.VIE2.namespaces, c);
