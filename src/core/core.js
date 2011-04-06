@@ -237,8 +237,11 @@ jQuery.VIE2.removeFromGlobalContext = function (uri, prop) {
     	return;
     }
     
-    jQuery.VIE2.log("info", "$.VIE2.core#removeFromGlobalContext()", "Removing all triples that match: '" + uri + " " + prop + " ?x'");
-    jQuery.VIE2.globalContext.remove(jQuery.rdf.pattern(uri, prop, "?x", {namespaces: jQuery.VIE2.namespaces}));
+    jQuery.VIE2.log("info", "$.VIE2.core#removeFromGlobalContext()", "Global context holds now " + jQuery.VIE2.globalContext.databank.triples().length + " triples!");
+    var pattern = jQuery.rdf.pattern(uri + " " + prop + " ?x", {namespaces: jQuery.VIE2.namespaces});
+    jQuery.VIE2.log("info", "$.VIE2.core#removeFromGlobalContext()", "Removing all triples that match: '" + pattern + "'");
+    jQuery.VIE2.globalContext
+    .where(pattern).remove(pattern);
     jQuery.VIE2.log("info", "$.VIE2.core#removeFromGlobalContext()", "Global context holds now " + jQuery.VIE2.globalContext.databank.triples().length + " triples!");
 };
 
@@ -350,7 +353,6 @@ jQuery.VIE2.query = function (uri, props, callback, options, elem) {
                         if (elem) {
     			            jQuery.VIE2.log("info", "$.VIE2.query()", "Local cache of element '" + elem.data('vie2-id') + "' holds now " + elem.vie2('option', 'localContext').databank.triples().length + " triples!");
                         }
-						console.log(ret);
 						callback.call(ret);
 					}
 				};
@@ -602,18 +604,22 @@ jQuery.VIE2.unregisterConnector = function (connectorId) {
     jQuery.VIE2.connectors[connector.id] = undefined;
 };
 
+jQuery.VIE2.logLevels = ["info", "warn", "error"];
+
 //<strong>$.VIE2.log(level, component, message)</strong>: Static convenience method for logging.
 jQuery.VIE2.log = function (level, component, message) {
-    switch (level) {
-    case "info":
-    	console.info(component + ' ' + message);
-    	break;
-    case "warn":
-    	console.warn(component + ' ' + message);
-    	break;
-    case "error":
-    	console.error(component + ' ' + message);
-    	break;
+    if (jQuery.VIE2.logLevels.indexOf(level) > -1) {
+        switch (level) {
+            case "info":
+                console.info(component + ' ' + message);
+                break;
+            case "warn":
+                console.warn(component + ' ' + message);
+                break;
+            case "error":
+                console.error(component + ' ' + message);
+                break;
+        }
     }
 };
 
