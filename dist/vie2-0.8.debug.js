@@ -338,18 +338,18 @@ jQuery.VIE2.getFromGlobalContext = function (uri, prop) {
 jQuery.VIE2.removeFromGlobalContext = function (uri, prop) {
     
     if (uri === undefined) {
-    	jQuery.VIE2.log("warn", "$.VIE2.core#remove()", "No URI specified, returning without action!");
+    	jQuery.VIE2.log("warn", "$.VIE2.core#removeFromGlobalContext()", "No URI specified, returning without action!");
     	return;
     }
     
     if (prop === undefined) {
-    	jQuery.VIE2.log("warn", "$.VIE2.core#remove()", "No property specified, returning without action!");
+    	jQuery.VIE2.log("warn", "$.VIE2.core#removeFromGlobalContext()", "No property specified, returning without action!");
     	return;
     }
     
-    jQuery.VIE2.log("info", "$.VIE2.core#remove()", "Removing all triples that match: '" + uri + " " + prop + " ?x'");
+    jQuery.VIE2.log("info", "$.VIE2.core#removeFromGlobalContext()", "Removing all triples that match: '" + uri + " " + prop + " ?x'");
     jQuery.VIE2.globalContext.remove(jQuery.rdf.pattern(uri, prop, "?x", {namespaces: jQuery.VIE2.namespaces}));
-    jQuery.VIE2.log("info", "$.VIE2.core#remove()", "Global context holds now " + jQuery.VIE2.globalContext.databank.triples().length + " triples!");
+    jQuery.VIE2.log("info", "$.VIE2.core#removeFromGlobalContext()", "Global context holds now " + jQuery.VIE2.globalContext.databank.triples().length + " triples!");
 };
 
 //TODO: document me
@@ -592,7 +592,7 @@ jQuery.VIE2.Entity = VIE.RDFEntity.extend({
 
 //<strong>$.VIE2.registerBackboneModel(entity)</strong>: Add a backbone model to the corresponding collection(s).
 jQuery.VIE2.registerBackboneModel = function (entity) {
-    $.VIE2.log("info", "$.VIE2.registerBackboneModel()", "Start!");
+    $.VIE2.log("info", "$.VIE2.registerBackboneModel()", "Start (" + entity.id + ")!");
     //check whether we already have this entity registered
     if (VIE.EntityManager.getBySubject(entity["id"]) !== undefined) {
         $.VIE2.log("info", "$.VIE2.registerBackboneModel()", "Entity " + entity["id"] + " already registered, no need to add it.");
@@ -614,7 +614,6 @@ jQuery.VIE2.registerBackboneModel = function (entity) {
     		var modelInstance = new Model(entity, {
                 collection: e['collection']
             });
-            console.log("GGGGGGGGG3" + entity["id"]);
             //add entity and possible attributes to global context
             var uri = modelInstance.getSubject();
             $.VIE2.log("info", "$.VIE2.registerBackboneModel()", "Registering a backbone model for '" + uri + "'.");
@@ -640,7 +639,9 @@ jQuery.VIE2.registerBackboneModel = function (entity) {
     				modelInstance.change();
     			};
     		}(modelInstance.getSubject(), mapping.defaultProps, modelInstance));
-    	}
+    	} else {
+            jQuery.VIE2.log("info", "VIE2.core#registerBackboneModel()", "Entity '" + entity.id + "' does not belong to collection of type " + i + "!");
+        }
     });
 };
 
