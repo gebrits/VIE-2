@@ -325,8 +325,10 @@ Inherits from VIE.RDFEntity.</p>             </td>             <td class="code">
     
     <span class="nx">unset</span><span class="o">:</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">attribute</span><span class="o">,</span> <span class="nx">opts</span><span class="p">)</span> <span class="p">{</span>
         <span class="nx">jQuery</span><span class="p">.</span><span class="nx">VIE2</span><span class="p">.</span><span class="nx">removeFromGlobalContext</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">getSubject</span><span class="p">()</span><span class="o">,</span> <span class="nx">attribute</span><span class="p">);</span>
-        <span class="k">this</span><span class="p">.</span><span class="nx">trigger</span><span class="p">(</span><span class="s1">&#39;change:&#39;</span> <span class="o">+</span> <span class="nx">attribute</span><span class="p">);</span>
-        <span class="k">this</span><span class="p">.</span><span class="nx">change</span><span class="p">();</span>
+        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">opts</span><span class="p">.</span><span class="nx">silent</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">this</span><span class="p">.</span><span class="nx">trigger</span><span class="p">(</span><span class="s1">&#39;change:&#39;</span> <span class="o">+</span> <span class="nx">attribute</span><span class="p">);</span>
+            <span class="k">this</span><span class="p">.</span><span class="nx">change</span><span class="p">();</span>
+        <span class="p">}</span>
     <span class="p">}</span><span class="o">,</span>
         
     <span class="nx">destroy</span><span class="o">:</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">opts</span><span class="p">)</span> <span class="p">{</span></pre></div>             </td>           </tr>                               <tr id="section-57">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-57">&#182;</a>               </div>               <p>TODO: overwrite me??

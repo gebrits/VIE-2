@@ -557,8 +557,10 @@ jQuery.VIE2.Entity = VIE.RDFEntity.extend({
     
     unset: function (attribute, opts) {
         jQuery.VIE2.removeFromGlobalContext(this.getSubject(), attribute);
-        this.trigger('change:' + attribute);
-        this.change();
+        if (!opts.silent) {
+            this.trigger('change:' + attribute);
+            this.change();
+        }
     },
         
     destroy: function (opts) {
