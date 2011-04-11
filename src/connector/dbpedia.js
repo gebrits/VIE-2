@@ -4,35 +4,39 @@
  */
 
 //The dbpedia connector needs to be initialized like this:
-//$.VIE2.getConnector('dbpedia').options({
+//VIE2.getConnector('dbpedia').options({
 //    "proxy_url" : "../utils/proxy/proxy.php"
 //});
-new Connector('dbpedia');
+new VIE2.Connector('dbpedia', {
+	namespaces: {
+	    owl : "http://www.w3.org/2002/07/owl#"
+	}
+});
 
-jQuery.VIE2.connectors['dbpedia'].query = function (uri, props, namespaces, callback) {
+VIE2.connectors['dbpedia'].query = function (uri, props, callback) {
 	if (uri instanceof jQuery.rdf.resource &&
 			uri.type === 'uri') {
-		this.query(uri.toString(), props, namespaces, callback);
+		this.query(uri.toString(), props, callback);
 		return;
 	}
 	if (!jQuery.isArray(props)) {
-		return this.query(uri, [props], namespaces, callback);
+		return this.query(uri, [props], callback);
 		return;
 	}
 	if ((typeof uri != 'string')) {
-		jQuery.VIE2.log ("warn", "VIE2.Connector('" + this.id + "')", "Query does not support the given URI!");
-		callback({});
+		VIE2.log ("warn", "VIE2.Connector('" + this.id + "')", "Query does not support the given URI!");
+		callback.call(this, {});
 		return;
 	}
 	var uri = uri.replace(/^</, '').replace(/>$/, '');
 	if (!uri.match(/^http\:\/\/dbpedia.org\/.*/)) {
-		jQuery.VIE2.log ("warn", "VIE2.Connector('" + this.id + "')", "Query does not support the given URI!");
-		callback({});
+		VIE2.log ("warn", "VIE2.Connector('" + this.id + "')", "Query does not support the given URI!");
+		callback.call(this, {});
 		return;
 	}
 	
 	var url = uri.replace('resource', 'data') + ".jrdf";
-	var c = function (u, ps, ns) {
+	var c = function (conn, u, ps) {
 		return function (data) {
 			//initialize the returning object
 			var ret = {};
@@ -42,7 +46,7 @@ jQuery.VIE2.connectors['dbpedia'].query = function (uri, props, namespaces, call
 					var json = jQuery.parseJSON(data.responseText);
 					if (json) {
 						var rdfc = jQuery.rdf().load(json);
-						jQuery.each(ns, function(k, v) {
+						jQuery.each(VIE2.namespaces, function(k, v) {
 							rdfc.prefix(k, v);
 						});
 						
@@ -51,24 +55,24 @@ jQuery.VIE2.connectors['dbpedia'].query = function (uri, props, namespaces, call
 							ret[prop] = [];
 							
 							rdfc
-							.where(jQuery.rdf.pattern('<' + u + '>', prop, '?object', { namespaces: ns}))
+							.where(jQuery.rdf.pattern('<' + u + '>', prop, '?object', { namespaces: VIE2.namespaces}))
 							.each(function () {
 								ret[prop].push(this.object);
 							});
 						}
 					}
 				} catch (e) {
-					jQuery.VIE2.log ("warn", "VIE2.Connector('dbpedia')", "Could not query for uri '" + uri + "' because of the following parsing error: '" + e.message + "'!");
+					VIE2.log ("warn", "VIE2.Connector('dbpedia')", "Could not query for uri '" + uri + "' because of the following parsing error: '" + e.message + "'!");
 				}
 			}
-			callback(ret);
+			callback.call(conn, ret);
 		};
-	}(uri, props, namespaces);
+	}(this, uri, props);
 	
 	this.queryDBPedia(url, c);
 };
 
-jQuery.VIE2.connectors['dbpedia'].queryDBPedia = function (url, callback) {
+VIE2.connectors['dbpedia'].queryDBPedia = function (url, callback) {
 	var proxy = this.options().proxy_url;
 	
 	if (proxy) {

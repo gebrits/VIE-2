@@ -24,20 +24,22 @@
 //    "enhancer_url" : "http://stanbol.iksfordrupal.net:9000/engines/",
 //    "entityhub_url" : "http://stanbol.iksfordrupal.net:9000/entityhub/"
 //});
-new Connector('stanbol', {
+
+new VIE2.Connector('stanbol', {
 	namespaces: {
 	    semdesk : "http://www.semanticdesktop.org/ontologies/2007/03/22/nfo#",
 	    owl : "http://www.w3.org/2002/07/owl#",
 	    gml : "http://www.opengis.net/gml/_",
-	    geonames : "http://www.geonames.org/ontology#"
+	    geonames : "http://www.geonames.org/ontology#",
+		fise : "http://fise.iks-project.eu/ontology/"
 	}
 });
 
-jQuery.VIE2.connectors['stanbol'].analyze = function (object, namespaces, callback) {
+VIE2.connectors['stanbol'].analyze = function (object, options) {
 	var rdf = jQuery.rdf();
 	
 	//rules to add backwards-relations to the triples
-	//this makes querying for entities aaaa lot easier!
+	//this makes querying for entities a lot easier!
 	var rules = jQuery.rdf.ruleset()
     .prefix('fise', 'http://fise.iks-project.eu/ontology/')
     .prefix('dc', 'http://purl.org/dc/terms/')
@@ -56,117 +58,82 @@ jQuery.VIE2.connectors['stanbol'].analyze = function (object, namespaces, callba
 	       '?entity fise:hasEntityAnnotation ?subject']);
 	
 	if (object === undefined) {
-		jQuery.VIE2.log ("warn", "VIE2.Connector('" + this.id + "')", "Given object is undefined!");
-		callback(rdf);
+		VIE2.log ("warn", "VIE2.Connector('" + this.id + "')", "Given object is undefined!");
+		if (options && options.error) {
+            options.error("Given object is undefined!");
+        }
 	} else if (typeof object === 'object') {
+		var self = this; 
 		//stanbol cannot deal with embedded HTML, so we remove that.
 		//--> hack!
-		var text = "";
-		if (object.get(0) && 
-				object.get(0).tagName && 
-				object.get(0).tagName == 'TEXTAREA') {
-			text = object.get(0).val();
-		} else {
-			text = object
-		        .clone()    //clone the element
-		        .children() //select all the children
-		        .remove()   //remove all the children
-		        .end()      //again go back to selected element
-		        .text()     //get the text of element
-		        .replace(/\s+/g, ' ') //collapse multiple whitespaces
-		        .replace(/\0\b\n\r\f\t/g, '').trim(); // remove non-letter symbols
-		}
-		
-		var c = function (rdfc) {
+		var text = self.extractText(object);
+        //the AJAX callback function
+		var callback = function (rdfc) {
+            //adding all new found triples to the main rdfQuery object
 			rdfc.databank.triples().each(function () {
 				rdf.add(this);
 			});
-			
-			var children = object.find('*');
-			if (children.length) {
-				children.each(function (index) {
-					var obj = jQuery(this);
-					var textc = "";
-					if (obj.get(0) && 
-							obj.get(0).tagName && 
-							obj.get(0).tagName == 'TEXTAREA') {
-						textc = obj.get(0).val();
-					}
-					else {
-						textc = obj
-					        .clone()    //clone the element
-					        .children() //select all the children
-					        .remove()   //remove all the children
-					        .end()  //again go back to selected element
-					        .text()    //get the text of element
-					        .replace(/\s+/g, ' ') //collapse multiple whitespaces
-					        .replace(/\0\b\n\r\f\t/g, '').trim(); // remove non-letter symbols
-					}
-					
-					var c2 = function (rdfx) {
-						rdfx.databank.triples().each(function () {
-							rdf.add(this);
-						});
-					};
-					
-					var cFinal = function (rdfx) {
-						rdfx.databank.triples().each(function () {
-							rdf.add(this);
-						});
-		                jQuery.VIE2.log("info", "VIE2.Connector(" + this.id + ")", "Start reasoning '" + (rdf.databank.triples().length) + "'");
-						rdf.reason(rules);
-		                jQuery.VIE2.log("info", "VIE2.Connector(" + this.id + ")", "End   reasoning '" + (rdf.databank.triples().length) + "'");
-						callback(rdf);
-					};
-					
-					if (index < (children.length - 1)) {
-						jQuery.VIE2.connectors['stanbol'].enhance(textc, c2);
-					} else {
-						//TODO: this does not really work, use queue instead!
-						jQuery.VIE2.connectors['stanbol'].enhance(textc, cFinal);
-					}
-				});
-			} else {
-				rdf.reason(rules);	
-				callback(rdf);
-			}
+			//let's see if there are children to be enhanced.
+			VIE2.log("info", "VIE2.Connector(" + self.id + ")", "Start reasoning '" + (rdf.databank.triples().length) + "'");
+            rdf.reason(rules);	
+			VIE2.log("info", "VIE2.Connector(" + self.id + ")", "End   reasoning '" + (rdf.databank.triples().length) + "'");
+            if (options && options.success) {
+                options.success.call(self, rdf);
+            } else {
+                VIE2.log("warn", "VIE2.Connector(" + self.id + ")", "No success callback given. How do you think this should gonna work?'");
+            }
 		};
-		
-		this.enhance(text, c);
+		this.enhance(text, callback);
 	} else {
-		jQuery.VIE2.log("error", "VIE2.Connector(" + this.id + ")", "Expected object, found: '" + (typeof object) + "'");
-		callback(rdf);
+		VIE2.log("error", "VIE2.Connector(" + this.id + ")", "Expected element of type 'object', found: '" + (typeof object) + "'");
+		if (options && options.error) {
+            options.error.call(this, "Expected element of type 'object', found: '" + (typeof object) + "'");
+        }
 	}
-	
 };
 
-jQuery.VIE2.connectors['stanbol'].enhance = function (text, callback) {
+VIE2.connectors['stanbol'].extractText = function (obj) {
+    if (obj.get(0) && 
+			obj.get(0).tagName && 
+			(obj.get(0).tagName == 'TEXTAREA' ||
+            obj.get(0).tagName == 'INPUT' && obj.attr('type', 'text'))) {
+		return obj.get(0).val();
+	}
+	else {
+		return obj
+	        .text()    //get the text of element
+	        .replace(/\s+/g, ' ') //collapse multiple whitespaces
+	        .replace(/\0\b\n\r\f\t/g, '').trim(); // remove non-letter symbols
+	}
+};
+
+VIE2.connectors['stanbol'].enhance = function (text, callback) {
 	if (text.length === 0) {
-		jQuery.VIE2.log("warn", "VIE2.Connector(" + this.id + ")", "Empty text.");
-		callback(jQuery.rdf());
-		return;
-	}
-	
-	var c = function (data) {
-		if (data) {
-			try {
-				var rdf = jQuery.rdf().load(data, {});
-				callback(rdf);
-			} catch (e) {
-				jQuery.VIE2.log("error", "VIE2.Connector(" + this.id + ")", "Could not connect to stanbol enhancer.");
-				jQuery.VIE2.log("error", "VIE2.Connector(" + this.id + ")", data);
-				callback(jQuery.rdf());
-			}
-		}
-	};
-	
-	this.queryEnhancer(text, c);
+        VIE2.log("warn", "VIE2.Connector(" + this.id + ")", "Empty text.");
+        callback(jQuery.rdf());
+    }
+    else {
+        var c = function(data) {
+            if (data) {
+                try {
+                    var rdf = jQuery.rdf().load(data, {});
+                    callback(rdf);
+                } 
+                catch (e) {
+                    VIE2.log("error", "VIE2.Connector(" + this.id + ")", "Could not connect to stanbol enhancer.");
+                    VIE2.log("error", "VIE2.Connector(" + this.id + ")", data);
+                    callback(jQuery.rdf());
+                }
+            }
+        };
+        this.queryEnhancer(text, c);
+    }
 };
 
-jQuery.VIE2.connectors['stanbol'].queryEnhancer = function (text, callback) {
+VIE2.connectors['stanbol'].queryEnhancer = function (text, callback) {
 
-	var proxy = this.options().proxy_url;
-	var enhancer_url = this.options().enhancer_url;
+	var proxy = this._options.proxy_url;
+	var enhancer_url = this._options.enhancer_url;
 
 	if (proxy) {
 		jQuery.ajax({
@@ -178,6 +145,7 @@ jQuery.VIE2.connectors['stanbol'].queryEnhancer = function (text, callback) {
 			data: {
     			proxy_url: enhancer_url, 
     			content: text,
+                type: "text/plain",
     			verb: "POST",
     			format: "application/rdf+json"
 			}
@@ -195,25 +163,29 @@ jQuery.VIE2.connectors['stanbol'].queryEnhancer = function (text, callback) {
 	}
 };
 
-jQuery.VIE2.connectors['stanbol'].query = function (uri, props, namespaces, callback) {
+
+//////////////////////
+
+VIE2.connectors['stanbol'].query = function (uri, props, callback) {
 	if (uri instanceof jQuery.rdf.resource &&
 			uri.type === 'uri') {
-		this.query(uri.toString().replace(/^</, '').replace(/>$/, ''), props, namespaces, callback);
+		this.query(uri.toString().replace(/^</, '').replace(/>$/, ''), props, callback);
 		return;
 	}
 	if (!jQuery.isArray(props)) {
-		this.query(uri, [props], namespaces, callback);
+		this.query(uri, [props], callback);
 		return;
 	}
-	if ((typeof uri != 'string') || uri.match("^urn:.*")) {
-		jQuery.VIE2.log ("warn", "VIE2.Connector('" + this.id + "')", "Query does not support the given URI!");
-		callback({});
+	if ((typeof uri !== 'string') || uri.match(/^<urn:.*/)) {
+		VIE2.log ("warn", "VIE2.Connector('" + this.id + "')", "Query does not support the given URI '" + uri + "'!");
+		callback.call(this, {});
 		return;
 	}
 	var uri = uri.replace(/^</, '').replace(/>$/, '');
 	
 	//initialize the returning object
 	var ret = {};
+    var that = this;
 	
 	var c = function (data) {
 		if (data && data.status === 200) {
@@ -221,7 +193,7 @@ jQuery.VIE2.connectors['stanbol'].query = function (uri, props, namespaces, call
 				var json = jQuery.parseJSON(data.responseText);
 				var rdfc = jQuery.rdf().load(json);
 
-				jQuery.each(namespaces, function(k, v) {
+				jQuery.each(VIE2.namespaces, function(k, v) {
 					rdfc.prefix(k, v);
 				});
 				
@@ -230,30 +202,31 @@ jQuery.VIE2.connectors['stanbol'].query = function (uri, props, namespaces, call
 					ret[prop] = [];
 					
 					rdfc
-					.where(jQuery.rdf.pattern('<' + uri + '>', prop, '?object', { namespaces: namespaces}))
+					.where(jQuery.rdf.pattern('<' + uri + '>', prop, '?object', { namespaces: VIE2.namespaces}))
 					.each(function () {
 						ret[prop].push(this.object);
 					});
 				}
 			} catch (e) {
-				jQuery.VIE2.log ("warn", "VIE2.Connector('stanbol')", "Could not query for uri '" + uri + "' because of the following parsing error: '" + e.message + "'!");
+				VIE2.log ("warn", "VIE2.Connector('stanbol')", "Could not query for uri '" + uri + "' because of the following parsing error: '" + e.message + "'!");
 			}
 		}
-		callback(ret);
+		callback.call(that, ret);
 	};
 	
 	this.queryEntityHub(uri, c);
 };
 
-jQuery.VIE2.connectors['stanbol'].queryEntityHub = function (uri, callback) {
-	var proxy = this.options().proxy_url;
-	var entityhub_url = this.options().entityhub_url.replace(/\/$/, '');
+VIE2.connectors['stanbol'].queryEntityHub = function (uri, callback) {
+	var proxy = this._options.proxy_url;
+	var entityhub_url = this._options.entityhub_url.replace(/\/$/, '');
 	
 	if (proxy) {
 		jQuery.ajax({
 			async: true,
 			type: "POST",
-			complete: callback,
+			success: callback,
+			error: callback,
 			url: proxy,
 			data: {
     			proxy_url: entityhub_url + "/sites/entity?id=" + uri, 
@@ -265,7 +238,8 @@ jQuery.VIE2.connectors['stanbol'].queryEntityHub = function (uri, callback) {
 	} else {
 		jQuery.ajax({
 			async: true,
-			complete: callback,
+			success: callback,
+			error: callback,
 			type: "GET",
 			url: entityhub_url + "/sites/entity?id=" + uri,
 			data: text,

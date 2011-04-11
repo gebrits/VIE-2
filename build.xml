@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <project name="VIE^2" basedir="." default="all">
     
-	<property name="VERSION" value="0.9"/>
+	<property name="VERSION" value="1.0alpha"/>
 	    
     <property name="DOCS_DIR" value="./docs" description="API documentation"/>
     <property name="DIST_DIR" value="./dist"/>
@@ -19,6 +19,8 @@
   			<arg value="${SRC_DIR}/core/connector.js" />
   			<arg value="${SRC_DIR}/core/core.js" />
   			<arg value="${SRC_DIR}/core/mapping.js" />
+  			<arg value="${SRC_DIR}/core/collection.js" />
+  			<arg value="${SRC_DIR}/core/model.js" />
   			<arg value="${SRC_DIR}/core/util.js" />
   			<arg value="${SRC_DIR}/mapping/person.js" />
   			<arg value="${SRC_DIR}/mapping/place.js" />
@@ -61,6 +63,8 @@
         	<fileset dir="${SRC_DIR}" includes="core/util.js"/>
         	<fileset dir="${SRC_DIR}" includes="core/connector.js"/>
         	<fileset dir="${SRC_DIR}" includes="core/mapping.js"/>
+        	<fileset dir="${SRC_DIR}" includes="core/collection.js"/>
+        	<fileset dir="${SRC_DIR}" includes="core/model.js"/>
         	<fileset dir="${SRC_DIR}" includes="core/core.js"/>
        	</concat>
         <copy file="${DIST_DIR}/vie2-${VERSION}.debug.js" tofile="${DIST_DIR}/vie2-latest.debug.js" overwrite="true" />

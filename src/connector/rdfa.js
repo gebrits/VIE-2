@@ -3,15 +3,16 @@
  * @author <a href="mailto:sebastian.germesin@dfki.de">Sebastian Germesin</a>
  */
 
-new Connector('rdfa');
+new VIE2.Connector('rdfa');
 
-jQuery.VIE2.connectors['rdfa'].analyze = function (object, namespaces, callback) {
-	var rdf = jQuery.rdf({namespaces: namespaces});
+VIE2.connectors['rdfa'].analyze = function (object, options) {
+	var rdf = jQuery.rdf({namespaces: VIE2.namespaces});
 	
 	if (object === undefined) {
-		jQuery.VIE2.log ("warn", "VIE2.Connector('" + this.id + "')#analyze()", "Given object is undefined!");
+		VIE2.log ("warn", "VIE2.Connector('" + this.id + "')#analyze()", "Given object is undefined!");
 		callback(rdf);
 	} else if (typeof object === 'object') {
+        var self = this;
 		//does only work on objects that have the 'typeof' attribute set!
 		if (object.attr('typeof')) {
 			//use rdfQuery to analyze the object
@@ -20,9 +21,14 @@ jQuery.VIE2.connectors['rdfa'].analyze = function (object, namespaces, callback)
 				rdf.add(this);
 			});
 			
-			callback(rdf);
+			if (options && options.success) {
+                options.success.call(self, rdf);
+            } else {
+                VIE2.log("warn", "VIE2.Connector(" + self.id + ")", "No success callback given. How do you think this should gonna work?'");
+            }
+            
 		} else {
-			jQuery.VIE2.log("info", "VIE2.Connector(" + this.id + ")#analyze()", "Object has no 'typeof' attribute! Trying to find children.");
+			VIE2.log("info", "VIE2.Connector(" + this.id + ")#analyze()", "Object has no 'typeof' attribute! Trying to find children.");
 			
 			object.find('[typeof]').each(function(i, e) {
 				var rdfa = jQuery(e).rdf();
@@ -32,22 +38,22 @@ jQuery.VIE2.connectors['rdfa'].analyze = function (object, namespaces, callback)
 					rdf.add(this);
 				});
 			});
-			callback(rdf);
+			if (options && options.success) {
+                options.success.call(self, rdf);
+            } else {
+                VIE2.log("warn", "VIE2.Connector(" + self.id + ")", "No success callback given. How do you think this should gonna work?'");
+            }
 		}
 	} else {
-		jQuery.VIE2.log("error", "VIE2.Connector(" + this.id + ")#analyze()", "Expected object, found: '" + (typeof object) + "'");
-		callback(rdf);
+		VIE2.log("error", "VIE2.Connector(" + this.id + ")#analyze()", "Expected object, found: '" + (typeof object) + "'");
+		if (options && options.error) {
+            options.error.call(this, "Expected element of type 'object', found: '" + (typeof object) + "'");
+        }
 	}
 };
-
-jQuery.VIE2.connectors['rdfa'].annotate = function (elem, triple, namespaces, callback) {
-	jQuery.VIE2.log("info", "VIE2.Connector(" + this.id + ")#annotate()", "Start annotation of object with triple.");
+/*
+VIE2.connectors['rdfa'].annotate = function (elem, triple, namespaces, callback) {
+	VIE2.log("info", "VIE2.Connector(" + this.id + ")#annotate()", "Start annotation of object with triple.");
 	jQuery(elem).rdfa(triple);
 	
-};
-
-jQuery.VIE2.connectors['rdfa'].remove = function (elem, triple, namespaces, callback) {
-	
-	jQuery(elem).removeRdfa(triple);
-	
-};
+};*/

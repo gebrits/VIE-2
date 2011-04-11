@@ -3,7 +3,7 @@
  * @author <a href="mailto:sebastian.germesin@dfki.de">Sebastian Germesin</a>
  */
 
-new Mapping('task', 
+new VIE2.Mapping('task', 
 		['rdfcal:Task'], 
 		['rdfcal:hasAgent', 'rdfcal:name', 'rdfcal:startDate', 'rdfcal:targetDate']
 );

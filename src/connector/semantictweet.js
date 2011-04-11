@@ -4,37 +4,37 @@
  */
 
 //The semantictweet connector needs to be initialized like this:
-//$.VIE2.getConnector('semantictweet').options({
+//VIE2.getConnector('semantictweet').options({
 //    "proxy_url" : "../utils/proxy/proxy.php"
 //});
-new Connector('semantictweet');
+new VIE2.Connector('semantictweet');
 
-jQuery.VIE2.connectors['semantictweet'].query = function (uri, props, namespaces, callback) {
+VIE2.connectors['semantictweet'].query = function (uri, props, callback) {
 	if (uri instanceof jQuery.rdf.resource &&
 			uri.type === 'uri') {
-		this.query(uri.toString(), props, namespaces, callback);
+		this.query(uri.toString(), props, callback);
 		return;
 	}
 	if (!jQuery.isArray(props)) {
-		return this.query(uri, [props], namespaces, callback);
+		return this.query(uri, [props], callback);
 		return;
 	}
 	if ((typeof uri != 'string')) {
 		jQuery.VIE2.log ("warn", "VIE2.Connector('" + this.id + "')", "Query does not support the given URI!");
-		callback({});
+		callback.call(this, {});
 		return;
 	}
 	var uri = uri.replace(/^</, '').replace(/>$/, '');
     
 	if (!uri.match(/^http\:\/\/semantictweet.com\/.*/)) {
 		jQuery.VIE2.log ("warn", "VIE2.Connector('" + this.id + "')", "Query does not support the given URI!");
-		callback({});
+		callback.call(this, {});
 		return;
 	}
 	
 	//var url = uri.replace('resource', 'data') + ".jrdf";
 	var url = uri;
-	var c = function (u, ps, ns) {
+	var c = function (conn, u, ps) {
 		return function (data) {
 			//initialize the returning object
 			var ret = {};
@@ -45,7 +45,7 @@ jQuery.VIE2.connectors['semantictweet'].query = function (uri, props, namespaces
 					var rdf_xml = data.responseText;
 					if (rdf_xml) {
 						var rdfc = jQuery.rdf().load(rdf_xml);
-						jQuery.each(ns, function(k, v) {
+						jQuery.each(VIE2.namespaces, function(k, v) {
 							rdfc.prefix(k, v);
 						});
 						
@@ -54,7 +54,7 @@ jQuery.VIE2.connectors['semantictweet'].query = function (uri, props, namespaces
 							ret[prop] = [];
 							
 							rdfc
-							.where(jQuery.rdf.pattern('<' + u + '>', prop, '?object', { namespaces: ns}))
+							.where(jQuery.rdf.pattern('<' + u + '>', prop, '?object', { namespaces: VIE2.namespaces}))
 							.each(function () {
 								ret[prop].push(this.object);
 							});
@@ -64,14 +64,14 @@ jQuery.VIE2.connectors['semantictweet'].query = function (uri, props, namespaces
 					jQuery.VIE2.log ("warn", "VIE2.Connector('semantictweet')", "Could not query for uri '" + uri + "' because of the following parsing error: '" + e.message + "'!");
 				}
 			}
-			callback(ret);
+			callback.call(this, ret);
 		};
-	}(uri, props, namespaces);
+	}(this, uri, props);
 	
 	this.querySemantictweet(url, c);
 };
 
-jQuery.VIE2.connectors['semantictweet'].querySemantictweet = function (url, callback) {
+VIE2.connectors['semantictweet'].querySemantictweet = function (url, callback) {
 	var proxy = this.options().proxy_url;
 	
 	if (proxy) {

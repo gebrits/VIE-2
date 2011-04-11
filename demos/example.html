@@ -3,7 +3,6 @@
 <html  
     version="XHTML+RDFa 1.0"
     xml:lang="en"
-    xmlns="http://www.w3.org/1999/xhtml" 
 	xmlns:dbpedia = "http://dbpedia.org/resource/"
 	xmlns:dbprop = "http://dbpedia.org/property/"
 	xmlns:dbonto = "http://dbpedia.org/ontology/"
@@ -11,7 +10,6 @@
 	xmlns:rdf = "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
 	xmlns:rdfs = "http://www.w3.org/2000/01/rdf-schema#"
 	xmlns:iks = "http://www.iks-project.eu/#"
-	xmlns:fise = "http://fise.iks-project.eu/ontology/"
 	xmlns:foaf = "http://xmlns.com/foaf/0.1/"
 	xmlns:dc = "http://purl.org/dc/terms/"
 	xmlns:geo = "http://www.w3.org/2003/01/geo/wgs84_pos#"
@@ -35,9 +33,12 @@
 		<!-- VIE^2 -->
 		<script type="text/javascript" src="../src/core/util.js"></script>
 		<script type="text/javascript" src="../src/core/core.js"></script>
+		<script type="text/javascript" src="../src/core/model.js"></script>
+		<script type="text/javascript" src="../src/core/collection.js"></script>
 		<script type="text/javascript" src="../src/core/connector.js"></script>
 		<script type="text/javascript" src="../src/core/mapping.js"></script>
-		
+		<script type="text/javascript">VIE2.logLevels = ["info", "warn", "error"];</script>
+        
 		<!-- Connector plug-ins -->
 		<script type="text/javascript" src="../src/connector/stanbol.js"></script>
 		<script type="text/javascript" src="../src/connector/dbpedia.js"></script>
@@ -49,24 +50,24 @@
 		
 		<!-- How the API would look like! -->
 		<script type="text/javascript">
+		    VIE2.logLevels = ["info", "warn", "error"];
 		    $(function() {
-                
-                $.VIE2.connectors['stanbol'].options({
+                VIE2.connectors['stanbol'].options({
              	    "proxy_url" : "../utils/proxy/proxy.php",
-             	    "enhancer_url" : "http://stanbol.iksfordrupal.net:9000/engines/",
-             	    "entityhub_url" : "http://stanbol.iksfordrupal.net:9000/entityhub/"
+             	    "enhancer_url" : "http://localhost:8080/engines/",
+             	    "entityhub_url" : "http://localhost:8080/entityhub/"
                 });
                 
-                $.VIE2.connectors['dbpedia'].options({
+                VIE2.connectors['dbpedia'].options({
 	                "proxy_url" : "../utils/proxy/proxy.php"
                 });
                 
-                $.VIE2.Backbone['person']['collection'].bind("add", function (p) {
-                    new PersonView({id: 'person-' + PseudoGuid.GetNew(), model: p});
+                VIE2.mappings['person']['collection'].bind("add", function (p) {
+                    new PersonView({id: 'person-' + VIE2.Util.PseudoGuid.GetNew(), model: p});
                 });
                 
-                $.VIE2.Backbone['task']['collection'].bind("add", function (t) {
-                     new TaskView({id: 'task-' + PseudoGuid.GetNew(), model: t});
+                VIE2.mappings['task']['collection'].bind("add", function (t) {
+                     new TaskView({id: 'task-' + VIE2.Util.PseudoGuid.GetNew(), model: t});
                 });
                 
                 var PersonView = Backbone.View.extend({
@@ -75,21 +76,22 @@
                     initialize: function() {
                         _.bindAll(this, "render");
                         this.model.bind('change', this.render);
-                        $(this.el).css('display', 'none');
+                        $(this.el).hide();
                         $('.persons').append($(this.el));
+                        this.render();
                     },
                     
                     render: function() {
                         var name = this.model.get("foaf:name");
-                        if (name && name[0]) {
-                            var names = name[0].value;
+                        if (name && name.length > 0) {
+                            var names = name[0];
                             for (var x = 1; x < name.length; x++) {
-                                names += " aka. " + name[x].value;
+                                names += " aka. " + name[x];
                             }
                             $(this.el).text(names);
-                            $(this.el).css('display', 'list-item');
+                            $(this.el).show();
                         } else {
-                           $(this.el).css('display', 'none');
+                           $(this.el).hide();
                         }
                       return this;
                     }
@@ -100,15 +102,16 @@
                     tagName: 'b',
                     
                     initialize: function() {
-                        _.bindAll(this, "render");
+                      _.bindAll(this, "render");
                       this.model.bind('change', this.render);
+                      this.render();
                     },
                     
                     render: function() {
                         var name = this.model.get("foaf:name");
                         
-                        if (name && name[0]) {
-                            name = name[0].value;
+                        if (name && name.length > 0) {
+                            name = name[0];
                         } else {
                             name = "???";
                         }
@@ -123,90 +126,130 @@
                     initialize: function() {
                         _.bindAll(this, "render");
                       this.model.bind('change', this.render);
+                      $(this.el)
+                      .addClass('task')
+                      .append("<span class='agent'>")
+                      .append("<span> needs to </span>")
+                      .append("<i><span class='todo'></span></i>")
+                      .append("<span> before <span class='targetDate'></span>!</span>");
                       $('.tasks').append($(this.el));
+                      this.render();
                     },
                     
                     render: function() {
-                        var agentUri = (this.model.get("rdfcal:hasAgent"))? this.model.get("rdfcal:hasAgent")[0].toString() : "";
-                        var agentName = "";
+                        var agentModel = (this.model.get("rdfcal:hasAgent").length > 0)? this.model.get("rdfcal:hasAgent")[0] : undefined;
+                        var agentSpan = $('.agent', $(this.el));
                         
-                        var agentModel = $.VIE2.Backbone['person']['collection'].get(agentUri);
-                        var agentView = new AgentView({id: 'agent-' + PseudoGuid.GetNew(), model: agentModel})
+                        var agentView = new AgentView({
+                            id: 'agent-' + VIE2.Util.PseudoGuid.GetNew(), 
+                            model: agentModel, 
+                            el: agentSpan})
                         .render();
                         
-                        var name = (this.model.get("rdfcal:name"))? this.model.get("rdfcal:name")[0].value : "";
-                        var startDate = (this.model.get("rdfcal:startDate"))? this.model.get("rdfcal:startDate")[0].value : "";
-                        var targetDate = (this.model.get("rdfcal:targetDate"))? this.model.get("rdfcal:targetDate")[0].value : "";
-
-                        $(this.el)
-                        .append($(agentView.el))
-                        .append($("<span> needs to <i>" + name + "</i> before " + targetDate + "!"));
+                        var todo       = (this.model.get("rdfcal:name"))? this.model.get("rdfcal:name")[0] : "nothing special";
+                        var targetDate = (this.model.get("rdfcal:targetDate"))? this.model.get("rdfcal:targetDate")[0] : "ASAP";
+                        
+                        $('.todo', this.el).text(todo);
+                        $('.targetDate', this.el).text(targetDate);
+                        
                         return this;
-                    },
+                    }
                 });
             });
             
-			function analyzeText (elem, button) {
+			function analyzeText (elem, buttonSelector) {
 				//disable button
-				//$(button).attr('disabled', 'disabled');
-                $(button).text('Analyzing...');
+                var button = $(buttonSelector);
+				button.attr('disabled', 'disabled');
+                button.text('Analyzing...');
 				
 				//start analysis
-				elem.vie2().vie2('analyze', function (status) {
-                    if (status === 'ok') {
-                        $(button).text('Done!');
-                    }
-                });
+				elem.vie2().vie2('analyze', 
+                    function (status) {
+                        if (status === 'ok') {
+                            button.text('Done!');
+                        }
+                    },
+                    ['rdfa', 'stanbol'] //restrict to these two connectors
+                );
 			};
-                        
-            function annotateAsTask (elem, agent, todo, targetDate, startDate) {
-                var x = $.rdf.blank('[]');
-                elem.vie2().vie2('annotate',
-                    [agent + ' a foaf:Person']);
-                elem.vie2().vie2('annotate',
-                  [
-                  x + ' a rdfcal:Task',
-                  x + ' rdfcal:hasAgent ' + ((agent === '' || agent === undefined)? '[]' : agent),
-                  x + ' rdfcal:name ' + ((todo === '' || todo === undefined)? '' : todo),
-                  x + ' rdfcal:startDate ' + ((startDate === '' || startDate === undefined)? '\"now\"' : startDate), //TODO: figure out how to write proper date
-                  x + ' rdfcal:targetDate ' + ((targetDate === '' || targetDate === undefined)? '\"tonight\"' : targetDate) //TODO: figure out how to write proper date
-                  ]);
-            };
-            
-            
-            function addName () {
-              var model =  $.VIE2.Backbone['person']['collection'].get('<http://dbpedia.org/resource/Barack_Obama>');
-              
-              var names = model.get("foaf:name");
-              names.push($.rdf.literal("B. Obama"));
-              
-              model.set({"foaf:name": names});
+
+            function annotateTask (agent, todo, targetDate) {
+                 var agentModel = VIE.EntityManager.getBySubject(agent);
+                 
+                 if (!agentModel) {
+                     //register the agent
+                    VIE2.registerModel({
+                        id: agent,
+                        a: ['foaf:Person'],
+                        'foaf:name': ["\"Mr. Unknown\""]
+                    });
+                }
                 
-                /*
-                 * ALTERNATIVE: 
-                $(document).vie2().vie2('annotate',
-                  '<http://dbpedia.org/resource/Barack_Obama> foaf:name "B. Obama"');
-                  */
+                //register the task
+                VIE2.registerModel ({
+                    id : $.rdf.blank('[]').toString(),
+                    a : ['rdfcal:Task'],
+                    'rdfcal:hasAgent' : [agent],
+                    'rdfcal:name' : [todo],
+                    'rdfcal:targetDate' : [targetDate]
+                });
             };
             
-            function changeName () {
-              var model =  $.VIE2.Backbone['person']['collection'].get('<http://dbpedia.org/resource/Barack_Obama>');
-              
-              var names = model.get("foaf:name");
-              names[0].value = "B B Obama";
-              
-              model.set({"foaf:name": names});
+            
+            function addName (subject, newName) {
+              var model = VIE.EntityManager.getBySubject(subject);
+              if (model) {
+                  model.addAValue('foaf:name', newName);
+              } else {
+                  VIE2.registerModel ({
+                    id : subject,
+                    a : ['foaf:Person']
+                  }, function () {
+                      this.addAValue('foaf:name', newName);
+                  });
+              }
+            };
+            
+            function changeName (subject, from, to) {
+              var model =  VIE.EntityManager.getBySubject(subject);
+              if (model) {
+                  model.changeAValue('foaf:name', from, to);
+              } else {
+                  VIE2.registerModel ({
+                        id : subject,
+                        a : ['foaf:Person']
+                      }, function () {
+                          this.changeAValue('foaf:name', from, to);
+                  });
+              }
+            };
+            
+            function removeName (subject, name) {
+              var model =  VIE.EntityManager.getBySubject(subject);
+              if (model) {
+                  model.removeAValue('foaf:name', name);
+              } else {
+                  VIE2.registerModel ({
+                        id : subject,
+                        a : ['foaf:Person']
+                      }, function () {
+                      this.removeAValue('foaf:name', name);
+                  });
+              }
             };
 		</script>
 		
 	</head>
 	<body>
 		<button onclick='analyzeText($("#test"), this);'>Analyze the short text below!</button><br />
-		<span id="test">This is a small test, where <span about="[demo:Thomas_Unknown]" typeof="foaf:Person"><span property="foaf:name">Thomas Unknown</span></span> and Barack Obama sing a song.</span><br />
-		<span id="result" style="display:none;">Found <span id="numEntities"></span> entities. Out of which <span id="numPersons"></span> are persons.</span><br />
-        <button onclick='addName();$(this).attr("disabled", "disabled")'>Add a fake name of B. Obama.</button><br /><br />
+		<span id="test">This is a small test, where <span about="[demo:Thomas_Unknown]" typeof="foaf:Person"><span property="foaf:name">Thomas Unknown</span></span> and Barack Obama sing a song.</span><br /><br />
+		<button onclick='addName("<http://dbpedia.org/resource/Barack_Obama>", "\"B. Obama\"");$(this).attr("disabled", "disabled")'>Add a fake name of Barack Obama (B. Obama).</button><br />
+        <button onclick='addName("<http://dbpedia.org/resource/Barack_Obama>", "\"Bobby Obama\"@nl");$(this).attr("disabled", "disabled")'>Add another fake name of Barack Obama (Bobby Obama).</button><br />
+        <button onclick='changeName("<http://dbpedia.org/resource/Barack_Obama>", "\"B. Obama\"", "\"Barack Thomas Oliver Obama\"");$(this).attr("disabled", "disabled")'>Change the fake name of Barack Obama (B. Obama -> Barack Thomas Oliver Obama).</button><br />
+        <button onclick='removeName("<http://dbpedia.org/resource/Barack_Obama>", "\"B. Obama\"");$(this).attr("disabled", "disabled")'>Remove the fake name of Barack Obama (B. Obama).</button><br /><br />
         
-        <button onclick='annotateAsTask($("#task"), "<http://this.demo.eu/Thomas_Unknown>", "\"implement something cool\"", "\"2011-04-01\"^^xsd:date");$(this).attr("disabled", "disabled");'>Annotate the task below.</button><br />
+        <button onclick='annotateTask("<http://this.demo.eu/Thomas_Unknown>", "\"implement something cool\"", "\"2012-04-11\"^^xsd:date");$(this).attr("disabled", "disabled");'>Annotate the task below.</button><br />
         <span id="task"><span class=".person">Thomas Unknown</span> should implement something cool.</span><br />
 		
 		<br /><br />
