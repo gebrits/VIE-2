@@ -176,13 +176,12 @@ VIE2.connectors['stanbol'].query = function (uri, props, callback) {
 		this.query(uri, [props], callback);
 		return;
 	}
-	if ((typeof uri !== 'string') || uri.match(/^<urn:.*/)) {
+	if ((typeof uri !== 'string') || uri.match(/^<urn:.*/) || uri.match(/^_:.*/)) {
 		VIE2.log ("warn", "VIE2.Connector('" + this.id + "')", "Query does not support the given URI '" + uri + "'!");
 		callback.call(this, {});
 		return;
 	}
 	var uri = uri.replace(/^</, '').replace(/>$/, '');
-	
 	//initialize the returning object
 	var ret = {};
     var that = this;

@@ -5,7 +5,7 @@
 
 new VIE2.Mapping(
     'person',  //the id of the mapping 
-	['foaf:Person', 'foaf:Person', 'opencalais:Person'],  //a list of all types that fall into this category
+	['foaf:Person', 'dbonto:Person', 'opencalais:Person'],  //a list of all types that fall into this category
 	['rdfs:label', 'foaf:name', 'foaf:page', 'foaf:depiction'], //a list of default properties
 	{// optional options
         namespaces: { //the used namespaces, these can be given here, or placed directly into the HTML document's xmlns attribute.

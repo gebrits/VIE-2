@@ -73,7 +73,9 @@
         //*options* can contain a 'connectors' field. If so, only these connectors will be used
         //for the analysis. If not specified, all connectors are used.
     	analyze: function (callback, options) {
+            options || (options = {});            
     		var that = this;
+            
     		//analyze() does not actually need a callback method, but it is usually good to use it 
     		if (callback === undefined) {
     			VIE2.log("warn", "VIE2.core#analyze()", "No callback method specified!");
@@ -86,7 +88,7 @@
     		jQuery.each(VIE2.connectors, function () {
     			//fill queue of connectors with 'id's to have an overview of running connectors.
     			//this supports the asynchronous calls.
-                if (options && options.connectors) {
+                if (options.connectors) {
                     if (options.connectors.indexOf(this.id) !== -1) {
                         connectorQueue.push(this.id);
                     }
@@ -122,9 +124,20 @@
                                 that.options.entities.push(subjStr);
                             }
                             
-                            VIE2.registerModel({
-                                id: subjStr
-                            });
+                            if (!VIE.EntityManager.getBySubject(subjStr)) {
+                                VIE2.log("info", "VIE2.core#analyze()", "Register new entity (" + subjStr + ")!");
+                                var model = new VIE2.Entity({
+                                    id: subjStr
+                                }, {
+                                    backend: true
+                                });
+                                
+                                VIE2.entities.add(model, {
+                                    backend: true
+                                });
+                            } else {
+                                VIE.EntityManager.getBySubject(subjStr).change();
+                            }
                         });
     					VIE2.Util.removeElement(connectorQueue, this.id);
     					//everytime we receive annotations from each connector, we remove the connector's id from the
@@ -136,21 +149,20 @@
     						VIE2.log("info", "VIE2.core#analyze()", "Finished! Local element holds now "  + that.options.entities.length + " entities!");
     						//provide a status field in the callback object: status = {'ok', 'error'};
     						if (callback) {
-    							callback.call(elem, 'ok');
+    							callback.call(elem);
     						}
     					}
-    					//TODO: in a future release, we might want to add a timeout to be called if a connector takes too long
     				};
     			} (that.element);
                 
                 //the connector's error callback method
                 var errorCallback = function (reason) {
-                    VIE2.log("error", "VIE2.core#analyze()", "Connector " + this.id + ") returned with the following error: '" + reason + "'!");
+                    VIE2.log("error", "VIE2.core#analyze()", "Connector (" + this.id + ") returned with the following error: '" + reason + "'!");
                     VIE2.Util.removeElement(connectorQueue, this.id);
                 };
     			
                 //check if we may need to filter for the connector
-                if (options && options.connectors) {
+                if (options.connectors) {
                     if (options.connectors.indexOf(this.id) !== -1) {
             			//start analysis with the connector.
          				VIE2.log("info", "VIE2.core#analyze()", "Starting analysis with connector: '" + this.id + "'!");
@@ -231,24 +243,41 @@ VIE2.clearCache = function () {
 	VIE2.globalCache = jQuery.rdf({namespaces: VIE2.namespaces});
 };
 
-//<strong>VIE2.getFromGlobalCache(uri, prop)</strong>: Retrive properties from the given *uri* directly from the
-//element's Cache. Does *not* retrieve information from the global Cache. 
-VIE2.getFromGlobalCache = function (uri, prop) {
-	//get data from local storage!
-	var ret = [];
+//<strong>VIE2.getFromCache(uri, prop)</strong>: Retrive properties from the given
+// *uri* directly from the global Cache. 
+VIE2.getFromCache = function (uri, prop) {
+    //initialize collection
+    var Collection = VIE2.ObjectCollection.extend({
+        uri      : uri,
+        property : prop
+    });
+    
+    var ret = new Collection();
 	
 	VIE2.globalCache
 	.where(jQuery.rdf.pattern(uri, prop, '?object', {namespaces: VIE2.namespaces}))
 	.each(function () {
         if (this.object.type) {
             if (this.object.type === 'literal') {
-		        ret.push(this.object.toString());
+                var inst = new VIE2.Literal({
+                    datatype: this.object.datatype,
+                    lang: this.object.lang,
+                    value: this.object.value,
+                    isLiteral: true,
+                    isResource: false
+                });
+                ret.add(inst, {backend:true, silent:true});
             } else if (this.object.type === 'uri' || this.object.type === 'bnode') {
 		        if (VIE.EntityManager.getBySubject(this.object.toString()) !== undefined) {
-                    ret.push(VIE.EntityManager.getBySubject(this.object.toString()));
+                    ret.add(VIE.EntityManager.getBySubject(this.object.toString()), {backend:true, silent:true});
                 }
                 else {
-                    ret.push(this.object.toString());
+                	var inst = new VIE2.Resource({
+                        value: this.object.value.toString(),
+                        isLiteral: false,
+                        isResource: true
+                    });
+                    ret.add(inst, {backend:true, silent:true});
                 }
             }
         }
@@ -257,135 +286,24 @@ VIE2.getFromGlobalCache = function (uri, prop) {
 	return ret;
 };
 
-//<strong>VIE2.addProperty(uri, prop, values)</strong>: TODO
-VIE2.addProperty = function (uri, prop, values) {
-    
-    if (uri === undefined) {
-    	VIE2.log("warn", "VIE2.addProperty()", "No URI specified, returning without action!");
-    	return;
-    }
-    if (prop === undefined) {
-    	VIE2.log("warn", "VIE2.addProperty()", "No property specified, returning without action!");
-    	return;
-    }
-    if (values === undefined) {
-    	VIE2.log("warn", "VIE2.addProperty()", "No values specified, returning without action!");
-    	return;
-    }
-
-    if (typeof values === 'string') {
-        return VIE2.addProperty(uri, prop, [ values ]);
-    }
-    
-    for (var i = 0; i < values.length; i++) {
-        var object;
-        if (VIE2.Util.isLiteral(values[i])) {
-            object = jQuery.rdf.literal(values[i], {namespaces: VIE2.namespaces});
-            if (!object.datatype) {
-                //if no specific datatype is given, we assume *xsd:string*
-                if (!object.lang) {
-                    //if no language is given, we assume *english*
-                    object.lang = "en";
-                }
-            }
-        } else if (VIE2.Util.isBlank(values[i])) {
-            object = jQuery.rdf.blank(values[i], {namespaces: VIE2.namespaces});
-        } else {
-            object = jQuery.rdf.resource(values[i], {namespaces: VIE2.namespaces});
-        }
-        var triple = jQuery.rdf.triple(uri, prop, object, {
-            namespaces: VIE2.namespaces
-        });
-        VIE2.log("info", "VIE2.addProperty()", "Adding new triple: '" + triple + "'.");
-        VIE2.globalCache.add(triple);
-    }
-    VIE2.log("info", "VIE2.addProperty()", "Global Cache holds now " + VIE2.globalCache.databank.triples().length + " triples!");
-};
-
-//<strong>VIE2.changeProperty(uri, prop, oldValue, newValue)</strong>: TODO
-VIE2.changeProperty = function (uri, prop, oldValue, newValue) {
-    if (uri === undefined) {
-    	VIE2.log("warn", "VIE2.removeProperty()", "No URI specified, returning without action!");
-    	return;
-    }
-    
-    if (prop === undefined) {
-    	VIE2.log("warn", "VIE2.removeProperty()", "No property specified, returning without action!");
-    	return;
-    }
-    
-    if (oldValue === undefined) {
-    	VIE2.log("warn", "VIE2.removeProperty()", "No oldValue specified, returning without action!");
-    	return;
-    }
-    
-    if (newValue === undefined) {
-    	VIE2.log("warn", "VIE2.removeProperty()", "No newValue specified, returning without action!");
-    	return;
-    }
-    
-    VIE2.removeProperty(uri, prop, oldValue);
-    VIE2.addProperty(uri, prop, newValue);
-    
-};
-
-//<strong>VIE2.removeProperty(uri, prop, value)</strong>: Removes TODO
-//all properties of the given uri from the global Cache.
-VIE2.removeProperty = function (uri, prop, value) {
-    
-    if (uri === undefined) {
-    	VIE2.log("warn", "VIE2.removeProperty()", "No URI specified, returning without action!");
-    	return;
-    }
-    
-    if (prop === undefined) {
-    	VIE2.log("warn", "VIE2.removeProperty()", "No property specified, returning without action!");
-    	return;
-    }
-    
-     if (value === undefined) {
-    	VIE2.log("warn", "VIE2.removeProperty()", "No value specified, returning without action!");
-    	return;
-    }
-    
-    VIE2.log("info", "VIE2.removeProperty()", "Global Cache holds now " + VIE2.globalCache.databank.triples().length + " triples!");
-    var object;
-    if (VIE2.Util.isLiteral(value)) {
-        object = jQuery.rdf.literal(value, {namespaces: VIE2.namespaces});
-        if (!object.datatype) {
-            //if no specific datatype is given, we assume *xsd:string*
-            if (!object.lang) {
-                //if no language is given, we assume *english*
-                object.lang = "en";
-            }
-        }
-    } else if (VIE2.Util.isBlank(value)) {
-        object = jQuery.rdf.blank(value, {namespaces: VIE2.namespaces});
-    } else {
-        object = jQuery.rdf.resource(value, {namespaces: VIE2.namespaces});
-    }
-    var pattern = jQuery.rdf.pattern(uri, prop, object, {namespaces: VIE2.namespaces});
-    VIE2.log("info", "VIE2.removeProperty()", "Removing all triples that match: '" + pattern + "'");
-    VIE2.globalCache.where(pattern).remove(pattern);
-    VIE2.log("info", "VIE2.removeProperty()", "Global Cache holds now " + VIE2.globalCache.databank.triples().length + " triples!");
-};
-
 //<strong>VIE2.lookup(uri, props, callback)</strong>: The query function supports querying for properties. The uri needs
 //to be of type <code>jQuery.rdf</code> object or a simple string and the property is either an array of strings
 //or a simple string. The function iterates over all connectors that have <code>query()</code>
 //implemented and collects data in an object.
 //The callback retrieves an object with the properties as keys and an array of results as their corresponding values.
 VIE2.lookup = function (uri, props, callback) {
-	VIE2.log("info", "VIE2.lookup()", "Start!");
+	VIE2.log("info", "VIE2.lookup()", "Start ('" + uri + "', '" + props + "')!");
 
 	if (uri === undefined || typeof uri !== 'string' || props === undefined) {
-		VIE2.log("warn", "VIE2.lookup()", "Invoked 'query()' with wrong/undefined argument(s)!");
-		callback.call(uri, ret);
+		VIE2.log("warn", "VIE2.lookup()", "Invoked 'lookup()' with wrong/undefined argument(s)!");
+		if (callback) {
+            callback.call(uri, ret);
+        }
 		return;
 	}
     
     if (!jQuery.isArray(props)) {
-		VIE2.lookup(uri, [ props ], callback, options);
+		VIE2.lookup(uri, [ props ], callback);
 		return;
 	}
     
@@ -431,14 +349,15 @@ VIE2.lookup = function (uri, props, callback) {
                     });
 					VIE2.log("info", "VIE2.lookup()", "Finished task: 'query()' for uri '" + uri + "'!");
 					VIE2.log("info", "VIE2.lookup()", "Global Cache now holds " + VIE2.globalCache.databank.triples().length + " triples!");
-				    callback.call(uri, ret);
+				    if (callback) {
+                        callback.call(uri, ret);
+                    }
                 }
 			};
 		}(uri, ret, callback);
 		this.query(uri, props, c);
 	});
 };
-
 
 //<strong>VIE2.mappings</strong>: Contains for all registered mappings (mapping.id is the key), the
 //following items:<br/>
@@ -447,142 +366,14 @@ VIE2.lookup = function (uri, props, callback) {
 //* VIE2.mappings[id].collection -> the backbone JS collection, that has the Model registered. 
 VIE2.mappings = {};
 
-//<strong>VIE2.registerModel(entity)</strong>: Add a backbone model to the corresponding collection(s).
-VIE2.registerModel = function (entity, callback) {
-    VIE2.log("info", "VIE2.registerModel()", "Start (" + entity.id + ")!");
-    
-    var model = VIE.EntityManager.getBySubject(entity["id"]);
-    //check whether we already have this entity registered
-    if (model !== undefined) {
-        VIE2.log("info", "VIE2.registerModel()", "Entity " + entity["id"] + " already registered, no need to add it.");
-        VIE2.log("info", "VIE2.registerModel()", "But we better check if there is a collection where we have to add it to.");
-        jQuery.each(VIE2.mappings, function (i, e) {
-        	var belongsHere = false;
-        	jQuery.each(e['a'], function () {
-        		if (jQuery.inArray(this.toString(), entity["a"]) !== -1) {
-        			belongsHere = true;
-        			return false;
-        		}
-        	});
-            //if model belongs to this collection and is not already added => add it
-        	if (belongsHere && e['collection'].indexOf(model) === -1) {
-                e['collection'].add(model);
-            }
-        });
-        if (callback) {
-            callback.call(model);
-        }
-    } else {
-        //let's first ask all connectors if they know more types of this entity!    
-        var queryCallback = function (ret) {
-            var types = [];
-            if (ret['a']) {
-                for (var i = 0; i < ret['a'].length; i++) {
-                    if (!VIE2.Util.isCurie(ret['a'][i])) {
-                        var curie = jQuery.createCurie(ret['a'][i].replace(/^</, '').replace(/>$/, ''), {
-                            namespaces: VIE2.namespaces,
-                            charcase: 'lower'
-                        }).toString();
-                        types.push(curie);
-                    }
-                    else {
-                        types.push(ret['a'][i]);
-                    }
-                }
-            }
-            
-            //merge with possibly given types in (entity['a'])
-            if (entity['a']) {
-                if (jQuery.isArray(entity['a'])) {
-                    for (var i = 0; i < entity['a'].length; i++) {
-                        if (!VIE2.Util.isCurie(entity['a'][i])) {
-                            var curie = jQuery.createCurie(entity['a'][i].replace(/^</, '').replace(/>$/, ''), {
-                                namespaces: VIE2.namespaces,
-                                charcase: 'lower'
-                            }).toString();
-                            types.push(curie);
-                        }
-                        else {
-                            types.push(entity['a'][i]);
-                        }
-                    }
-                } else if (typeof entity['a'] === 'string'){
-                    if (!VIE2.Util.isCurie(entity['a'])) {
-                        var curie = jQuery.createCurie(entity['a'].replace(/^</, '').replace(/>$/, ''), {
-                            namespaces: VIE2.namespaces,
-                            charcase: 'lower'
-                        }).toString();
-                        types.push(curie);
-                    }
-                    else {
-                        types.push(entity['a']);
-                    }
-                }
-            }
-            
-            VIE2.log("info", "VIE2.registerModel()", "Entity " + entity["id"] + " of type(s) [" + types.join(", ") + "] needs to be registered as a backbone model.");
-    		var modelInstance = new VIE2.Entity(entity);
-            var uri = modelInstance.getSubject();
-            
-            jQuery.each(VIE2.mappings, function (i, mapping) {
-            	var belongsHere = false;
-                for (var x = 0; x < types.length; x++) {
-            		if (mapping['a'].indexOf(types[x]) !== -1) {
-            			belongsHere = true;
-                        break;
-            		}
-                }
-                //entity needs to be registered with this mapping
-            	if (belongsHere) {
-                    VIE2.log("info", "VIE2.registerModel()", "Registered a backbone model for '" + uri + "'.");
-            		var Model = mapping['collection'].model;
-
-                    jQuery.each(entity, function (k, v) {
-                        if (k !== "id") {
-                            VIE2.addProperty(uri, k, v);
-                        }
-                    });
-                    //registering the model within VIE
-                    VIE.EntityManager.registerModel(modelInstance);
-            		//adding model instance to collection
-            		mapping['collection'].add(modelInstance);
-                    
-            		VIE2.log("info", "VIE2.registerModel()", "Added entity '" + uri + "' to collection of type '" + i + "'!");
-            		var mapping = mapping['mapping'];
-                    
-            		//query for default properties to make them available in the offline storage
-            		VIE2.log("info", "VIE2.registerModel()", "Querying for default properties for entity '" + entity["id"] + "': [" + mapping.defaults.join(", ") + "]!");
-                    VIE2.lookup(modelInstance.getSubject(), mapping.defaults, function (defProps, modelInstance) {
-            			return function () {
-            	    		VIE2.log("info", "VIE2.registerModel()", "Finished querying for default properties for entity '" + modelInstance.getSubject() + "': [" + defProps.join(", ") + "]!");
-                            //trigger change when finished
-                            for (var y = 0; y < defProps.length; y++) {
-                                modelInstance.trigger('change:' + defProps[y]);
-                            }
-            				modelInstance.change();
-            			};
-            		} (mapping.defaults, modelInstance));
-            	} else {
-                    VIE2.log("info", "VIE2.registerModel()", "Entity '" + entity.id + "' does not belong to collection of type " + i + "!");
-                }
-            });
-            if (callback) {
-                callback.call(modelInstance);
-            }
-        }
-        VIE2.lookup(entity.id, ['a'], queryCallback);
-    }
-};
-
 //<strong>VIE2.registerMapping(mapping)</strong>: Static method to register a mapping (is automatically called 
 //during construction of mapping class. This allocates an object in *VIE2.mappings[mapping.id]*.
 VIE2.registerMapping = function (mapping) {
     //first check if there is already 
     //a mapping with 'mapping.id' registered	
     if (!VIE2.mappings[mapping.id]) {
-    	VIE2.log("info", "VIE2.registerMapping()", "Registered mapping '" + mapping.id + "'");
                 
-    	var Collection = VIE2.Collection.extend({model: VIE2.Entity});
+    	var Collection = VIE2.EntityCollection.extend({model: VIE2.Entity});
     	
     	VIE2.mappings[mapping.id] = {
 			"a" : (jQuery.isArray(mapping.types))? mapping.types : [mapping.types],
@@ -590,7 +381,7 @@ VIE2.registerMapping = function (mapping) {
 			"mapping" : mapping
     	};
     	
-    	VIE2.log("info", "VIE2.registerMapping()", "Registered mapping '" + mapping.id + "' finished!");
+    	VIE2.log("info", "VIE2.registerMapping()", "  Registered mapping '" + mapping.id + "'!");
     } else {
     	VIE2.log("warn", "VIE2.registerMapping()", "Did not register mapping, as there is" +
     			"already a mapping with the same id registered.");
