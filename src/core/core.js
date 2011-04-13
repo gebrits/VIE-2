@@ -349,7 +349,7 @@ VIE2.lookup = function (uri, props, callback) {
                     });
 					VIE2.log("info", "VIE2.lookup()", "Finished task: 'query()' for uri '" + uri + "'!");
 					VIE2.log("info", "VIE2.lookup()", "Global Cache now holds " + VIE2.globalCache.databank.triples().length + " triples!");
-				    if (callback) {
+				    if (callback) {
                         callback.call(uri, ret);
                     }
                 }
