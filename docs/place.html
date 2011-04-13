@@ -5,13 +5,15 @@
 
 <span class="k">new</span> <span class="nx">VIE2</span><span class="p">.</span><span class="nx">Mapping</span><span class="p">(</span>
     <span class="s1">&#39;place&#39;</span><span class="o">,</span>  <span class="c">//the id of the mapping </span>
-	<span class="p">[</span><span class="s1">&#39;dbonto:Place&#39;</span><span class="p">]</span><span class="o">,</span>  <span class="c">//a list of all types that fall into this category</span>
+	<span class="p">[</span><span class="s1">&#39;dbonto:Place&#39;</span><span class="o">,</span> <span class="s1">&#39;opencalais:Facility&#39;</span><span class="o">,</span> <span class="s1">&#39;zemanta:Category&#39;</span><span class="p">]</span><span class="o">,</span>  <span class="c">//a list of all types that fall into this category</span>
 	<span class="p">[</span><span class="s1">&#39;rdfs:label&#39;</span><span class="o">,</span> <span class="s1">&#39;foaf:name&#39;</span><span class="o">,</span> <span class="s1">&#39;foaf:page&#39;</span><span class="o">,</span> <span class="s1">&#39;foaf:depiction&#39;</span><span class="o">,</span> <span class="s1">&#39;geo:long&#39;</span><span class="o">,</span> <span class="s1">&#39;geo:lat&#39;</span><span class="p">]</span><span class="o">,</span> <span class="c">//a list of default properties</span>
 	<span class="p">{</span><span class="c">// optional options</span>
         <span class="nx">namespaces</span><span class="o">:</span> <span class="p">{</span> <span class="c">//the used namespaces, these can be given here, or placed directly into the HTML document&#39;s xmlns attribute.</span>
-            <span class="s1">&#39;rdfs&#39;</span>   <span class="o">:</span> <span class="s1">&#39;http://www.w3.org/2000/01/rdf-schema#&#39;</span><span class="o">,</span>
-            <span class="s1">&#39;foaf&#39;</span>   <span class="o">:</span> <span class="s1">&#39;http://xmlns.com/foaf/0.1/&#39;</span><span class="o">,</span>
-            <span class="s1">&#39;dbonto&#39;</span> <span class="o">:</span> <span class="s1">&#39;http://dbpedia.org/ontology/&#39;</span>
+            <span class="s1">&#39;rdfs&#39;</span>       <span class="o">:</span> <span class="s1">&#39;http://www.w3.org/2000/01/rdf-schema#&#39;</span><span class="o">,</span>
+            <span class="s1">&#39;foaf&#39;</span>       <span class="o">:</span> <span class="s1">&#39;http://xmlns.com/foaf/0.1/&#39;</span><span class="o">,</span>
+            <span class="s1">&#39;dbonto&#39;</span>     <span class="o">:</span> <span class="s1">&#39;http://dbpedia.org/ontology/&#39;</span><span class="o">,</span>
+            <span class="s1">&#39;opencalais&#39;</span> <span class="o">:</span> <span class="s1">&#39;http://s.opencalais.com/1/type/em/e/&#39;</span><span class="o">,</span>
+            <span class="s1">&#39;zemanta&#39;</span>    <span class="o">:</span> <span class="s1">&#39;http://s.zemanta.com/ns#&#39;</span>
         <span class="p">}</span>
     <span class="p">}</span>
 <span class="p">);</span>

@@ -18,7 +18,7 @@ VIE2.EntityCollection = VIE.RDFEntityCollection.extend({
     
     //overwrite the internal _add method
     _add: function (model, opts) {
-        opts || (opts = {});
+        if (!opts) { opts = {};}
         VIE.RDFEntityCollection.prototype._add.call(this, model, opts);
         
         //if the annotation does *not* come from the analyze() method
@@ -42,6 +42,7 @@ VIE2.EntityCollection = VIE.RDFEntityCollection.extend({
 	},
     
     _remove: function (model, opts) {
+        if (!opts) { opts = {};}
         //when removing the model from this collection, that means
         //that we remove all corresponding data from the cache as well.
         var pattern = jQuery.rdf.pattern(model.get('id'), '?x', '?y', {namespaces: VIE2.namespaces});
@@ -60,7 +61,7 @@ VIE2.entities = new VIE2.EntityCollection();
 VIE2.ObjectCollection = Backbone.Collection.extend({
         
     _add: function (model, opts) {
-        opts || (opts = {});
+        if (!opts) { opts = {};}
         Backbone.Collection.prototype._add.call(this, model, opts);
         
         if (!opts.backend) {

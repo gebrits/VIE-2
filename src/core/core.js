@@ -73,7 +73,7 @@
         //*options* can contain a 'connectors' field. If so, only these connectors will be used
         //for the analysis. If not specified, all connectors are used.
     	analyze: function (callback, options) {
-            options || (options = {});            
+            if (!options) { options = {};}     
     		var that = this;
             
     		//analyze() does not actually need a callback method, but it is usually good to use it 

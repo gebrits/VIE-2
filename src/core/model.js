@@ -19,7 +19,7 @@ VIE2.Entity = VIE.RDFEntity.extend({
         //mappings if the model needs to be inserted.
         this.bind('change:a', this.searchCollections);  
         
-        opts || (opts = {});
+        if (!opts) { opts = {};}
         
         if (!opts.backend) {
             for (var attr in attrs) {
