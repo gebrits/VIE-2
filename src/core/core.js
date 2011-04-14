@@ -118,7 +118,6 @@
     					
     					//register all subjects as backbone model
     					jQuery.each(rdf.databank.subjectIndex, function (subject, v) {
-    						
                             var subjStr = subject.toString();
                             if (that.options.entities.indexOf(subjStr) === -1) {
                                 that.options.entities.push(subjStr);
@@ -126,15 +125,10 @@
                             
                             if (!VIE.EntityManager.getBySubject(subjStr)) {
                                 VIE2.log("info", "VIE2.core#analyze()", "Register new entity (" + subjStr + ")!");
-                                var model = new VIE2.Entity({
-                                    id: subjStr
-                                }, {
-                                    backend: true
-                                });
                                 
-                                VIE2.entities.add(model, {
-                                    backend: true
-                                });
+                                VIE2.createEntity({
+                                  id : subjStr
+                                }, {backend: true});
                             } else {
                                 VIE.EntityManager.getBySubject(subjStr).change();
                             }
@@ -245,11 +239,12 @@ VIE2.clearCache = function () {
 
 //<strong>VIE2.getFromCache(uri, prop)</strong>: Retrive properties from the given
 // *uri* directly from the global Cache. 
-VIE2.getFromCache = function (uri, prop) {
+VIE2.getFromCache = function (parent, uri, prop) {
     //initialize collection
     var Collection = VIE2.ObjectCollection.extend({
         uri      : uri,
-        property : prop
+        property : prop,
+        parent: parent
     });
     
     var ret = new Collection();
@@ -259,24 +254,14 @@ VIE2.getFromCache = function (uri, prop) {
 	.each(function () {
         if (this.object.type) {
             if (this.object.type === 'literal') {
-                var inst = new VIE2.Literal({
-                    datatype: this.object.datatype,
-                    lang: this.object.lang,
-                    value: this.object.value,
-                    isLiteral: true,
-                    isResource: false
-                });
+                var inst = VIE2.createLiteral(this.object.value, {lang: this.object.lang, datatype: this.object.datatype, backend:true, silent:true});
                 ret.add(inst, {backend:true, silent:true});
             } else if (this.object.type === 'uri' || this.object.type === 'bnode') {
 		        if (VIE.EntityManager.getBySubject(this.object.toString()) !== undefined) {
                     ret.add(VIE.EntityManager.getBySubject(this.object.toString()), {backend:true, silent:true});
                 }
                 else {
-                	var inst = new VIE2.Resource({
-                        value: this.object.value.toString(),
-                        isLiteral: false,
-                        isResource: true
-                    });
+                	var inst = VIE2.createResource(this.object.value.toString(), {backend:true, silent:true});
                     ret.add(inst, {backend:true, silent:true});
                 }
             }
@@ -284,6 +269,20 @@ VIE2.getFromCache = function (uri, prop) {
 	});
 	
 	return ret;
+};
+
+VIE2.removeFromCache = function (uri, prop, val) {
+    var pattern = jQuery.rdf.pattern(
+    uri, 
+    (prop)? prop : '?x',
+    (val)? val : '?y', 
+    {namespaces: VIE2.namespaces});
+    VIE2.log("info", "VIE2.removeFromCache()", "Removing triples that match: '" + pattern.toString() + "'!");
+    VIE2.log("info", "VIE2.removeFromCache()", "Global Cache now holds " + VIE2.globalCache.databank.triples().length + " triples!");
+    VIE2.globalCache
+    .where(pattern)
+    .remove(pattern);
+    VIE2.log("info", "VIE2.removeFromCache()", "Global Cache now holds " + VIE2.globalCache.databank.triples().length + " triples!");
 };
 
 //<strong>VIE2.lookup(uri, props, callback)</strong>: The query function supports querying for properties. The uri needs

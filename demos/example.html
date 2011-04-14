@@ -51,6 +51,7 @@
 		<script type="text/javascript">
 		    VIE2.logLevels = ["info", "warn", "error"];
 		    $(function() {
+                
                 VIE2.connectors['stanbol'].options({
              	    "proxy_url" : "../utils/proxy/proxy.php",
              	    "enhancer_url" : "http://localhost:8080/engines/",
@@ -81,7 +82,9 @@
                     
                     initialize: function() {
                         _.bindAll(this, "render");
+                        _.bindAll(this, "remove");
                         this.model.bind('change', this.render);
+                        this.model.bind('remove', this.remove);
                         $(this.el).hide();
                         $('.persons').append($(this.el));
                         this.render();
@@ -91,11 +94,16 @@
                         var names = this.model.get("foaf:name");
                         var str = "";
 
-                        names.each(function (name) {
-                           var literal = name.get('isLiteral');
-                           var res = name.get('isResource');
-                           str += " " + name.get('value').replace(/"/g, '');
-                        });
+                        if (names.length) {
+                            var name = names.at(0);
+                            str += name.get('value').replace(/"/g, '');
+                        }
+                        for (var i = 1, l = names.length; i < l; i++) {
+                            var name = names.at(i);
+                            var literal = name.isLiteral;
+                            str += " aka. " + name.get('value').replace(/"/g, '');
+                            str += '@' + name.get('lang');
+                        }
                         
                         str.trim();
                         if (str.length > 0) {
@@ -114,18 +122,31 @@
                     
                     initialize: function() {
                       _.bindAll(this, "render");
+                      _.bindAll(this, "remove");
                       this.model.bind('change', this.render);
+                      this.model.bind('remove', this.render);
                       this.render();
                     },
                     
                     render: function() {
                         var names = this.model.get("foaf:name");
-                        var name = "???";
-                        
+                        var str = "";
+
                         if (names.length) {
-                            name = names.at(0).get('value');
+                            var name = names.at(0);
+                            str += name.get('value').replace(/"/g, '');
+                            for (var i = 1, l = names.length; i < l; i++) {
+                                var name = names.at(i);
+                                var literal = name.isLiteral;
+                                str += " aka. " + name.get('value').replace(/"/g, '');
+                                str += '@' + name.get('lang');
+                            }
+                        } else {
+                            str = "???";
                         }
-                        $(this.el).text(name);
+                        str.trim();
+                        $(this.el).text(str);
+                        $(this.el).show();
                       return this;
                     }
                 });
@@ -134,8 +155,9 @@
                     tagName: 'li',
                     
                     initialize: function() {
-                        _.bindAll(this, "render");
+                      _.bindAll(this, "render");
                       this.model.bind('change', this.render);
+                      this.model.bind('remove', this.remove);
                       $(this.el)
                       .addClass('task')
                       .append("<span class='agent'>")
@@ -150,11 +172,20 @@
                         var agentModel = (this.model.get("rdfcal:hasAgent").length)? this.model.get("rdfcal:hasAgent").at(0) : undefined;
                         var agentSpan = $('.agent', $(this.el));
                         
-                        var agentView = new AgentView({
-                            id: 'agent-' + VIE2.Util.PseudoGuid.GetNew(), 
-                            model: agentModel, 
-                            el: agentSpan
-                        });
+                        if (agentModel) {
+                            if (!this.agentView) {
+                                this.agentView = new AgentView({
+                                    id: 'agent-' + VIE2.Util.PseudoGuid.GetNew(),
+                                    model: agentModel,
+                                    el: agentSpan
+                                });
+                            }
+                            else {
+                                this.agentView.model.change();
+                            }
+                        } else {
+                            agentSpan.text("???");
+                        }
                         
                         var todo       = (this.model.get("rdfcal:name").length)? this.model.get("rdfcal:name").at(0).get('value') : "nothing special";
                         var targetDate = (this.model.get("rdfcal:targetDate").length)? this.model.get("rdfcal:targetDate").at(0).get('value') : "ASAP";
@@ -189,23 +220,19 @@
                  
                  if (!agentModel) {
                      //register the agent
-                     agentModel = new VIE2.Entity({
+                     agentModel = VIE2.createEntity({
                         id: agent,
                         a: 'foaf:Person',
                         'foaf:name': "\"Mr. Unknown\""
                      });
-                    
-                    VIE2.entities.add(agentModel);
                 }
-                var model = new VIE2.Entity({
+                var model = VIE2.createEntity({
                     id: $.rdf.blank('[]').toString(),
-                    a: ['rdfcal:Task'],
+                    a: 'rdfcal:Task',
                     'rdfcal:name': todo,
                     'rdfcal:targetDate': targetDate,
                     'rdfcal:hasAgent': agent
                 });
-                    
-                VIE2.entities.add(model);
             };
             
             
@@ -214,38 +241,58 @@
                 
                 //see if an entity is already present
                 var model = VIE.EntityManager.getBySubject(subject);
-                if (model) {
-                    var inst = new VIE2.Literal({
-                        lang: lang,
-                        value: newName,
-                        isLiteral: true,
-                        isResource: false
-                    });
-                    model.get(prop).add(inst);
-                } else {
-                    model = new VIE2.Entity({
+                if (!model) {
+                    model = VIE2.createEntity({
                       id : subject,
-                      a : 'foaf:Person',
-                      prop: newName + '@' + lang
+                      a : 'foaf:Person'
                     });
-                    VIE2.entities.add(model);
                 }
+                
+                var inst = VIE2.createLiteral(newName, {lang: lang});
+                model.get(prop).add(inst);
             };
             
-            function changeName(subject, from, to){
+            function changeName(subject, from, to) {
                 var prop = 'foaf:name';
                                 
                 //see if an entity is already present
                 var model = VIE.EntityManager.getBySubject(subject);
-                if (model) {
-                    model.changeLiteral(prop, from, to);
+                if (!model) {
+                    model = VIE2.createEntity({
+                      id : subject,
+                      a : 'foaf:Person',
+                      prop: from
+                    });
                 }
-                else {
-                    VIE2.registerModel({
-                        id: subject,
-                        a: ['foaf:Person']
-                    }, function () {
-                        this.changeLiteral(prop, from, to);
+                
+                var oldValueModel = model.get(prop).getByValue(from);
+                
+                if (oldValueModel) {
+                    oldValueModel.set({
+                        value: to
+                    });
+                }
+            };
+            
+            function changeNameLang(subject, value, from, to) {
+                var prop = 'foaf:name';
+                                
+                //see if an entity is already present
+                var model = VIE.EntityManager.getBySubject(subject);
+                if (!model) {
+                    model = VIE2.createEntity({
+                      id : subject,
+                      a : 'foaf:Person',
+                      prop: from
+                    });
+                }
+                
+                var oldValue = model.get(prop).getByValue(from, {lang: from});
+                
+                if (oldValue) {
+                    oldValue.set({
+                        value: value,
+                        lang: to
                     });
                 }
             };
@@ -253,19 +300,25 @@
             function removeName (subject, name) {
               var prop = 'foaf:name';
                                 
-                //see if an entity is already present
+               //see if an entity is already present
                 var model = VIE.EntityManager.getBySubject(subject);
-                if (model) {
-                    model.removeLiteral(prop, name);
-                }
-                else {
-                    VIE2.registerModel({
-                        id: subject,
-                        a: ['foaf:Person']
-                    }, function () {
-                        this.removeLiteral(prop, name);
+                if (!model) {
+                    model = VIE2.createEntity({
+                      id : subject,
+                      a : 'foaf:Person',
+                      prop: name
                     });
                 }
+                
+                var values = model.get(prop);
+                var value = values.getByValue(name);
+                values.remove(value);
+                
+            };
+            
+            function removeEntity (subject, buttonSelector) {
+                VIE2.entities.remove(VIE.EntityManager.getBySubject(subject));
+                $(buttonSelector).attr("disabled", "disabled");
             };
 		</script>
 		
@@ -276,8 +329,9 @@
 		<button onclick='addName("<http://dbpedia.org/resource/Barack_Obama>", "\"B. Obama\"", "en");$(this).attr("disabled", "disabled")'>Add a fake name of Barack Obama in english (B. Obama).</button><br />
         <button onclick='addName("<http://dbpedia.org/resource/Barack_Obama>", "\"Bobby Obama\"", "nl");$(this).attr("disabled", "disabled")'>Add another fake name of Barack Obama in dutch (Bobby Obama).</button><br />
         <button onclick='changeName("<http://dbpedia.org/resource/Barack_Obama>", "\"B. Obama\"", "\"Barack Thomas Oliver Obama\"");$(this).attr("disabled", "disabled")'>Change the fake name of Barack Obama (B. Obama -> Barack Thomas Oliver Obama).</button><br />
-        <button onclick='removeName("<http://dbpedia.org/resource/Barack_Obama>", "\"B. Obama\"");$(this).attr("disabled", "disabled")'>Remove the fake name of Barack Obama (B. Obama).</button><br /><br />
-        
+        <button onclick='changeNameLang("<http://dbpedia.org/resource/Barack_Obama>", "\"Bobby Obama\"", "nl", "fr");$(this).attr("disabled", "disabled")'>Change language of Bobby Obama to french.</button><br />
+        <button onclick='removeName("<http://dbpedia.org/resource/Barack_Obama>", "\"Barack Thomas Oliver Obama\"");$(this).attr("disabled", "disabled")'>Remove the fake name of Barack Obama (B. Obama).</button><br />
+        <button onclick='removeEntity("<http://this.demo.eu/Thomas_Unknown>", this);'>Remove Thomas Unknown entity.</button><br /><br />
         <button onclick='annotateTask("<http://this.demo.eu/Thomas_Unknown>", "\"implement something cool\"", "\"2012-04-11\"^^xsd:date");$(this).attr("disabled", "disabled");'>Annotate the task below.</button><br />
         <span id="task"><span class=".person">Thomas Unknown</span> should implement something cool.</span><br />
 		
