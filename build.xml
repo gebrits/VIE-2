@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <project name="VIE^2" basedir="." default="all">
     
-	<property name="VERSION" value="1.0alpha"/>
+	<property name="VERSION" value="1.0.0"/>
 	    
     <property name="DOCS_DIR" value="./docs" description="API documentation"/>
     <property name="DIST_DIR" value="./dist"/>
@@ -16,17 +16,7 @@
 		<echo message="Attention: 'Docco' is needed for that. Make sure it is on your PATH or"/>
 		<echo message="get it from: http://jashkenas.github.com/docco/"/>
 		<exec executable="docco" dir=".">
-  			<arg value="${SRC_DIR}/core/connector.js" />
-  			<arg value="${SRC_DIR}/core/core.js" />
-  			<arg value="${SRC_DIR}/core/mapping.js" />
-  			<arg value="${SRC_DIR}/core/collection.js" />
-  			<arg value="${SRC_DIR}/core/model.js" />
-  			<arg value="${SRC_DIR}/core/util.js" />
-  			<arg value="${SRC_DIR}/mapping/person.js" />
-  			<arg value="${SRC_DIR}/mapping/place.js" />
-  			<arg value="${SRC_DIR}/connector/dbpedia.js" />
-  			<arg value="${SRC_DIR}/connector/rdfa.js" />
-  			<arg value="${SRC_DIR}/connector/stanbol.js" />
+  			<arg value="${DIST_DIR}/vie2-latest.debug.js" />
   			<arg value="${TOOLS_DIR}/proxy/node_proxy.js" />
 		</exec>
     </target>
@@ -41,31 +31,24 @@
         <mkdir dir="${DIST_DIR}" />
 	</target>
 	
-    <target name="all" depends="init, doc, dist"/>
+    <target name="all" depends="init, dist, doc"/>
 	
     <target name="dist">
         <antcall target="combine" />
         <antcall target="minimise" />
-        
-        <zip destfile="${DIST_DIR}/vie2-${VERSION}.zip">
-            <zipfileset dir="${DIST_DIR}" includes="*.js" prefix="${DIST_DIR}"/>
-            <zipfileset dir="${SRC_DIR}" includes="**/**" prefix="${SRC_DIR}"/>
-            <zipfileset dir="${LIB_DIR}" includes="**/**" prefix="${LIB_DIR}"/>
-            <zipfileset dir="${TOOLS_DIR}" includes="**/**" prefix="${TOOLS_DIR}"/>
-            <zipfileset dir="${DEMOS_DIR}" includes="**/**" prefix="${DEMOS_DIR}"/>
-            <zipfileset dir="${DOCS_DIR}" includes="**/**" prefix="${DOCS_DIR}"/>
-        </zip>
     </target>
     
     <target name="combine" description="combines core/*.js files into one file">
         <echo message="Building VIE^2 Distribution" />
         <concat destfile="${DIST_DIR}/vie2-${VERSION}.debug.js">
-        	<fileset dir="${SRC_DIR}" includes="core/util.js"/>
-        	<fileset dir="${SRC_DIR}" includes="core/connector.js"/>
-        	<fileset dir="${SRC_DIR}" includes="core/mapping.js"/>
+        	<fileset dir="${SRC_DIR}" includes="core/intro.js"/>
+        	<fileset dir="${SRC_DIR}" includes="core/core.js"/>
         	<fileset dir="${SRC_DIR}" includes="core/collection.js"/>
         	<fileset dir="${SRC_DIR}" includes="core/model.js"/>
-        	<fileset dir="${SRC_DIR}" includes="core/core.js"/>
+        	<fileset dir="${SRC_DIR}" includes="core/connector.js"/>
+        	<fileset dir="${SRC_DIR}" includes="core/mapping.js"/>
+        	<fileset dir="${SRC_DIR}" includes="core/util.js"/>
+        	<fileset dir="${SRC_DIR}" includes="core/outro.js"/>
        	</concat>
         <copy file="${DIST_DIR}/vie2-${VERSION}.debug.js" tofile="${DIST_DIR}/vie2-latest.debug.js" overwrite="true" />
     </target>

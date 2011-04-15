@@ -1,14 +1,6 @@
-/**
- * @fileOverview VIE^2
- * @author <a href="mailto:sebastian.germesin@dfki.de">Sebastian Germesin</a>
- */
-
-//The global <strong>VIE2 object</strong>. If VIE2 is already defined, the
-//existing VIE2 object will not be overwritten so that the
-//defined object is preserved.
-if (typeof VIE2 == 'undefined' || !VIE2) {
-    VIE2 = {};
-}
+// File:   collection.js
+// Author: <a href="mailto:sebastian.germesin@dfki.de">Sebastian Germesin</a>
+//
 
 //just for convenience, should be removed in a later revision
 VIE.EntityManager.initializeCollection();
@@ -35,11 +27,11 @@ VIE2.EntityCollection = VIE.RDFEntityCollection.extend({
         }
         //in any case, we query all connectors for the types of the entity.
         VIE2.lookup(model.get('id'), ['a'], function (m) {
-        	return function () {
-        	    m.trigger('change:a');
+            return function () {
+                m.trigger('change:a');
             };
         }(model));
-	},
+    },
     
     _remove: function (model, opts) {
         if (!opts) { opts = {};}

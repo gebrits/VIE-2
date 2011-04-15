@@ -1,14 +1,6 @@
-/**
- * @fileOverview VIE&sup2;
- * @author <a href="mailto:sebastian.germesin@dfki.de">Sebastian Germesin</a>
- */
-
-//The global <strong>VIE&sup2; object</strong>. If VIE&sup2; is already defined, the
-//existing VIE&sup2; object will not be overwritten so that the
-//defined object is preserved.
-if (typeof VIE2 == 'undefined' || !VIE2) {
-    VIE2 = {};
-}
+// File:   model.js
+// Author: <a href="mailto:sebastian.germesin@dfki.de">Sebastian Germesin</a>
+//
 
 //<strong>VIE2.Entity</strong>: The parent backbone entity class for all other entites.
 //Inherits from VIE.RDFEntity.
@@ -25,7 +17,7 @@ VIE2.Entity = VIE.RDFEntity.extend({
             for (var attr in attrs) {
                 var val = attrs[attr];
                 if (attr !== 'id') {
-                    if ($.isArray(val)) {
+                    if (jQuery.isArray(val)) {
                         for (var i = 0; i < val.length; i++) {
                             var triple = jQuery.rdf.triple(this.id, attr, val[i], {
                                 namespaces: VIE2.namespaces
@@ -49,7 +41,7 @@ VIE2.Entity = VIE.RDFEntity.extend({
         var types = VIE2.getFromCache(this, this.get('id'), 'a');
         
         jQuery.each(VIE2.mappings, function (i, mapping) {
-        	var belongsHere = false;
+            var belongsHere = false;
             
             for (var x = 0; x < types.length; x++) {
                 var curie = types.at(x).get('value');
@@ -59,13 +51,13 @@ VIE2.Entity = VIE.RDFEntity.extend({
                         charcase: 'lower'
                     }).toString();
                 }
-        		if (mapping['a'].indexOf(curie) !== -1) {
-        			belongsHere = true;
+                if (mapping['a'].indexOf(curie) !== -1) {
+                    belongsHere = true;
                     break;
-        		}
+                }
             }
             //entity needs to be registered with this mapping
-        	if (belongsHere) {
+            if (belongsHere) {
                 //adding model instance to collection
                 if (!mapping['collection'].get(self.id)) {
                     mapping['collection'].add(self, {backend: true});
@@ -90,7 +82,7 @@ VIE2.Entity = VIE.RDFEntity.extend({
     //overwritten to directly access the global Cache
     get: function (attr) {
         if (attr === 'id') {
-    		return VIE.RDFEntity.prototype.get.call(this, attr);
+            return VIE.RDFEntity.prototype.get.call(this, attr);
         }
         return VIE2.getFromCache(this, this.get('id'), attr);
     }

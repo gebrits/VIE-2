@@ -30,12 +30,7 @@
 		<script type="text/javascript" src="../lib/vie/vie.js"></script>
         
 		<!-- VIE^2 -->
-		<script type="text/javascript" src="../src/core/util.js"></script>
-		<script type="text/javascript" src="../src/core/core.js"></script>
-		<script type="text/javascript" src="../src/core/model.js"></script>
-		<script type="text/javascript" src="../src/core/collection.js"></script>
-		<script type="text/javascript" src="../src/core/connector.js"></script>
-		<script type="text/javascript" src="../src/core/mapping.js"></script>
+		<script type="text/javascript" src="../dist/vie2-latest.debug.js"></script>
 		<script type="text/javascript">VIE2.logLevels = ["info", "warn", "error"];</script>
         
 		<!-- Connector plug-ins -->
@@ -49,8 +44,9 @@
 		
 		<!-- How the API would look like! -->
 		<script type="text/javascript">
-		    VIE2.logLevels = ["info", "warn", "error"];
 		    $(function() {
+                
+                UUID = 0;
                 
                 VIE2.connectors['stanbol'].options({
              	    "proxy_url" : "../utils/proxy/proxy.php",
@@ -64,16 +60,13 @@
                 
                 VIE2.mappings['person']['collection'].bind("add", function (entity, collection) {
                     if (collection === VIE2.mappings['person']['collection']) {
-                        new PersonView({id: 'person-' + VIE2.Util.PseudoGuid.GetNew(), model: entity});
+                        new PersonView({id: 'person-' + (UUID++), model: entity});
                     }
                 });
                 
                 VIE2.mappings['task']['collection'].bind("add", function (entity, collection) {
                      if (collection === VIE2.mappings['task']['collection']) {
-                         new TaskView({
-                             id: 'task-' + VIE2.Util.PseudoGuid.GetNew(),
-                             model: entity
-                         });
+                         new TaskView({id: 'task-' + (UUID++), model: entity});
                      }
                 });
                 
@@ -175,7 +168,7 @@
                         if (agentModel) {
                             if (!this.agentView) {
                                 this.agentView = new AgentView({
-                                    id: 'agent-' + VIE2.Util.PseudoGuid.GetNew(),
+                                    id: 'agent-' + (UUID++),
                                     model: agentModel,
                                     el: agentSpan
                                 });
@@ -274,29 +267,6 @@
                 }
             };
             
-            function changeNameLang(subject, value, from, to) {
-                var prop = 'foaf:name';
-                                
-                //see if an entity is already present
-                var model = VIE.EntityManager.getBySubject(subject);
-                if (!model) {
-                    model = VIE2.createEntity({
-                      id : subject,
-                      a : 'foaf:Person',
-                      prop: from
-                    });
-                }
-                
-                var oldValue = model.get(prop).getByValue(from, {lang: from});
-                
-                if (oldValue) {
-                    oldValue.set({
-                        value: value,
-                        lang: to
-                    });
-                }
-            };
-            
             function removeName (subject, name) {
               var prop = 'foaf:name';
                                 
@@ -329,8 +299,7 @@
 		<button onclick='addName("<http://dbpedia.org/resource/Barack_Obama>", "\"B. Obama\"", "en");$(this).attr("disabled", "disabled")'>Add a fake name of Barack Obama in english (B. Obama).</button><br />
         <button onclick='addName("<http://dbpedia.org/resource/Barack_Obama>", "\"Bobby Obama\"", "nl");$(this).attr("disabled", "disabled")'>Add another fake name of Barack Obama in dutch (Bobby Obama).</button><br />
         <button onclick='changeName("<http://dbpedia.org/resource/Barack_Obama>", "\"B. Obama\"", "\"Barack Thomas Oliver Obama\"");$(this).attr("disabled", "disabled")'>Change the fake name of Barack Obama (B. Obama -> Barack Thomas Oliver Obama).</button><br />
-        <button onclick='changeNameLang("<http://dbpedia.org/resource/Barack_Obama>", "\"Bobby Obama\"", "nl", "fr");$(this).attr("disabled", "disabled")'>Change language of Bobby Obama to french.</button><br />
-        <button onclick='removeName("<http://dbpedia.org/resource/Barack_Obama>", "\"Barack Thomas Oliver Obama\"");$(this).attr("disabled", "disabled")'>Remove the fake name of Barack Obama (B. Obama).</button><br />
+        <button onclick='removeName("<http://dbpedia.org/resource/Barack_Obama>", "\"Barack Thomas Oliver Obama\"");$(this).attr("disabled", "disabled")'>Remove the fake name of Barack Obama (Barack Thomas Oliver Obama).</button><br />
         <button onclick='removeEntity("<http://this.demo.eu/Thomas_Unknown>", this);'>Remove Thomas Unknown entity.</button><br /><br />
         <button onclick='annotateTask("<http://this.demo.eu/Thomas_Unknown>", "\"implement something cool\"", "\"2012-04-11\"^^xsd:date");$(this).attr("disabled", "disabled");'>Annotate the task below.</button><br />
         <span id="task"><span class=".person">Thomas Unknown</span> should implement something cool.</span><br />
