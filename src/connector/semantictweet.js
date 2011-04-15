@@ -1,5 +1,5 @@
 // File:   semantictweet.js
-// Author: <a href="mailto:sebastian.germesin@dfki.de">Sebastian Germesin</a>
+// Author: Rene Kapusta
 //
 
 //The semantictweet connector needs to be initialized like this:
