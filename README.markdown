@@ -16,33 +16,33 @@ VIE&sup2; offers the _automatic_ as well as _manual_ annotation of entities and 
 
 VIE&sup2; depends on several Javascript libraries, namely: [jQuery](http://jquery.com), [jQuery UI](http://jqueryui.com), [rdfQuery](http://code.google.com/p/rdfquery/), [backbone JS](http://documentcloud.github.com/backbone/), [underscore JS](http://documentcloud.github.com/underscore/) and [VIE](https://github.com/bergie/VIE). 
 
-   &lt;!-- 3rd-party libs -->
-   &lt;script type="text/javascript" src=".../jquery-1.4.4.min.js">&lt;/script>
-   &lt;script type="text/javascript" src=".../jquery-ui-1.8.11.custom.min.js">&lt;/script>
-   &lt;script type="text/javascript" src=".../jquery.rdfquery.rules.js">&lt;/script>
-   &lt;script type="text/javascript" src=".../underscore.js">&lt;/script>
-   &lt;script type="text/javascript" src=".../backbone.js">&lt;/script>
-   &lt;script type="text/javascript" src=".../vie.js">&lt;/script>
+    &lt;!-- 3rd-party libs -->
+    &lt;script type="text/javascript" src=".../jquery-1.4.4.min.js">&lt;/script>
+    &lt;script type="text/javascript" src=".../jquery-ui-1.8.11.custom.min.js">&lt;/script>
+    &lt;script type="text/javascript" src=".../jquery.rdfquery.rules.js">&lt;/script>
+    &lt;script type="text/javascript" src=".../underscore.js">&lt;/script>
+    &lt;script type="text/javascript" src=".../backbone.js">&lt;/script>
+    &lt;script type="text/javascript" src=".../vie.js">&lt;/script>
    
 The core library of VIE&sup2; can be loaded like this: 
    
-   &lt;!-- VIE^2 -->
-   &lt;script type="text/javascript" src="../dist/vie2-latest.js">&lt;/script>
+    &lt;!-- VIE^2 -->
+    &lt;script type="text/javascript" src="../dist/vie2-latest.js">&lt;/script>
    
 In addition, we can install several __connectors__ that are able to access backend services
 which offer functionalities for semantic lifting, querying for information and serialization.
    
-   &lt;!-- Connector plug-ins -->
-   &lt;script type="text/javascript" src="../src/connector/stanbol.js">&lt;/script>
-   &lt;script type="text/javascript" src="../src/connector/dbpedia.js">&lt;/script>
-   &lt;script type="text/javascript" src="../src/connector/rdfa.js">&lt;/script>
+    &lt;!-- Connector plug-ins -->
+    &lt;script type="text/javascript" src="../src/connector/stanbol.js">&lt;/script>
+    &lt;script type="text/javascript" src="../src/connector/dbpedia.js">&lt;/script>
+    &lt;script type="text/javascript" src="../src/connector/rdfa.js">&lt;/script>
    
 For each __mapping__ that is loaded, a special type of backbone collection is registered
 and automatically filled with information if a matching entity is found.
    
-   &lt;!-- Mapping plug-ins -->
-   &lt;script type="text/javascript" src="../src/mapping/person.js">&lt;/script>
-   &lt;script type="text/javascript" src="../src/mapping/task.js">&lt;/script>
+    &lt;!-- Mapping plug-ins -->
+    &lt;script type="text/javascript" src="../src/mapping/person.js">&lt;/script>
+    &lt;script type="text/javascript" src="../src/mapping/task.js">&lt;/script>
    
    
 ### Analysis of data
