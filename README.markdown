@@ -1,7 +1,7 @@
 VIE&sup2; - Vienna IKS Editable Entities
 ====================
 
-VIE&sup2; is the semantic enrichment layer on top of ![VIE](https://github.com/bergie/VIE) and
+VIE&sup2; is the semantic enrichment layer on top of [VIE](https://github.com/bergie/VIE) and
 enables web developers to support an interactive usage of semantic information.
 
 ## Main functionality
