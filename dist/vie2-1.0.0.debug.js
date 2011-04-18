@@ -669,6 +669,9 @@ VIE2.Entity = VIE.RDFEntity.extend({
 });
 
 VIE2.createEntity = function (attrs, opts) {
+    if (!('id' in attrs)) {
+    	attrs.id = $.rdf.blank('[]').toString();
+    }
     var model = new VIE2.Entity(attrs, opts);
     VIE2.entities.add(model, opts);
     return model;
