@@ -188,7 +188,12 @@ class http {
 	    }
             $post_string = "";
             foreach ($this->postvars as $key=>$value) {
-	      if ($key != "format") {
+	      if (is_array($value)) {
+		foreach ($value as $key2=>$value2) {
+		  $post_string .= "&".urlencode($key2)."=".urlencode($value2);
+		}
+	      }
+	      else if ($key != "format") {
                 $post_string .= "&".urlencode($key)."=".urlencode($value);
 	      }
             }

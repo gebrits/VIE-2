@@ -354,6 +354,8 @@ VIE2.registerMapping = function (mapping) {
             "mapping" : mapping
         };
         
+        //TODO: trigger filling of collections!
+        
         VIE2.log("info", "VIE2.registerMapping()", "  Registered mapping '" + mapping.id + "'!");
     } else {
         VIE2.log("warn", "VIE2.registerMapping()", "Did not register mapping, as there is" +

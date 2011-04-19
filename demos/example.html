@@ -27,6 +27,7 @@
         
 		<!-- Connector plug-ins -->
 		<script type="text/javascript" src="../src/connector/stanbol.js"></script>
+		<script type="text/javascript" src="../src/connector/zemanta.js"></script>
 		<script type="text/javascript" src="../src/connector/dbpedia.js"></script>
 		<script type="text/javascript" src="../src/connector/rdfa.js"></script>
 		
@@ -35,6 +36,7 @@
 		<script type="text/javascript" src="../src/mapping/task.js"></script>
 		
 		<!-- How the API would look like! -->
+		<script type="text/javascript" src="../utils/zemanta_api_key.js"></script>
 		<script type="text/javascript">
 		    $(function() {
                 
@@ -44,6 +46,12 @@
              	    "proxy_url" : "../utils/proxy/proxy.php",
              	    "enhancer_url" : "http://localhost:8080/engines/",
              	    "entityhub_url" : "http://localhost:8080/entityhub/"
+                });
+                
+                VIE2.connectors['zemanta'].options({
+             	    "proxy_url" : "../utils/proxy/proxy.php",
+             	    "zemanta_url" : "http://api.zemanta.com/services/rest/0.0/",
+                    "zemanta_api_key" : ZEMANTA_API_KEY
                 });
                 
                 VIE2.connectors['dbpedia'].options({
@@ -195,7 +203,7 @@
                         button.text('Done!');
                     },
                     {
-                        connectors: ['rdfa', 'stanbol']
+                        connectors: ['rdfa', 'stanbol', 'zemanta']
                     } //restrict to these two connectors
                 );
 			};
@@ -286,7 +294,7 @@
 	</head>
 	<body>
 		<button onclick='analyzeText($("#test"), this);'>Analyze the short text below!</button><br />
-		<span id="test">This is a small test, where <span about="[demo:Thomas_Unknown]" typeof="foaf:Person"><span property="foaf:name">Thomas Unknown</span></span> and Barack Obama sing a song.</span><br /><br />
+		<span id="test">This is a small test, where Steve Jobs, <span about="[demo:Thomas_Unknown]" typeof="foaf:Person"><span property="foaf:name">Thomas Unknown</span></span> and Barack Obama sing a song.</span><br /><br />
 		<button onclick='addName("<http://dbpedia.org/resource/Barack_Obama>", "\"B. Obama\"", "en");$(this).attr("disabled", "disabled")'>Add a fake name of Barack Obama in english (B. Obama).</button><br />
         <button onclick='addName("<http://dbpedia.org/resource/Barack_Obama>", "\"Bobby Obama\"", "nl");$(this).attr("disabled", "disabled")'>Add another fake name of Barack Obama in dutch (Bobby Obama).</button><br />
         <button onclick='changeName("<http://dbpedia.org/resource/Barack_Obama>", "\"B. Obama\"", "\"Barack Thomas Oliver Obama\"");$(this).attr("disabled", "disabled")'>Change the fake name of Barack Obama (B. Obama -> Barack Thomas Oliver Obama).</button><br />
