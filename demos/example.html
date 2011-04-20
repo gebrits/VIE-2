@@ -28,6 +28,7 @@
 		<!-- Connector plug-ins -->
 		<script type="text/javascript" src="../src/connector/stanbol.js"></script>
 		<script type="text/javascript" src="../src/connector/zemanta.js"></script>
+		<script type="text/javascript" src="../src/connector/opencalais.js"></script>
 		<script type="text/javascript" src="../src/connector/dbpedia.js"></script>
 		<script type="text/javascript" src="../src/connector/rdfa.js"></script>
 		
@@ -37,6 +38,7 @@
 		
 		<!-- How the API would look like! -->
 		<script type="text/javascript" src="../utils/zemanta_api_key.js"></script>
+		<script type="text/javascript" src="../utils/opencalais_api_key.js"></script>
 		<script type="text/javascript">
 		    $(function() {
                 
@@ -52,6 +54,12 @@
              	    "proxy_url" : "../utils/proxy/proxy.php",
              	    "zemanta_url" : "http://api.zemanta.com/services/rest/0.0/",
                     "zemanta_api_key" : ZEMANTA_API_KEY
+                });
+                
+                VIE2.connectors['opencalais'].options({
+             	    "proxy_url" : "../utils/proxy/proxy.php",
+             	    "opencalais_url" : "http://api.opencalais.com/enlighten/rest/",
+                    "opencalais_api_key" : OPENCALAIS_API_KEY
                 });
                 
                 VIE2.connectors['dbpedia'].options({
@@ -203,7 +211,7 @@
                         button.text('Done!');
                     },
                     {
-                        connectors: ['rdfa', 'stanbol', 'zemanta']
+                        connectors: ['zemanta', 'opencalais', 'rdfa', 'stanbol']
                     } //restrict to these two connectors
                 );
 			};

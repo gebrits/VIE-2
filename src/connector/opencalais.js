@@ -1,15 +1,17 @@
-new VIE2.Connector('zemanta', {
+new VIE2.Connector('opencalais', {
     namespaces: {
-        z: "http://s.zemanta.com/ns#"
+        c:  "http://s.opencalais.com/1/pred/",
+        cr: "http://s.opencalais.com/1/type/er/",
+        cm: "http://s.opencalais.com/1/type/em/e/",
+        cp: "http://s.opencalais.com/1/pred/",
+        foaf : "http://xmlns.com/foaf/0.1/"
     }
 });
 
-VIE2.connectors['zemanta'].analyze = function (object, options) {
+VIE2.connectors['opencalais'].analyze = function (object, options) {
     var rdf = jQuery.rdf();
     
-    var rules = jQuery.rdf.ruleset()
-    .prefix('z', 'http://s.zemanta.com/ns#')
-    .add([], []);
+    var rules = this.createReasoningRules();
     
     if (object === undefined) {
         VIE2.log ("warn", "VIE2.Connector('" + this.id + "')", "Given object is undefined!");
@@ -18,8 +20,7 @@ VIE2.connectors['zemanta'].analyze = function (object, options) {
         }
     } else if (typeof object === 'object') {
         var self = this; 
-        //zemanta cannot deal with embedded HTML, so we remove that.
-        //--> hack!
+        //opencalais can in fact deal with embedded HTML
         var text = self.extractText(object);
         //the AJAX callback function
         var callback = function (rdfc) {
@@ -46,7 +47,24 @@ VIE2.connectors['zemanta'].analyze = function (object, options) {
     }
 };
 
-VIE2.connectors['zemanta'].extractText = function (obj) {
+VIE2.connectors['opencalais'].createReasoningRules = function () {
+    var rules = jQuery.rdf.ruleset();
+    
+    jQuery.each(this._options.namespaces, function (k, v) {
+        rules.prefix(k, v);
+    })
+    
+    rules.add(['?subject a cm:Person',
+               '?subject cp:name ?name',
+               '?subject cp:commonname ?commonname'], 
+              ['?subject foaf:name ?name',
+               '?subject foaf:name ?commonname'
+              ]);
+              
+   return rules;
+}
+
+VIE2.connectors['opencalais'].extractText = function (obj) {
     if (obj.get(0) && 
             obj.get(0).tagName && 
             (obj.get(0).tagName == 'TEXTAREA' ||
@@ -55,52 +73,51 @@ VIE2.connectors['zemanta'].extractText = function (obj) {
     }
     else {
         return obj
-            .text()    //get the text of element
+            .html()    //get the html of element
             .replace(/\s+/g, ' ') //collapse multiple whitespaces
             .replace(/\0\b\n\r\f\t/g, '').trim(); // remove non-letter symbols
     }
 };
 
-VIE2.connectors['zemanta'].enhance = function (text, callback) {
+VIE2.connectors['opencalais'].enhance = function (text, callback) {
     if (text.length === 0) {
         VIE2.log("warn", "VIE2.Connector(" + this.id + ")", "Empty text.");
         callback(jQuery.rdf());
     }
     else {
         var c = function(data) {
-            if (data && data.status === 200) {
+            if (data) {
                 try {
-                    var responseData = data.responseText
-                    .replace(/<z:signature>.*?<\/z:signature>/, '');
-                    var rdf = jQuery.rdf().load(responseData, {});
+                    
+                    var rdf = jQuery.rdf().load(data, {});
                     callback(rdf);
                 } 
                 catch (e) {
-                    VIE2.log("error", "VIE2.Connector(" + this.id + ")", "Could not connect to zemanta enhancer.");
+                    VIE2.log("error", "VIE2.Connector(" + this.id + ")", "Could not connect to opencalais enhancer.");
                     VIE2.log("error", "VIE2.Connector(" + this.id + ")", data);
                     callback(jQuery.rdf());
                 }
             }
         };
-        this.queryZemanta(this.prepareZemantaData(text), c);
+        this.queryOpencalais(this.prepareOpencalaisData(text), c);
     }
 };
 
-VIE2.connectors['zemanta'].prepareZemantaData = function (text) {
+VIE2.connectors['opencalais'].prepareOpencalaisData = function (text) {
     return {
-        method: 'zemanta.suggest_markup',
-        format: 'rdfxml',
-        api_key: this._options.zemanta_api_key,
-        text: text,
-        return_rdf_links: 1
-        // for more options check http://developer.zemanta.com/docs/suggest/
+        licenseID: this._options.opencalais_api_key,
+        calculareRelevanceScore: "true",
+        enableMetadataType: "GenericRelations,SocialTags",
+        contentType: "text/html",
+        content: text
+        // for more options check http://developer.opencalais.com/docs/suggest/
     };
 };
 
-VIE2.connectors['zemanta'].queryZemanta = function (data, callback) {
+VIE2.connectors['opencalais'].queryOpencalais = function (data, callback) {
 
     var proxy = this._options.proxy_url;
-    var zemanta_url = this._options.zemanta_url;
+    var opencalais_url = this._options.opencalais_url;
 
     if (proxy) {
         jQuery.ajax({
@@ -110,10 +127,10 @@ VIE2.connectors['zemanta'].queryZemanta = function (data, callback) {
             type: "POST",
             url: proxy,
             data: {
-                proxy_url: zemanta_url, 
+                proxy_url: opencalais_url, 
                 content: data,
                 verb: "POST",
-                format: "application/rdf+json"
+                format: "text/xml"//application/x-www-form-urlencoded"
             }
         });
     } else {
@@ -122,9 +139,9 @@ VIE2.connectors['zemanta'].queryZemanta = function (data, callback) {
             success: callback,
             error: callback,
             type: "POST",
-            url: zemanta_url,
+            url: opencalais_url,
             data: data,
-            dataType: "application/rdf+json"
+            dataType: "text/xml"
         });
     }
 };
