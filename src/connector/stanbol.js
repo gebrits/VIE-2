@@ -209,7 +209,8 @@ VIE2.connectors['stanbol'].query = function (uri, props, callback) {
                 VIE2.log ("warn", "VIE2.Connector('stanbol')", "Could not query for uri '" + uri + "' because of the following parsing error: '" + e.message + "'!");
             }
         }
-        callback.call(that, ret);
+        // was: callback.call(that, ret); why? ret was always empty with my stanbol tests.
+		callback.call(that, _(ret).keys().length ? ret : data);
     };
     
     this.queryEntityHub(uri, c);
