@@ -299,13 +299,9 @@ VIE2.lookup = function (uri, props, callback) {
         VIE2.log("info", "VIE2.lookup()", "Start with connector '" + this.id + "' for uri '" + uri + "'!");
         var c = function (uri, ret, callback) {
             return function (data) {
-                VIE2.log("info", "VIE2.lookup()", "Received query information from connector '" + this.id + "' for uri '" + uri + "'!");
-                jQuery.each(data, function (k, v) {
-                    for (var i = 0; i < v.length; i++) {
-                        var triple = jQuery.rdf.triple(uri, k, v[i], {namespaces: VIE2.namespaces});
-                        VIE2.globalCache.add(triple);
-                    }
-                });
+                VIE2.log("info", "VIE2.lookup()", ["Received query information from connector '" + this.id + "' for uri '" + uri + "'!", data]);
+                VIE2.globalCache.load(data);
+                VIE.EntityManager.getByRDFJSON(data);
                 VIE2.Util.removeElement(connectorQueue, this.id);
                 if (connectorQueue.length === 0) {
                     //if the queue is empty, all connectors have successfully returned and we can call the
