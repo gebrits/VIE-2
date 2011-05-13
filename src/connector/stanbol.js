@@ -144,7 +144,6 @@ VIE2.connectors['stanbol'].queryEnhancer = function (text, callback) {
             data: {
                 proxy_url: enhancer_url, 
                 content: text,
-                type: "text/plain",
                 verb: "POST",
                 format: "application/rdf+json"
             }
