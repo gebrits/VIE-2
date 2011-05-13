@@ -112,6 +112,7 @@ VIE2.connectors['stanbol'].enhance = function (text, callback) {
         callback(jQuery.rdf());
     }
     else {
+        var that = this;
         var c = function(data) {
             if (data) {
                 try {
@@ -119,8 +120,8 @@ VIE2.connectors['stanbol'].enhance = function (text, callback) {
                     callback(rdf);
                 } 
                 catch (e) {
-                    VIE2.log("error", "VIE2.Connector(" + this.id + ")", "Could not connect to stanbol enhancer.");
-                    VIE2.log("error", "VIE2.Connector(" + this.id + ")", data);
+                    VIE2.log("error", "VIE2.Connector(" + that.id + ")", e);
+                    VIE2.log("error", "VIE2.Connector(" + that.id + ")", data);
                     callback(jQuery.rdf());
                 }
             }
