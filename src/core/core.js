@@ -30,7 +30,7 @@
                     VIE2.globalCache.prefix(k, v);
                 });
             } catch (ex) {
-                    //needs to be ignored when called on $(document);
+                //needs to be ignored when called on $(document);
                 if (this.element.get(0) !== document) {
                     VIE2.log("warn", "VIE2.core#create()", "Could not retrieve namespaces from element: '" + e + "'!");
                 }
@@ -354,7 +354,11 @@ VIE2.registerMapping = function (mapping) {
             "mapping" : mapping
         };
         
-        //TODO: trigger filling of collections!
+        //trigger filling of collections!
+        for (var i = 0; i < VIE2.entities.length; i++) {
+            VIE2.entities.at(i).searchCollections();
+        }
+        
         
         VIE2.log("info", "VIE2.registerMapping()", "  Registered mapping '" + mapping.id + "'!");
     } else {
