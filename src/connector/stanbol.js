@@ -30,7 +30,8 @@ new VIE2.Connector('stanbol', {
         owl : "http://www.w3.org/2002/07/owl#",
         gml : "http://www.opengis.net/gml/_",
         geonames : "http://www.geonames.org/ontology#",
-        fise : "http://fise.iks-project.eu/ontology/"
+        fise : "http://fise.iks-project.eu/ontology/",
+        rick: "http://www.iks-project.eu/ontology/rick/model/"
     }
 });
 
@@ -176,7 +177,7 @@ VIE2.connectors['stanbol'].query = function (uri, props, callback) {
         return;
     }
     if ((typeof uri !== 'string') || uri.match(/^<urn:.*/) || uri.match(/^_:.*/)) {
-        VIE2.log ("warn", "VIE2.Connector('" + this.id + "')", "Query does not support the given URI '" + uri + "'!");
+        VIE2.log ("warn", "VIE2.Connector(" + this.id + ")", "Query does not support the given URI '" + uri + "'!");
         callback.call(this, {});
         return;
     }
@@ -206,11 +207,13 @@ VIE2.connectors['stanbol'].query = function (uri, props, callback) {
                     });
                 }
             } catch (e) {
-                VIE2.log ("warn", "VIE2.Connector('stanbol')", "Could not query for uri '" + uri + "' because of the following parsing error: '" + e.message + "'!");
+                VIE2.log ("warn", "VIE2.Connector(" + that.id + ")", "Could not query for uri '" + uri + "' because of the following parsing error: '" + e.message + "'!");
             }
+            callback.call(that, ret);
+        } else {
+            //we need to send back something in order to clear the queue.
+            callback.call(that, {});
         }
-        // was: callback.call(that, ret); why? ret was always empty with my stanbol tests.
-		callback.call(that, _(ret).keys().length ? ret : data);
     };
     
     this.queryEntityHub(uri, c);

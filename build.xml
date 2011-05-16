@@ -31,13 +31,22 @@
         <mkdir dir="${DIST_DIR}" />
 	</target>
 	
-    <target name="all" depends="init, dist, doc"/>
+    <target name="all" depends="init, dist, doc, zip"/>
 	
     <target name="dist">
         <antcall target="combine" />
         <antcall target="minimise" />
     </target>
     
+    <target name="zip">
+        <zip destfile="${DIST_DIR}/vie2-${VERSION}.zip">
+            <zipfileset dir="docs/" prefix="docs"/>
+            <zipfileset dir="src/connector/" prefix="connector"/>
+            <zipfileset dir="src/mapping/" prefix="mapping"/>
+            <zipfileset dir="dist/" includes="*.js"/>
+        </zip>  
+    </target>
+        
     <target name="combine" description="combines core/*.js files into one file">
         <echo message="Building VIE^2 Distribution" />
         <concat destfile="${DIST_DIR}/vie2-${VERSION}.debug.js">

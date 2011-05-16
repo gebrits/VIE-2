@@ -109,9 +109,9 @@ VIE2.Entity = VIE.RDFEntity.extend({
             VIE2.entities.remove(model);
         }
         else {
-            VIE2.removeFromCache(model.get('id'), '?x', '?y');
+            VIE2.removeFromCache(this.get('id'), '?x', '?y');
             
-            var success = function(resp){
+            var success = function(resp) {
                 if (options.success) 
                     options.success(model, resp);
             };
@@ -122,6 +122,7 @@ VIE2.Entity = VIE.RDFEntity.extend({
     },
     
     sync: function (method, model, success, error, options) {
+        if (!options) { options = {};}
         VIE2.log("info", "VIE2.Backbone#sync(" + model.get('id') + ")", "Start syncing!");
         
         var rdfTmp = jQuery.rdf({namespaces: VIE2.namespaces});
@@ -138,11 +139,11 @@ VIE2.Entity = VIE.RDFEntity.extend({
             rdfTmp.reason(options.rules);
             //TODO: filter!
         }
-        VIE2.log("info", "VIE2.Backbone#sync(" + model.get('id') + ")", "Found " + triples.length + " triples for serialization!");
+        VIE2.log("info", "VIE2.Backbone#sync(" + model.get('id') + ")", "Found " + rdfTmp.length + " triples for serialization!");
             
         jQuery.each(VIE2.connectors, function (id, connector) {
             VIE2.log("info", "VIE2.Backbone#sync(" + model.get('id') + ")", "Using connector: '" + id + "'");
-            connector.serialize(triples, options);
+            connector.serialize(rdfTmp.databank, options);
         });
         
         //VIE.RDFEntity.prototype.sync.call(this, method, model, success, error);

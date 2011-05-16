@@ -45,9 +45,9 @@ VIE2.EntityCollection = VIE.RDFEntityCollection.extend({
                 });
                 
                 VIE.EntityManager.entities.remove(model, opts);
+                model.destroy();
             }
             VIE.RDFEntityCollection.prototype._remove.call(this, model, opts);
-            model.destroy();
         }
     }
 });

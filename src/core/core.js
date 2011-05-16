@@ -299,28 +299,30 @@ VIE2.lookup = function (uri, props, callback) {
         VIE2.log("info", "VIE2.lookup()", "Start with connector '" + this.id + "' for uri '" + uri + "'!");
         var c = function (uri, ret, callback) {
             return function (data) {
-                VIE2.log("info", "VIE2.lookup()", ["Received query information from connector '" + this.id + "' for uri '" + uri + "'!", data]);
-                VIE2.globalCache.load(data);
-                VIE.EntityManager.getByRDFJSON(data);
-                VIE2.Util.removeElement(connectorQueue, this.id);
-                if (connectorQueue.length === 0) {
-                    //if the queue is empty, all connectors have successfully returned and we can call the
-                    //callback function.
-                    jQuery.each(ret, function (k) {
-                        VIE2.globalCache
-                        .where(uri + ' ' + k + ' ?x')
-                        .each(function () {
-                            var valStr = this.x.toString();
-                            if (ret[k].indexOf(valStr) === -1) {
-                                ret[k].push(valStr);
-                            }
+                try {
+                    VIE2.log("info", "VIE2.lookup()", ["Received query information from connector '" + this.id + "' for uri '" + uri + "'!", data]);
+                    VIE2.globalCache.load(data);
+                    VIE.EntityManager.getByRDFJSON(data);
+                    VIE2.Util.removeElement(connectorQueue, this.id);
+                    if (connectorQueue.length === 0) {
+                        //if the queue is empty, all connectors have successfully returned and we can call the
+                        //callback function.
+                        jQuery.each(ret, function(k){
+                            VIE2.globalCache.where(uri + ' ' + k + ' ?x').each(function(){
+                                var valStr = this.x.toString();
+                                if (ret[k].indexOf(valStr) === -1) {
+                                    ret[k].push(valStr);
+                                }
+                            });
                         });
-                    });
-                    VIE2.log("info", "VIE2.lookup()", "Finished task: 'query()' for uri '" + uri + "'!");
-                    VIE2.log("info", "VIE2.lookup()", "Global Cache now holds " + VIE2.globalCache.databank.triples().length + " triples!");
-                    if (callback) {
-                        callback.call(uri, ret);
+                        VIE2.log("info", "VIE2.lookup()", "Finished task: 'query()' for uri '" + uri + "'!");
+                        VIE2.log("info", "VIE2.lookup()", "Global Cache now holds " + VIE2.globalCache.databank.triples().length + " triples!");
+                        if (callback) {
+                            callback.call(uri, ret);
+                        }
                     }
+                } catch (e) {
+                    VIE2.log("error", "EEEEERRROR!");
                 }
             };
         }(uri, ret, callback);
