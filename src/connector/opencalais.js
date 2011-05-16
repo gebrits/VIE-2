@@ -4,6 +4,9 @@ new VIE2.Connector('opencalais', {
         cr: "http://s.opencalais.com/1/type/er/",
         cm: "http://s.opencalais.com/1/type/em/e/",
         cp: "http://s.opencalais.com/1/pred/",
+        cl: "http://s.opencalais.com/1/type/lid/",
+        cs: "http://s.opencalais.com/1/type/sys/",
+        cc: "http://s.opencalais.com/1/type/cat/",
         foaf : "http://xmlns.com/foaf/0.1/"
     }
 });

@@ -39,15 +39,15 @@ VIE2.EntityCollection = VIE.RDFEntityCollection.extend({
             //when removing the model from this collection, that means
             //that we remove all corresponding data from the cache as well.
             if (VIE2.entities === this) {
-                VIE2.removeFromCache(model.get('id'), '?x', '?y');
-                
                 //also remove from all other collections!
                 jQuery.each(VIE2.mappings, function(k, v){
                     v.collection.remove(model);
                 });
+                
                 VIE.EntityManager.entities.remove(model, opts);
             }
             VIE.RDFEntityCollection.prototype._remove.call(this, model, opts);
+            model.destroy();
         }
     }
 });

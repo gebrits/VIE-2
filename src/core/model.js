@@ -85,6 +85,68 @@ VIE2.Entity = VIE.RDFEntity.extend({
             return VIE.RDFEntity.prototype.get.call(this, attr);
         }
         return VIE2.getFromCache(this, this.get('id'), attr);
+    },
+    
+    save: function (attrs, options) {
+        if (!options) { options = {};}
+        if (attrs && !this.set(attrs, options)) return false;
+            var model = this;
+            var success = function(resp) {
+                if (!model.set(model.parse(resp), options)) return false;
+                if (options.success) options.success(model, resp);
+            };
+        var error = $.noop;
+        var method = this.isNew() ? 'create' : 'update';
+        this.sync(method, this, success, error, options);
+        return this;
+    },
+    
+    destroy: function (opts) {
+        if (!opts) { opts = {};}
+        
+        var model = VIE.EntityManager.getBySubject(this.get('id'));
+        if (model) {
+            VIE2.entities.remove(model);
+        }
+        else {
+            VIE2.removeFromCache(model.get('id'), '?x', '?y');
+            
+            var success = function(resp){
+                if (options.success) 
+                    options.success(model, resp);
+            };
+            var error = $.noop;
+            (this.sync || Backbone.sync)('delete', this, success, error);
+        }
+        return this;
+    },
+    
+    sync: function (method, model, success, error, options) {
+        VIE2.log("info", "VIE2.Backbone#sync(" + model.get('id') + ")", "Start syncing!");
+        
+        var rdfTmp = jQuery.rdf({namespaces: VIE2.namespaces});
+        
+        VIE2.globalCache
+        .where(model.get('id') + ' ?p ?o')
+        .each(function (i, bindings, trs) {
+            for (var j = 0; j < trs.length; j++) {
+                rdfTmp.add(trs[j]);
+            }
+        });
+        
+        if (options.rules || options.props) {
+            rdfTmp.reason(options.rules);
+            //TODO: filter!
+        }
+        VIE2.log("info", "VIE2.Backbone#sync(" + model.get('id') + ")", "Found " + triples.length + " triples for serialization!");
+            
+        jQuery.each(VIE2.connectors, function (id, connector) {
+            VIE2.log("info", "VIE2.Backbone#sync(" + model.get('id') + ")", "Using connector: '" + id + "'");
+            connector.serialize(triples, options);
+        });
+        
+        //VIE.RDFEntity.prototype.sync.call(this, method, model, success, error);
+        VIE2.log("info", "VIE2.Backbone#sync(" + model.get('id') + ")", "End syncing!");
     }
 });
 

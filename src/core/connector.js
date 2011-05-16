@@ -58,3 +58,10 @@ VIE2.Connector.prototype.query = function (uri, properties, callback) {
     VIE2.log("info", "VIE2.Connector(" + this.id + ")#query()", "Not overwritten!");
     callback.call(this, {});
 };
+
+VIE2.Connector.prototype.serialize = function (rdf, options) {
+    VIE2.log("info", "VIE2.Connector(" + this.id + ")#serialize()", "Not overwritten!");
+    if (options && options.success) {
+        options.success.call(this, {});
+    }
+};

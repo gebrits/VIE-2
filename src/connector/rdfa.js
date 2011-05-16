@@ -50,9 +50,19 @@ VIE2.connectors['rdfa'].analyze = function (object, options) {
         }
     }
 };
-/*
-VIE2.connectors['rdfa'].annotate = function (elem, triple, namespaces, callback) {
-    VIE2.log("info", "VIE2.Connector(" + this.id + ")#annotate()", "Start annotation of object with triple.");
-    jQuery(elem).rdfa(triple);
+
+
+VIE2.connectors['rdfa'].serialize = function (rdf, options) {
+    VIE2.log("info", "VIE2.Connector(" + this.id + ")#serialize()", "Start annotation of object with triple.");
+    if (options.elem) {
+        for (var i = 0; i < triples.length; i++) {
+            jQuery(options.elem).rdfa(triples[i], VIE2.namespaces);
+        }
+    } else {
+        VIE2.log("error", "VIE2.Connector(" + this.id + ")#serialize()", "No element specified! Please use 'options.elem' to do that!");
+    }
     
-};*/
+};
+
+//$('#main > p > a').rdfa('<> dc:date "2008-10-19"^^xsd:date .');
+//$('#main > p > a').removeRdfa({ property: "dc:creator" });
