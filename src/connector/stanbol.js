@@ -112,6 +112,7 @@ VIE2.connectors['stanbol'].enhance = function (text, callback) {
         callback(jQuery.rdf());
     }
     else {
+        var that = this;
         var c = function(data) {
             if (data) {
                 try {
@@ -119,8 +120,8 @@ VIE2.connectors['stanbol'].enhance = function (text, callback) {
                     callback(rdf);
                 } 
                 catch (e) {
-                    VIE2.log("error", "VIE2.Connector(" + this.id + ")", "Could not connect to stanbol enhancer.");
-                    VIE2.log("error", "VIE2.Connector(" + this.id + ")", data);
+                    VIE2.log("error", "VIE2.Connector(" + that.id + ")", e);
+                    VIE2.log("error", "VIE2.Connector(" + that.id + ")", data);
                     callback(jQuery.rdf());
                 }
             }
@@ -144,7 +145,6 @@ VIE2.connectors['stanbol'].queryEnhancer = function (text, callback) {
             data: {
                 proxy_url: enhancer_url, 
                 content: text,
-                type: "text/plain",
                 verb: "POST",
                 format: "application/rdf+json"
             }
@@ -209,7 +209,8 @@ VIE2.connectors['stanbol'].query = function (uri, props, callback) {
                 VIE2.log ("warn", "VIE2.Connector('stanbol')", "Could not query for uri '" + uri + "' because of the following parsing error: '" + e.message + "'!");
             }
         }
-        callback.call(that, ret);
+        // was: callback.call(that, ret); why? ret was always empty with my stanbol tests.
+		callback.call(that, _(ret).keys().length ? ret : data);
     };
     
     this.queryEntityHub(uri, c);
