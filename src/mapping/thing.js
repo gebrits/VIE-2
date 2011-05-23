@@ -4,7 +4,7 @@
 
 new VIE2.Mapping(
     'thing',  //the id of the mapping 
-    ['own:Thing'],  //a list of all types that fall into this category
+    ['owl:Thing'],  //a list of all types that fall into this category
     [], //a list of default properties
     {// optional options
         namespaces: { //the used namespaces, these can be given here, or placed directly into the HTML document's xmlns attribute.

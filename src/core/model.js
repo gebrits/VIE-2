@@ -9,7 +9,7 @@ VIE2.Entity = VIE.RDFEntity.extend({
     initialize: function (attrs, opts) {
         //if the type has changed, we need to search through the
         //mappings if the model needs to be inserted.
-        this.bind('change:a', this.searchCollections);  
+        this.bind('change:a', this.searchCollections);
         
         if (!opts) { opts = {};}
         
@@ -39,7 +39,7 @@ VIE2.Entity = VIE.RDFEntity.extend({
     searchCollections: function () {
         var self = this;
         var types = VIE2.getFromCache(this, this.get('id'), 'a');
-        
+
         jQuery.each(VIE2.mappings, function (i, mapping) {
             var belongsHere = false;
             
@@ -87,67 +87,8 @@ VIE2.Entity = VIE.RDFEntity.extend({
         return VIE2.getFromCache(this, this.get('id'), attr);
     },
     
-    save: function (attrs, options) {
-        if (!options) { options = {};}
-        if (attrs && !this.set(attrs, options)) return false;
-            var model = this;
-            var success = function(resp) {
-                if (!model.set(model.parse(resp), options)) return false;
-                if (options.success) options.success(model, resp);
-            };
-        var error = $.noop;
-        var method = this.isNew() ? 'create' : 'update';
-        this.sync(method, this, success, error, options);
-        return this;
-    },
-    
-    destroy: function (opts) {
-        if (!opts) { opts = {};}
-        
-        var model = VIE.EntityManager.getBySubject(this.get('id'));
-        if (model) {
-            VIE2.entities.remove(model);
-        }
-        else {
-            VIE2.removeFromCache(this.get('id'), '?x', '?y');
-            
-            var success = function(resp) {
-                if (options.success) 
-                    options.success(model, resp);
-            };
-            var error = $.noop;
-            (this.sync || Backbone.sync)('delete', this, success, error);
-        }
-        return this;
-    },
-    
-    sync: function (method, model, success, error, options) {
-        if (!options) { options = {};}
-        VIE2.log("info", "VIE2.Backbone#sync(" + model.get('id') + ")", "Start syncing!");
-        
-        var rdfTmp = jQuery.rdf({namespaces: VIE2.namespaces});
-        
-        VIE2.globalCache
-        .where(model.get('id') + ' ?p ?o')
-        .each(function (i, bindings, trs) {
-            for (var j = 0; j < trs.length; j++) {
-                rdfTmp.add(trs[j]);
-            }
-        });
-        
-        if (options.rules || options.props) {
-            rdfTmp.reason(options.rules);
-            //TODO: filter!
-        }
-        VIE2.log("info", "VIE2.Backbone#sync(" + model.get('id') + ")", "Found " + rdfTmp.length + " triples for serialization!");
-            
-        jQuery.each(VIE2.connectors, function (id, connector) {
-            VIE2.log("info", "VIE2.Backbone#sync(" + model.get('id') + ")", "Using connector: '" + id + "'");
-            connector.serialize(rdfTmp.databank, options);
-        });
-        
-        //VIE.RDFEntity.prototype.sync.call(this, method, model, success, error);
-        VIE2.log("info", "VIE2.Backbone#sync(" + model.get('id') + ")", "End syncing!");
+    serialize: function (opts) {
+        //TODO!
     }
 });
 
@@ -221,6 +162,80 @@ VIE2.Object = Backbone.Model.extend({
             this.get('value'), {
                 namespaces: VIE2.namespaces
         });
+    },
+    
+    serialize: function (options) {
+        if (!options) { options = {};}
+        var model = this;
+        
+        VIE2.log("info", "VIE2.Backbone#serialize(" + model.get('id') + ")", "Start serialization!");
+    
+        var connectorQueue = [];
+        jQuery.each(VIE2.connectors, function () {
+            //fill queue of connectors with 'id's to have an overview of running connectors.
+            //this supports the asynchronous calls.
+            if (options.connectors) {
+                if (options.connectors.indexOf(this.id) !== -1) {
+                    connectorQueue.push(this.id);
+                }
+            } else {
+                connectorQueue.push(this.id);
+            }
+        });
+        
+        //iterate over all connectors
+        jQuery.each(VIE2.connectors, function () {
+            //the connector's success callback method
+            var successCallback = function () {
+                VIE2.log("info", "VIE2.Backbone#serialize(" + model.get('id') + ")", "Successfully serialized the annotation!");
+                VIE2.Util.removeElement(connectorQueue, this.id);
+            };
+            
+            var errorCallback = function (reason) {
+                VIE2.log("error", "VIE2.Backbone#serialize(" + model.get('id') + ")", "");
+                VIE2.Util.removeElement(connectorQueue, this.id);
+            };
+            
+            //check if we may need to filter for the connector
+            if (options.connectors) {
+                if (options.connectors.indexOf(this.id) !== -1) {
+                    //start analysis with the connector.
+                    VIE2.log("info", "VIE2.Backbone#serialize(" + model.get('id') + ")", "Starting serialization with connector: '" + this.id + "'!");
+                    //TODO: toTriple(this);
+                    
+                    this.serialize(this, 
+                    jQuery.extend(options, {
+                        success: successCallback,
+                        error: errorCallback
+                    }));
+                }
+                else {
+                    VIE2.log("info", "VIE2.Backbone#serialize(" + model.get('id') + ")", "Will not use connector " + this.id + " as it is filtered!");
+                }
+            } else {
+                //start analysis with the connector.
+                VIE2.log("info", "VIE2.Backbone#serialize(" + model.get('id') + ")", "Starting serialization with connector: '" + this.id + "'!");
+                //TODO: toTriple(this);
+                this.serialize(this, 
+                    jQuery.extend(options, {
+                        success: successCallback,
+                        error: errorCallback
+                }));
+            }
+        });
+    },
+    
+    //for convenience
+    value: function () {
+        return this.get('value');
+    },
+    //for convenience
+    datatype: function () {
+        return this.get('datatype');
+    },
+    //for convenience
+    lang: function () {
+        return this.get('lang');
     }
 });
 

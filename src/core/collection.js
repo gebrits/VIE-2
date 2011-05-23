@@ -4,6 +4,7 @@
 
 //just for convenience, should be removed in a later revision
 VIE.EntityManager.initializeCollection();
+VIE2.namespaces["owl"] = "http://www.w3.org/2002/07/owl#";
 
 //<strong>VIE2.EntityCollection</strong>: TODO: document me
 VIE2.EntityCollection = VIE.RDFEntityCollection.extend({
@@ -39,6 +40,8 @@ VIE2.EntityCollection = VIE.RDFEntityCollection.extend({
             //when removing the model from this collection, that means
             //that we remove all corresponding data from the cache as well.
             if (VIE2.entities === this) {
+                VIE2.removeFromCache(model.get('id'));
+                delete VIE2.globalCache.databank.subjectIndex[model.get('id')]; //HACK: rdfQuery does not remove an entity from its internal DB when no other triples are present
                 //also remove from all other collections!
                 jQuery.each(VIE2.mappings, function(k, v){
                     v.collection.remove(model);

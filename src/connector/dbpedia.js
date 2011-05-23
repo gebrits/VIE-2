@@ -13,7 +13,7 @@ new VIE2.Connector('dbpedia', {
     }
 });
 
-VIE2.connectors['dbpedia'].query = function (uri, props, callback) {
+VIE2.connectors['dbpedia'].query = function (uri, props, callback) {    
     if (uri instanceof jQuery.rdf.resource &&
             uri.type === 'uri') {
         this.query(uri.toString(), props, callback);
@@ -65,6 +65,7 @@ VIE2.connectors['dbpedia'].query = function (uri, props, callback) {
                     VIE2.log ("warn", "VIE2.Connector('dbpedia')", "Could not query for uri '" + uri + "' because of the following parsing error: '" + e.message + "'!");
                 }
             }
+            console.log("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDBPEDIA", uri, ret);
             callback.call(conn, ret);
         };
     }(this, uri, props);

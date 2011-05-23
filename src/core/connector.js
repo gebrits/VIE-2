@@ -47,7 +47,7 @@ VIE2.Connector.prototype.options = function(values) {
 
 //TODO: document me
 VIE2.Connector.prototype.analyze = function (object, options) {
-    VIE2.log("info", "VIE2.Connector(" + this.id + ")#analyze()", "Not overwritten!");
+    //VIE2.log("info", "VIE2.Connector(" + this.id + ")#analyze()", "Not overwritten!");
     if (options && options.success) {
         options.success.call(this, jQuery.rdf());
     }
@@ -55,12 +55,12 @@ VIE2.Connector.prototype.analyze = function (object, options) {
 
 //TODO: document me
 VIE2.Connector.prototype.query = function (uri, properties, callback) {
-    VIE2.log("info", "VIE2.Connector(" + this.id + ")#query()", "Not overwritten!");
+    //VIE2.log("info", "VIE2.Connector(" + this.id + ")#query()", "Not overwritten!");
     callback.call(this, {});
 };
 
 VIE2.Connector.prototype.serialize = function (rdf, options) {
-    VIE2.log("info", "VIE2.Connector(" + this.id + ")#serialize()", "Not overwritten!");
+    //VIE2.log("info", "VIE2.Connector(" + this.id + ")#serialize()", "Not overwritten!");
     if (options && options.success) {
         options.success.call(this, {});
     }

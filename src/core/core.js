@@ -133,7 +133,7 @@
                 if (options.connectors) {
                     if (options.connectors.indexOf(this.id) !== -1) {
                         //start analysis with the connector.
-                         VIE2.log("info", "VIE2.core#analyze()", "Starting analysis with connector: '" + this.id + "'!");
+                        VIE2.log("info", "VIE2.core#analyze()", "Starting analysis with connector: '" + this.id + "'!");
                         this.analyze(that.element, {
                             success: successCallback,
                             error: errorCallback
@@ -296,13 +296,16 @@ VIE2.lookup = function (uri, props, callback) {
     //look up for properties in the connectors that
     //implement/overwrite the query() method
     jQuery.each(VIE2.connectors, function () {
-        VIE2.log("info", "VIE2.lookup()", "Start with connector '" + this.id + "' for uri '" + uri + "'!");
         var c = function (uri, ret, callback) {
             return function (data) {
                 try {
-                    VIE2.log("info", "VIE2.lookup()", ["Received query information from connector '" + this.id + "' for uri '" + uri + "'!", data]);
-                    VIE2.globalCache.load(data);
-                    VIE.EntityManager.getByRDFJSON(data);
+                    VIE2.log("info", "VIE2.lookup()", "Received query information from connector '" + this.id + "' for uri '" + uri + "'!");
+                    jQuery.each(data, function (k, v) {
+                        for (var i = 0; i < v.length; i++) {
+                            var triple = jQuery.rdf.triple(uri, k, v[i], {namespaces: VIE2.namespaces});
+                            VIE2.globalCache.add(triple);
+                        }
+                    });
                     VIE2.Util.removeElement(connectorQueue, this.id);
                     if (connectorQueue.length === 0) {
                         //if the queue is empty, all connectors have successfully returned and we can call the
@@ -315,14 +318,12 @@ VIE2.lookup = function (uri, props, callback) {
                                 }
                             });
                         });
-                        VIE2.log("info", "VIE2.lookup()", "Finished task: 'query()' for uri '" + uri + "'!");
                         VIE2.log("info", "VIE2.lookup()", "Global Cache now holds " + VIE2.globalCache.databank.triples().length + " triples!");
                         if (callback) {
                             callback.call(uri, ret);
                         }
                     }
                 } catch (e) {
-                    VIE2.log("error", "EEEEERRROR!");
                 }
             };
         }(uri, ret, callback);
@@ -356,9 +357,6 @@ VIE2.registerMapping = function (mapping) {
         for (var i = 0; i < VIE2.entities.length; i++) {
             VIE2.entities.at(i).searchCollections();
         }
-        
-        
-        VIE2.log("info", "VIE2.registerMapping()", "  Registered mapping '" + mapping.id + "'!");
     } else {
         VIE2.log("warn", "VIE2.registerMapping()", "Did not register mapping, as there is" +
                 "already a mapping with the same id registered.");
@@ -389,7 +387,6 @@ VIE2.registerConnector = function (connector) {
                 //also add to all known VIE&sup2; elements' Cache!
             });
         }
-        VIE2.log("info", "VIE2.registerConnector()", "Registered connector '" + connector.id + "'");
         
     } else {
         VIE2.log("warn", "VIE2.registerConnector()", "Did not register connector, as there is" +

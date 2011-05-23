@@ -10,13 +10,17 @@
     xmlns:demo="http://this.demo.eu/">
 	<head>
 		<title>Example usage of VIE^2</title>
+		<style type="text/css">
+		    body {font-family: Lucida Grande, Lucida Sans, Arial, sans-serif;}
+            h1,h2,h3,h4,h5,h6 {margin-bottom:5px;text-shadow: 1px 1px 3px gray;}
+        </style>
 		
 		<!-- 3rd-party libs -->
-		<script type="text/javascript" src="../lib/jquery/1.4/jquery-1.4.4.min.js"></script>
+		<script type="text/javascript"                  src="../lib/jquery/1.4/jquery-1.4.4.min.js"></script>
 		<script type="text/javascript" src="../lib/jquery-ui/1.8/js/jquery-ui-1.8.11.custom.min.js"></script>
-		<script type="text/javascript" src="../lib/rdfquery/latest/jquery.rdfquery.min.js"></script>
-		<script type="text/javascript" src="../lib/underscoreJS/underscore.min.js"></script>
-		<script type="text/javascript" src="../lib/backboneJS/backbone.min.js"></script>
+		<script type="text/javascript"          src="../lib/rdfquery/latest/jquery.rdfquery.debug.js"></script>
+		<script type="text/javascript"                  src="../lib/underscoreJS/underscore.min.js"></script>
+		<script type="text/javascript"                      src="../lib/backboneJS/backbone.min.js"></script>
         
         <!-- VIE -->
 		<script type="text/javascript" src="../lib/vie/vie.min.js"></script>
@@ -83,8 +87,7 @@
                     tagName: 'li',
                     
                     initialize: function() {
-                        _.bindAll(this, "render");
-                        _.bindAll(this, "remove");
+                        _.bindAll(this, "render", "remove");
                         this.model.bind('change', this.render);
                         this.model.bind('remove', this.remove);
                         $(this.el).hide();
@@ -99,14 +102,16 @@
                         if (names.length) {
                             var name = names.at(0);
                             str += name.get('value').replace(/"/g, '');
+                            if (name.get('lang')) 
+                                str += '@' + name.get('lang');
+                            for (var i = 1, l = names.length; i < l; i++) {
+                                var name = names.at(i);
+                                var literal = name.isLiteral;
+                                str += " aka. " + name.get('value').replace(/"/g, '');
+                                if (name.get('lang')) 
+                                    str += '@' + name.get('lang');
+                            }
                         }
-                        for (var i = 1, l = names.length; i < l; i++) {
-                            var name = names.at(i);
-                            var literal = name.isLiteral;
-                            str += " aka. " + name.get('value').replace(/"/g, '');
-                            str += '@' + name.get('lang');
-                        }
-                        
                         str.trim();
                         if (str.length > 0) {
                             $(this.el).text(str);
@@ -123,8 +128,7 @@
                     tagName: 'b',
                     
                     initialize: function() {
-                      _.bindAll(this, "render");
-                      _.bindAll(this, "remove");
+                      _.bindAll(this, "render", "remove");
                       this.model.bind('change', this.render);
                       this.model.bind('remove', this.render);
                       this.render();
@@ -137,11 +141,14 @@
                         if (names.length) {
                             var name = names.at(0);
                             str += name.get('value').replace(/"/g, '');
+                            if (name.get('lang')) 
+                                    str += '@' + name.get('lang');
                             for (var i = 1, l = names.length; i < l; i++) {
                                 var name = names.at(i);
                                 var literal = name.isLiteral;
                                 str += " aka. " + name.get('value').replace(/"/g, '');
-                                str += '@' + name.get('lang');
+                                if (name.get('lang')) 
+                                    str += '@' + name.get('lang');
                             }
                         } else {
                             str = "???";
@@ -157,7 +164,7 @@
                     tagName: 'li',
                     
                     initialize: function() {
-                      _.bindAll(this, "render");
+                      _.bindAll(this, "render", "remove");
                       this.model.bind('change', this.render);
                       this.model.bind('remove', this.remove);
                       $(this.el)
@@ -212,8 +219,25 @@
                         button.text('Done!');
                     },
                     {
-                        connectors: ['zemanta', 'opencalais', 'rdfa', 'stanbol']
-                    } //restrict to these two connectors
+                        connectors: ['zemanta', 'opencalais', 'stanbol']
+                    } //restrict to these connectors
+                );
+			};
+            
+            function analyzeRDFa (elem, buttonSelector) {
+				//disable button
+                var button = $(buttonSelector);
+				button.attr('disabled', 'disabled');
+                button.text('Analyzing...');
+				
+				//start analysis
+				elem.vie2().vie2('analyze', 
+                    function (status) {
+                        button.text('Done!');
+                    },
+                    {
+                        connectors: ['rdfa']
+                    } //restrict to these connectors
                 );
 			};
 
@@ -228,7 +252,7 @@
                         'foaf:name': "\"Mr. Unknown\""
                      });
                 }
-                var model = VIE2.createEntity({
+                var taskModel = VIE2.createEntity({
                     a: 'rdfcal:Task',
                     'rdfcal:name': todo,
                     'rdfcal:targetDate': targetDate,
@@ -291,7 +315,6 @@
                 var values = model.get(prop);
                 var value = values.getByValue(name);
                 values.remove(value);
-                
             };
             
             function removeEntity (subject, buttonSelector) {
@@ -299,46 +322,64 @@
                 $(buttonSelector).attr("disabled", "disabled");
             };
             
-            function annotate (subject, elem) {
-                 var model = VIE.EntityManager.getBySubject(subject);
-                 model.save({}, {
-                     elem: elem,
-                     props: ['foaf:name']
-                 });
-                 elem.show();
+            function annotate () {
+                var elem = $('#rdfa_obama');
+                
+                var model = VIE.EntityManager.getBySubject("<http://dbpedia.org/resource/Barack_Obama>");
+
+                if (model) {
+                
+                    var name = model.get('foaf:name').at(0);
+                
+                    model.serialize({elem: elem}); //only writes 'id' & 'a'
+                    name.serialize({elem :$('.name', elem)}); //adds the name to that element
+                    
+                }
             };
 		</script>
 		
 	</head>
 	<body>
-		<button onclick='analyzeText($("#test"), this);'>Analyze the short text below!</button><br />
-		<span id="test">This is a small test, where Steve Jobs, <span about="[demo:Thomas_Unknown]" typeof="foaf:Person"><span property="foaf:name">Thomas Unknown</span></span> and Barack Obama sing a song.</span><br /><br />
+	    <div style="width:1024px;margin-left:auto;margin-right:auto">
+	    <p><h2>Use VIE&sup2; to query backend services to analyze the following text for entities.</h2>
+        <span id="test">This is a small test, where Steve Jobs and Barack Obama sing a song.</span><br/>
+        <button onclick='analyzeText($("#test"), this);'>Click to start analysis!</button><br />
+        </p>
+        
+        <p><h2>Use VIE&sup2; to parse RDFa</h2>
+        <span id="test2" about="[demo:Thomas_Unknown]" typeof="foaf:Person"><span property="foaf:name">Thomas Unknown</span></span><br />
+        <button onclick='analyzeRDFa($("#test2"), this);'>Click to start parsing!</button><br />
+        </p>
+        
+        <p><h2>Add manual annotations</h2>
 		<button onclick='addName("<http://dbpedia.org/resource/Barack_Obama>", "\"B. Obama\"", "en");$(this).attr("disabled", "disabled")'>Add a fake name of Barack Obama in english (B. Obama).</button><br />
         <button onclick='addName("<http://dbpedia.org/resource/Barack_Obama>", "\"Bobby Obama\"", "nl");$(this).attr("disabled", "disabled")'>Add another fake name of Barack Obama in dutch (Bobby Obama).</button><br />
+        <button onclick='addTask("<http://this.demo.eu/Thomas_Unknown>", "\"implement something cool\"", "\"2012-04-11\"");$(this).attr("disabled", "disabled");'>Add a task (Thomas Unknown needs to implement something cool).</button><br />
+        </p>
+        
+        <p><h2>Alter the annotations</h2>
         <button onclick='changeName("<http://dbpedia.org/resource/Barack_Obama>", "\"B. Obama\"", "\"Barack Thomas Oliver Obama\"");$(this).attr("disabled", "disabled")'>Change the fake name of Barack Obama (B. Obama -> Barack Thomas Oliver Obama).</button><br />
         <button onclick='removeName("<http://dbpedia.org/resource/Barack_Obama>", "\"Barack Thomas Oliver Obama\"");$(this).attr("disabled", "disabled")'>Remove the fake name of Barack Obama (Barack Thomas Oliver Obama).</button><br />
-        <button onclick='removeEntity("<http://this.demo.eu/Thomas_Unknown>", this);'>Remove Thomas Unknown entity.</button><br /><br />
-        <button onclick='addTask("<http://this.demo.eu/Thomas_Unknown>", "\"implement something cool\"", "\"2012-04-11\"^^xsd:date");$(this).attr("disabled", "disabled");'>Add a task.</button><br /><br />
-        <button onclick='annotate("<http://dbpedia.org/resource/Barack_Obama>", $("#rdfa_obama"));$(this).attr("disabled", "disabled");'>Serialize annotations of Barack Obama.</button><br />
-        <span id="task"><span class=".person">Thomas Unknown</span> should implement something cool.</span><br />
-		
-		<br /><br />
-        
+        <button onclick='removeEntity("<http://this.demo.eu/Thomas_Unknown>", this);'>Remove the entity 'Thomas Unknown'.</button><br /><br />
+         </p>
+         
+        <p><h2>Use VIE&sup2; to serialize knowledge in RDFa</h2>
+        <button onclick='annotate();$(this).attr("disabled", "disabled");'>Serialize annotations of Barack Obama.</button><br />
+        <div id="rdfa_obama">This is a sample text with <span class="name">Barack Obama</span> in RDFa format.</div>
+        </p>
         <table style="width:100%;">
             <tr>
                 <td style="background-color: #CDCDCD;width:40%;vertical-align:top;">
-                    <h3>Persons:</h3>
+                    <h2>Persons:</h2>
                     <ul class="persons"></ul>
                 </td>
                 
                 <td style="background-color: #CDCDCD;width:40%;vertical-align:top;">
-                    <h3>Tasks:</h3>
+                    <h2>Tasks:</h2>
                     <ul class="tasks"></ul>
                 </td>
             </tr>
         </table>
-        
-        <div id="rdfa_obama" style="display:none;">This here should be annotated now with Barack Obama in RDFa format.</div>
-        
+        </div>
 	</body>
 </html>
