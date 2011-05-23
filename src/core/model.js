@@ -85,10 +85,6 @@ VIE2.Entity = VIE.RDFEntity.extend({
             return VIE.RDFEntity.prototype.get.call(this, attr);
         }
         return VIE2.getFromCache(this, this.get('id'), attr);
-    },
-    
-    serialize: function (opts) {
-        //TODO!
     }
 });
 
@@ -118,9 +114,6 @@ VIE2.Object = Backbone.Model.extend({
         
         if (oldValue !== undefined && oldValue !== newValue) {
             if (this.collection) {
-                //TODO: Dear future me! This is a hack, please change that!
-                //user driven change
-                //add the new
                 var inst = VIE2.createLiteral(newValue, {
                     lang: this.attributes['lang'],
                     datatype: this.attributes['datatype']
@@ -149,6 +142,10 @@ VIE2.Object = Backbone.Model.extend({
         if (lang !== undefined && datatype !== undefined) {
             datatype = undefined;
         }
+        
+        var val = this.get('value');
+        
+        
         return jQuery.rdf.literal(
             this.get('value'), {
                 namespaces: VIE2.namespaces,
@@ -164,65 +161,12 @@ VIE2.Object = Backbone.Model.extend({
         });
     },
     
-    serialize: function (options) {
-        if (!options) { options = {};}
-        var model = this;
-        
-        VIE2.log("info", "VIE2.Backbone#serialize(" + model.get('id') + ")", "Start serialization!");
-    
-        var connectorQueue = [];
-        jQuery.each(VIE2.connectors, function () {
-            //fill queue of connectors with 'id's to have an overview of running connectors.
-            //this supports the asynchronous calls.
-            if (options.connectors) {
-                if (options.connectors.indexOf(this.id) !== -1) {
-                    connectorQueue.push(this.id);
-                }
-            } else {
-                connectorQueue.push(this.id);
-            }
+    tojQueryRdfTriple: function () {
+        var triple = jQuery.rdf.triple(this.collection.parent.get('id') + " " + this.collection.property + " " + this.tojQueryRdf().toString(), {
+                namespaces: VIE2.namespaces
         });
         
-        //iterate over all connectors
-        jQuery.each(VIE2.connectors, function () {
-            //the connector's success callback method
-            var successCallback = function () {
-                VIE2.log("info", "VIE2.Backbone#serialize(" + model.get('id') + ")", "Successfully serialized the annotation!");
-                VIE2.Util.removeElement(connectorQueue, this.id);
-            };
-            
-            var errorCallback = function (reason) {
-                VIE2.log("error", "VIE2.Backbone#serialize(" + model.get('id') + ")", "");
-                VIE2.Util.removeElement(connectorQueue, this.id);
-            };
-            
-            //check if we may need to filter for the connector
-            if (options.connectors) {
-                if (options.connectors.indexOf(this.id) !== -1) {
-                    //start analysis with the connector.
-                    VIE2.log("info", "VIE2.Backbone#serialize(" + model.get('id') + ")", "Starting serialization with connector: '" + this.id + "'!");
-                    //TODO: toTriple(this);
-                    
-                    this.serialize(this, 
-                    jQuery.extend(options, {
-                        success: successCallback,
-                        error: errorCallback
-                    }));
-                }
-                else {
-                    VIE2.log("info", "VIE2.Backbone#serialize(" + model.get('id') + ")", "Will not use connector " + this.id + " as it is filtered!");
-                }
-            } else {
-                //start analysis with the connector.
-                VIE2.log("info", "VIE2.Backbone#serialize(" + model.get('id') + ")", "Starting serialization with connector: '" + this.id + "'!");
-                //TODO: toTriple(this);
-                this.serialize(this, 
-                    jQuery.extend(options, {
-                        success: successCallback,
-                        error: errorCallback
-                }));
-            }
-        });
+        return triple;
     },
     
     //for convenience
@@ -252,7 +196,7 @@ VIE2.createLiteral = function (value, opts) {
 VIE2.createResource = function (value, opts) {
      if (!opts) { opts = {};}
      return new VIE2.Object({
-        value: value,
+        value: '<' + value + '>',
         isLiteral: false,
         isResource: true
     }, jQuery.extend(opts, {isLiteral: false}));

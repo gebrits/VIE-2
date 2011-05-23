@@ -82,7 +82,7 @@
                          new TaskView({id: 'task-' + (UUID++), model: entity});
                      }
                 });
-                
+
                 var PersonView = Backbone.View.extend({
                     tagName: 'li',
                     
@@ -327,20 +327,35 @@
                 
                 var model = VIE.EntityManager.getBySubject("<http://dbpedia.org/resource/Barack_Obama>");
 
-                if (model) {
-                
-                    var name = model.get('foaf:name').at(0);
-                
-                    model.serialize({elem: elem}); //only writes 'id' & 'a'
-                    name.serialize({elem :$('.name', elem)}); //adds the name to that element
-                    
+                if (!model) {
+                    model = VIE2.createEntity({
+                      id : "<http://dbpedia.org/resource/Barack_Obama>",
+                      a : 'foaf:Person',
+                      'foaf:name' : '"Barack Obama"',
+                      'foaf:age': '56'
+                    });
                 }
+                
+                var name = model.get('foaf:name').at(0);
+                var age = model.get('foaf:age').at(0);
+            
+                VIE2.serialize(model, { //only writes 'id' & 'a'
+                    elem: elem,
+                    connectors: ['rdfa']
+                });
+                VIE2.serialize(name, { //adds the name to that element
+                    elem: $('.name', elem),
+                    connectors: ['rdfa']
+                });
+                VIE2.serialize(age, { //adds the name to that element
+                    elem: $('.age', elem),
+                    connectors: ['rdfa']
+                });
             };
 		</script>
-		
 	</head>
 	<body>
-	    <div style="width:1024px;margin-left:auto;margin-right:auto">
+	    <div style="width:960px;margin-left:auto;margin-right:auto">
 	    <p><h2>Use VIE&sup2; to query backend services to analyze the following text for entities.</h2>
         <span id="test">This is a small test, where Steve Jobs and Barack Obama sing a song.</span><br/>
         <button onclick='analyzeText($("#test"), this);'>Click to start analysis!</button><br />
@@ -365,7 +380,7 @@
          
         <p><h2>Use VIE&sup2; to serialize knowledge in RDFa</h2>
         <button onclick='annotate();$(this).attr("disabled", "disabled");'>Serialize annotations of Barack Obama.</button><br />
-        <div id="rdfa_obama">This is a sample text with <span class="name">Barack Obama</span> in RDFa format.</div>
+        <div id="rdfa_obama">This is a sample text with <span class="name">Barack Obama</span> <span class="age"></span> in RDFa format.</div>
         </p>
         <table style="width:100%;">
             <tr>

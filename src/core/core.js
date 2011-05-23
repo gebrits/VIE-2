@@ -211,7 +211,7 @@ VIE2.clearCache = function () {
     VIE2.globalCache = jQuery.rdf({namespaces: VIE2.namespaces});
 };
 
-//<strong>VIE2.getFromCache(uri, prop)</strong>: Retrive properties from the given
+//<strong>VIE2.getFromCache(uri, prop)</strong>: Retrieve properties from the given
 // *uri* directly from the global Cache. 
 VIE2.getFromCache = function (parent, uri, prop) {
     //initialize collection
@@ -228,7 +228,7 @@ VIE2.getFromCache = function (parent, uri, prop) {
     .each(function () {
         if (this.object.type) {
             if (this.object.type === 'literal') {
-                var inst = VIE2.createLiteral(this.object.value, {lang: this.object.lang, datatype: this.object.datatype, backend:true, silent:true});
+                var inst = VIE2.createLiteral(this.object.representation ? this.object.representation : ('"' + this.object.value + '"'), {lang: this.object.lang, datatype: this.object.datatype, backend:true, silent:true});
                 ret.add(inst, {backend:true, silent:true});
             } else if (this.object.type === 'uri' || this.object.type === 'bnode') {
                 if (VIE.EntityManager.getBySubject(this.object.toString()) !== undefined) {
@@ -328,6 +328,73 @@ VIE2.lookup = function (uri, props, callback) {
             };
         }(uri, ret, callback);
         this.query(uri, props, c);
+    });
+};
+
+//<strong>VIE2.serialize</strong>: TODO document me
+VIE2.serialize = function (model, options) {
+    
+    if (!options) 
+        options = {};
+    
+    VIE2.log("info", "VIE2.Backbone#serialize(" + model.get('id') + ")", "Start serialization!");
+    
+    var connectorQueue = [];
+    jQuery.each(VIE2.connectors, function(){
+        //fill queue of connectors with 'id's to have an overview of running connectors.
+        //this supports the asynchronous calls.
+        if (options.connectors) {
+            if (options.connectors.indexOf(this.id) !== -1) {
+                connectorQueue.push(this.id);
+            }
+        }
+        else {
+            connectorQueue.push(this.id);
+        }
+    });
+    
+    //iterate over all connectors
+    jQuery.each(VIE2.connectors, function(){
+        //the connector's success callback method
+        var successCallback = function(){
+            VIE2.log("info", "VIE2.serialize(" + model.get('id') + ")", "Successfully serialized the annotation!");
+            VIE2.Util.removeElement(connectorQueue, this.id);
+        };
+        
+        var errorCallback = function(reason) {
+            VIE2.log("error", "VIE2.serialize(" + model.get('id') + ")", "");
+            VIE2.Util.removeElement(connectorQueue, this.id);
+        };
+        
+        //check if we may need to filter for the connector
+        if (options.connectors) {
+            if (options.connectors.indexOf(this.id) !== -1) {
+                //start analysis with the connector.
+                VIE2.log("info", "VIE2.serialize(" + model.get('id') + ")", "Starting serialization with connector: '" + this.id + "'!");
+                if (model instanceof VIE2.Entity) {
+                    var triple = model.get('a').at(0).tojQueryRdfTriple(); //TODO!
+                } else {
+                    var triple = model.tojQueryRdfTriple(); //TODO!
+                }
+                
+                this.serialize(triple, jQuery.extend(options, {
+                    success: successCallback,
+                    error: errorCallback
+                }));
+            }
+            else {
+                VIE2.log("info", "VIE2.serialize(" + model.get('id') + ")", "Will not use connector " + this.id + " as it is filtered!");
+            }
+        }
+        else {
+            //start analysis with the connector.
+            VIE2.log("info", "VIE2.serialize(" + model.get('id') + ")", "Starting serialization with connector: '" + this.id + "'!");
+            //TODO: toTriple(this);
+            this.serialize(this, jQuery.extend(options, {
+                success: successCallback,
+                error: errorCallback
+            }));
+        }
     });
 };
 
