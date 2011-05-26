@@ -52,7 +52,7 @@ Each connector that implements the _analyze()_ method is automatically queried u
 command:
 
     var elem = $('#test');
-    elem.vie2().vie2('analyze', callback);
+    elem.vie2().vie2('analyze', callback, options);
    
 Dependent on the implementation of the connector, the element is analyzed and for each registered
 mapping that matches the types of the found entities, a backbone JS model is registered and
@@ -89,7 +89,7 @@ as ['rdfs:label', 'foaf:name', 'foaf:page', 'foaf:depiction']).
 
     var prop = 'foaf:name';
     var model = VIE.EntityManager.getBySubject(subject);
-    var inst = VIE2.createLiteral(newName);
+    var inst = VIE2.createLiteral(newName, {lang: 'en'});
     model.get(prop).add(inst);
    
 #### Update a value of an entities' property
@@ -108,6 +108,19 @@ as ['rdfs:label', 'foaf:name', 'foaf:page', 'foaf:depiction']).
     var values = model.get(prop);
     var value = values.getByValue(name);
     values.remove(value);
+
+### Serialization into RDFa
+
+    var model = VIE.EntityManager.getBySubject(subject);
+    var name = model.get('foaf:name').at(0);
+    VIE2.serialize(model, { //note: if we pass the entity-model, the RDFa serializer only adds 'id' & 'a'
+         elem: elem,
+         connectors: ['rdfa']
+    });
+    VIE2.serialize(name, { //note: passing the object-model starts the serialization of the literal
+         elem: $('.name', elem),
+         connectors: ['rdfa']
+    });
 
 ### Developing your own connector
 
