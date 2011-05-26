@@ -195,11 +195,13 @@ if (typeof VIE2 == 'undefined' || !VIE2) {
 }
 
 //<strong>VIE2.namespaces</strong>: This map contains all namespaces known to VIE2.
-//There are currently *no* default namespaces, though
-//we might want to change this in a future release.
+//There are currently *one* default namespace:
+// iks -> http://www.iks-ontology.net/
 //Namespaces can be overridden directly using VIE2.namespaces[x] = y but
 //are parsed from the &lt;html> tag's xmlns: attribute anyway during initialization.
-VIE2.namespaces = {};
+VIE2.namespaces = {
+    'iks' : 'http://www.iks-ontology.net/'
+};
 
 //<strong>VIE2.globalCache</strong>: The variable **globalCache** stores all knowledge in
 //triples that were retrieved and annotated so far in one *rdfQuery object*. Though it is
@@ -228,7 +230,7 @@ VIE2.getFromCache = function (parent, uri, prop) {
     .each(function () {
         if (this.object.type) {
             if (this.object.type === 'literal') {
-                var inst = VIE2.createLiteral(this.object.representation ? this.object.representation : ('"' + this.object.value + '"'), {lang: this.object.lang, datatype: this.object.datatype, backend:true, silent:true});
+                var inst = VIE2.createLiteral(this.object.representation ? this.object.representation : (/*'"' + */this.object.value/* + '"'*/), {lang: this.object.lang, datatype: this.object.datatype, backend:true, silent:true});
                 ret.add(inst, {backend:true, silent:true});
             } else if (this.object.type === 'uri' || this.object.type === 'bnode') {
                 if (VIE.EntityManager.getBySubject(this.object.toString()) !== undefined) {

@@ -274,6 +274,7 @@
                 }
                 
                 var inst = VIE2.createLiteral(newName, {lang: lang});
+                debugger;
                 model.get(prop).add(inst);
             };
             
@@ -286,10 +287,13 @@
                     model = VIE2.createEntity({
                       id : subject,
                       a : 'foaf:Person',
-                      prop: from
+                      'foaf:name': from
                     });
                 }
                 
+                var xx = model.get(prop).at(0).value();
+                var xx1 = model.get(prop).at(0).get('value');
+                debugger;
                 var oldValueModel = model.get(prop).getByValue(from);
                 
                 if (oldValueModel) {
@@ -331,10 +335,13 @@
                     model = VIE2.createEntity({
                       id : "<http://dbpedia.org/resource/Barack_Obama>",
                       a : 'foaf:Person',
-                      'foaf:name' : '"Barack Obama"',
-                      'foaf:age': '56'
+                      'foaf:name' : '"Barack Obama"'
                     });
                 }
+                
+                //add age
+                var inst = VIE2.createLiteral('49');
+                model.get('foaf:age').add(inst);
                 
                 var name = model.get('foaf:name').at(0);
                 var age = model.get('foaf:age').at(0);

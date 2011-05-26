@@ -2,6 +2,7 @@ module("Core - Namespaces");
 
 test ("Parsing of Document namespaces", 1, function () {
     var reference = {
+        "iks": "http://www.iks-ontology.net/",
       "owl": "http://www.w3.org/2002/07/owl#",
       "": "http://www.w3.org/1999/xhtml",
       "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
@@ -17,6 +18,7 @@ test ("Parsing of Document namespaces", 1, function () {
 test ("Manually adding namespaces", 2, function () {
     VIE2.namespaces["test"] = "http://this.is.a/test#";
     var reference = {
+        "iks": "http://www.iks-ontology.net/",
       "owl": "http://www.w3.org/2002/07/owl#",
       "": "http://www.w3.org/1999/xhtml",
       "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
@@ -34,6 +36,7 @@ test ("Manually adding namespaces", 2, function () {
 test ("Manually adding duplicate", 2, function () {
     VIE2.namespaces["test"] = "http://this.is.a/test#";
     var reference = {
+        "iks": "http://www.iks-ontology.net/",
       "owl": "http://www.w3.org/2002/07/owl#",
       "": "http://www.w3.org/1999/xhtml",
       "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
@@ -51,6 +54,7 @@ test ("Manually adding duplicate", 2, function () {
 test ("Manually removing namespaces", 2, function () {
     delete VIE2.namespaces["test"];
     var reference = {
+        "iks": "http://www.iks-ontology.net/",
       "owl": "http://www.w3.org/2002/07/owl#",
       "": "http://www.w3.org/1999/xhtml",
       "rdfs": "http://www.w3.org/2000/01/rdf-schema#",

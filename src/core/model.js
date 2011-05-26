@@ -29,6 +29,7 @@ VIE2.Entity = VIE.RDFEntity.extend({
                         var triple = jQuery.rdf.triple(this.id, attr, val, {
                             namespaces: VIE2.namespaces
                         });
+                        console.log("init", triple);
                         VIE2.globalCache.add(triple);
                     }
                 }
@@ -145,7 +146,6 @@ VIE2.Object = Backbone.Model.extend({
         
         var val = this.get('value');
         
-        
         return jQuery.rdf.literal(
             this.get('value'), {
                 namespaces: VIE2.namespaces,
@@ -185,8 +185,9 @@ VIE2.Object = Backbone.Model.extend({
 
 VIE2.createLiteral = function (value, opts) {
     if (!opts) { opts = {};}
+    console.log("create", value);
     return new VIE2.Object({
-        value: value,
+        'value': value,
         isResource: false,
         lang: opts.lang,
         datatype: opts.datatype,
@@ -196,7 +197,7 @@ VIE2.createLiteral = function (value, opts) {
 VIE2.createResource = function (value, opts) {
      if (!opts) { opts = {};}
      return new VIE2.Object({
-        value: '<' + value + '>',
+        'value': '<' + value + '>',
         isLiteral: false,
         isResource: true
     }, jQuery.extend(opts, {isLiteral: false}));

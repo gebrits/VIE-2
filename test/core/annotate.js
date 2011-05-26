@@ -10,8 +10,8 @@ test ("Manually add an entity wo. id", 7, function () {
     ok(entity);
     
     ok(entity.get('a').size() === 2);
-    equal(entity.get('a').at(0).value(), "http://xmlns.com/foaf/0.1/Person");
-    equal(entity.get('a').at(1).value(), "http://www.w3.org/2002/07/owl#Thing");
+    equal(entity.get('a').at(0).value(), "<http://xmlns.com/foaf/0.1/Person>");
+    equal(entity.get('a').at(1).value(), "<http://www.w3.org/2002/07/owl#Thing>");
     
     equal(entity.get('foaf:name').size(), 1);
     
