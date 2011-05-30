@@ -3,7 +3,6 @@ new VIE2.Connector('opencalais', {
         c:  "http://s.opencalais.com/1/pred/",
         cr: "http://s.opencalais.com/1/type/er/",
         cm: "http://s.opencalais.com/1/type/em/e/",
-        cp: "http://s.opencalais.com/1/pred/",
         cl: "http://s.opencalais.com/1/type/lid/",
         cs: "http://s.opencalais.com/1/type/sys/",
         cc: "http://s.opencalais.com/1/type/cat/",
@@ -58,8 +57,8 @@ VIE2.connectors['opencalais'].createReasoningRules = function () {
     })
     
     rules.add(['?subject a cm:Person',
-               '?subject cp:name ?name',
-               '?subject cp:commonname ?commonname'], 
+               '?subject c:name ?name',
+               '?subject c:commonname ?commonname'], 
               ['?subject foaf:name ?name',
                '?subject foaf:name ?commonname'
               ]);

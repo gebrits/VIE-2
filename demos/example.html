@@ -38,6 +38,8 @@
 		
 		<!-- Mapping plug-ins -->
 		<script type="text/javascript" src="../src/mapping/person.js"></script>
+		<script type="text/javascript" src="../src/mapping/place.js"></script>
+		<script type="text/javascript" src="../src/mapping/organization.js"></script>
 		<script type="text/javascript" src="../src/mapping/task.js"></script>
 		
 		<script type="text/javascript" src="../utils/zemanta_api_key.js"></script>
@@ -274,7 +276,6 @@
                 }
                 
                 var inst = VIE2.createLiteral(newName, {lang: lang});
-                debugger;
                 model.get(prop).add(inst);
             };
             
@@ -293,7 +294,6 @@
                 
                 var xx = model.get(prop).at(0).value();
                 var xx1 = model.get(prop).at(0).get('value');
-                debugger;
                 var oldValueModel = model.get(prop).getByValue(from);
                 
                 if (oldValueModel) {

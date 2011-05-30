@@ -31,15 +31,15 @@ VIE2.Util.isCurie = function (str) {
 // <code>return boolean</code> 
 VIE2.Util.isLiteral = function (str) {
     try {
-        jQuery.rdf.resource(str, {namespaces: VIE2.namespaces});
+        jQuery.rdf.resource(str, {namespaces: VIE2.namespaces.toObj()});
         return false;
     } catch (e) {
         try {
-            jQuery.rdf.blank(str, {namespaces: VIE2.namespaces});
+            jQuery.rdf.blank(str, {namespaces: VIE2.namespaces.toObj()});
             return false;
         } catch (f) {
             try {
-                jQuery.rdf.literal(str, {namespaces: VIE2.namespaces});
+                jQuery.rdf.literal(str, {namespaces: VIE2.namespaces.toObj()});
                 return true;
             } catch (g) {
                 return false;
@@ -52,14 +52,25 @@ VIE2.Util.isLiteral = function (str) {
 // <code>return boolean</code> 
 VIE2.Util.isBlank = function (str) {
     try {
-        jQuery.rdf.resource(str, {namespaces: VIE2.namespaces});
+        jQuery.rdf.resource(str, {namespaces: VIE2.namespaces.toObj()});
         return false;
     } catch (h) {
         try {
-            jQuery.rdf.blank(str, {namespaces: VIE2.namespaces});
+            jQuery.rdf.blank(str, {namespaces: VIE2.namespaces.toObj()});
             return true;
         } catch (i) {
             return false;
         }
     }
 };
+
+
+VIE2.Util.clone = function(src) {
+    var newObj = {};
+    
+    for (k in src) {
+        newObj[k] = src[k];
+    }
+    
+    return newObj;
+}

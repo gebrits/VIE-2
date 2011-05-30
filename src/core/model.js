@@ -20,14 +20,14 @@ VIE2.Entity = VIE.RDFEntity.extend({
                     if (jQuery.isArray(val)) {
                         for (var i = 0; i < val.length; i++) {
                             var triple = jQuery.rdf.triple(this.id, attr, val[i], {
-                                namespaces: VIE2.namespaces
+                                namespaces: VIE2.namespaces.toObj()
                             });
                             VIE2.globalCache.add(triple);
                         }
                     }
                     else {
                         var triple = jQuery.rdf.triple(this.id, attr, val, {
-                            namespaces: VIE2.namespaces
+                            namespaces: VIE2.namespaces.toObj()
                         });
                         console.log("init", triple);
                         VIE2.globalCache.add(triple);
@@ -48,7 +48,7 @@ VIE2.Entity = VIE.RDFEntity.extend({
                 var curie = types.at(x).get('value');
                 if (!VIE2.Util.isCurie(curie)) {
                     curie = jQuery.createCurie(curie.replace(/^</, '').replace(/>$/, ''), {
-                        namespaces: VIE2.namespaces,
+                        namespaces: VIE2.namespaces.toObj(),
                         charcase: 'lower'
                     }).toString();
                 }
@@ -148,7 +148,7 @@ VIE2.Object = Backbone.Model.extend({
         
         return jQuery.rdf.literal(
             this.get('value'), {
-                namespaces: VIE2.namespaces,
+                namespaces: VIE2.namespaces.toObj(),
                 datatype: datatype,
                 lang: lang
         });
@@ -157,13 +157,13 @@ VIE2.Object = Backbone.Model.extend({
     _tojQueryRdfRes: function () {
         return jQuery.rdf.resource(
             this.get('value'), {
-                namespaces: VIE2.namespaces
+                namespaces: VIE2.namespaces.toObj()
         });
     },
     
     tojQueryRdfTriple: function () {
         var triple = jQuery.rdf.triple(this.collection.parent.get('id') + " " + this.collection.property + " " + this.tojQueryRdf().toString(), {
-                namespaces: VIE2.namespaces
+                namespaces: VIE2.namespaces.toObj()
         });
         
         return triple;
@@ -185,7 +185,6 @@ VIE2.Object = Backbone.Model.extend({
 
 VIE2.createLiteral = function (value, opts) {
     if (!opts) { opts = {};}
-    console.log("create", value);
     return new VIE2.Object({
         'value': value,
         isResource: false,

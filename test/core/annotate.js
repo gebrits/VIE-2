@@ -40,7 +40,13 @@ test ("Manually add an entity w. given blank-id", 6, function () {
 });
 
 test ("Manually add an entity w. given id", 6, function () {
-    VIE2.namespaces["test"] = "http://this.is.a/test#";
+    if (!VIE2.namespaces.containsKey("test")) {
+        VIE2.namespaces.add("test", "http://this.is.a/test#");
+    }
+    if (!VIE2.namespaces.containsKey("foaf")) {
+        VIE2.namespaces.add("foaf", "http://xmlns.com/foaf/0.1/");
+    }
+    
     var entity = 
         VIE2.createEntity({
             id: "<http://this.is.a/test#TestPerson01>",

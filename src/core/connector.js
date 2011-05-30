@@ -25,6 +25,11 @@ VIE2.Connector = function(id, options) {
     this.id = id;
     this._options = (options)? options : {};
     
+    if (this._options.namespaces) {
+        jQuery.each(this._options.namespaces, function (k, v) {
+            VIE2.namespaces.add(k, v);
+        });
+    }
     //registers the connector within VIE&sup2;. Also adds the given namespaces
     //to the global cache in VIE&sup2;.
     VIE2.registerConnector(this);

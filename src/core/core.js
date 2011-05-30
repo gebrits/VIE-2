@@ -18,16 +18,20 @@
             //automatically scans for xmlns attributes in the **html** element
             //and adds them to the global VIE2.namespaces object
             jQuery.each(jQuery('html').xmlns(), function (k, v) {
-                VIE2.namespaces[k] = v.toString();
-                VIE2.globalCache.prefix(k, v);
+                var vStr = v.toString();
+                if (!VIE2.namespaces.containsKey(k) && !VIE2.namespaces.containsValue(vStr)) {
+                    VIE2.namespaces.add(k, vStr);
+                }
             });
             
             //automatically scans for xmlns attributes in the **given** element
             //and adds them to the global VIE2.namespaces object
             try {
-                jQuery.each(this.element.xmlns(), function(k, v){
-                    VIE2.namespaces[k] = v.toString();
-                    VIE2.globalCache.prefix(k, v);
+                jQuery.each(this.element.xmlns(), function(k, v) {
+                    var vStr = v.toString();
+                    if (!VIE2.namespaces.containsKey(k) && !VIE2.namespaces.containsValue(vStr)) {
+                        VIE2.namespaces.add(k, vStr);
+                    }
                 });
             } catch (ex) {
                 //needs to be ignored when called on $(document);
@@ -35,6 +39,8 @@
                     VIE2.log("warn", "VIE2.core#create()", "Could not retrieve namespaces from element: '" + e + "'!");
                 }
             }
+            
+            return this;
         },
         
         //<strong>analyze(callback,[options])</strong>: The analyze() method sends the element to all connectors and lets
@@ -81,7 +87,7 @@
                         //we add all namespaces to the rdfQuery object. 
                         //Attention: this might override namespaces that were added by the connector!
                         //but needed to keep consistency through VIE&sup2;.
-                        jQuery.each(VIE2.namespaces, function(k, v) {
+                        jQuery.each(VIE2.namespaces.toObj(), function(k, v) {
                             rdf.prefix(k, v);
                         });
 
@@ -194,23 +200,25 @@ if (typeof VIE2 == 'undefined' || !VIE2) {
     VIE2 = {};
 }
 
-//<strong>VIE2.namespaces</strong>: This map contains all namespaces known to VIE2.
+//<strong>VIE2.namespaces</strong>: This object contains all namespaces known to VIE2.
 //There are currently *one* default namespace:
 // iks -> http://www.iks-ontology.net/
-//Namespaces can be overridden directly using VIE2.namespaces[x] = y but
+// owl -> http://www.w3.org/2002/07/owl#
+//Namespaces can be overridden directly using VIE2.namespaces.update(k, v) but
 //are parsed from the &lt;html> tag's xmlns: attribute anyway during initialization.
-VIE2.namespaces = {
-    'iks' : 'http://www.iks-ontology.net/'
-};
+VIE2.namespaces = new VIE2.Namespaces({
+    'iks' : 'http://www.iks-ontology.net/',
+    "owl" : "http://www.w3.org/2002/07/owl#"
+});
 
 //<strong>VIE2.globalCache</strong>: The variable **globalCache** stores all knowledge in
 //triples that were retrieved and annotated so far in one *rdfQuery object*. Though it is
 //available via VIE2.globalCache, it is highly discouraged to access it directly.
-VIE2.globalCache = jQuery.rdf({namespaces: VIE2.namespaces});
+VIE2.globalCache = jQuery.rdf({namespaces: VIE2.namespaces.toObj()});
 
 //<strong>VIE2.clearCache()</strong>: Static method to clear the global Cache.
 VIE2.clearCache = function () {
-    VIE2.globalCache = jQuery.rdf({namespaces: VIE2.namespaces});
+    VIE2.globalCache = jQuery.rdf({namespaces: VIE2.namespaces.toObj()});
 };
 
 //<strong>VIE2.getFromCache(uri, prop)</strong>: Retrieve properties from the given
@@ -226,7 +234,7 @@ VIE2.getFromCache = function (parent, uri, prop) {
     var ret = new Collection();
     
     VIE2.globalCache
-    .where(jQuery.rdf.pattern(uri, prop, '?object', {namespaces: VIE2.namespaces}))
+    .where(jQuery.rdf.pattern(uri, prop, '?object', {namespaces: VIE2.namespaces.toObj()}))
     .each(function () {
         if (this.object.type) {
             if (this.object.type === 'literal') {
@@ -252,7 +260,7 @@ VIE2.removeFromCache = function (uri, prop, val) {
     uri, 
     (prop)? prop : '?x',
     (val)? val : '?y', 
-    {namespaces: VIE2.namespaces});
+    {namespaces: VIE2.namespaces.toObj()});
     VIE2.log("info", "VIE2.removeFromCache()", "Removing triples that match: '" + pattern.toString() + "'!");
     VIE2.log("info", "VIE2.removeFromCache()", "Global Cache now holds " + VIE2.globalCache.databank.triples().length + " triples!");
     VIE2.globalCache
@@ -304,7 +312,7 @@ VIE2.lookup = function (uri, props, callback) {
                     VIE2.log("info", "VIE2.lookup()", "Received query information from connector '" + this.id + "' for uri '" + uri + "'!");
                     jQuery.each(data, function (k, v) {
                         for (var i = 0; i < v.length; i++) {
-                            var triple = jQuery.rdf.triple(uri, k, v[i], {namespaces: VIE2.namespaces});
+                            var triple = jQuery.rdf.triple(uri, k, v[i], {namespaces: VIE2.namespaces.toObj()});
                             VIE2.globalCache.add(triple);
                         }
                     });
@@ -447,16 +455,7 @@ VIE2.registerConnector = function (connector) {
     //first check if there is already 
     //a connector with 'connector.id' registered
     if (!VIE2.connectors[connector.id]) {
-        VIE2.connectors[connector.id] = connector;
-        
-        if (connector.options('namespaces')) {
-            jQuery.each(connector.options('namespaces'), function(k, v) {
-                VIE2.namespaces[k] = v;
-                VIE2.globalCache.prefix(k, v);
-                //also add to all known VIE&sup2; elements' Cache!
-            });
-        }
-        
+        VIE2.connectors[connector.id] = connector;        
     } else {
         VIE2.log("warn", "VIE2.registerConnector()", "Did not register connector, as there is" +
                 "already a connector with the same id registered.");

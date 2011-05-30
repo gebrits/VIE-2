@@ -19,14 +19,14 @@ VIE2.connectors['semantictweet'].query = function (uri, props, callback) {
         return;
     }
     if ((typeof uri != 'string')) {
-        jQuery.VIE2.log ("warn", "VIE2.Connector('" + this.id + "')", "Query does not support the given URI!");
+        VIE2.log ("warn", "VIE2.Connector('" + this.id + "')", "Query does not support the given URI!");
         callback.call(this, {});
         return;
     }
     var uri = uri.replace(/^</, '').replace(/>$/, '');
     
     if (!uri.match(/^http\:\/\/semantictweet.com\/.*/)) {
-        jQuery.VIE2.log ("warn", "VIE2.Connector('" + this.id + "')", "Query does not support the given URI!");
+        VIE2.log ("warn", "VIE2.Connector('" + this.id + "')", "Query does not support the given URI!");
         callback.call(this, {});
         return;
     }
@@ -60,7 +60,7 @@ VIE2.connectors['semantictweet'].query = function (uri, props, callback) {
                         }
                     }
                 } catch (e) {
-                    jQuery.VIE2.log ("warn", "VIE2.Connector('semantictweet')", "Could not query for uri '" + uri + "' because of the following parsing error: '" + e.message + "'!");
+                    VIE2.log ("warn", "VIE2.Connector('semantictweet')", "Could not query for uri '" + uri + "' because of the following parsing error: '" + e.message + "'!");
                 }
             }
             callback.call(this, ret);

@@ -51,12 +51,13 @@
         <echo message="Building VIE^2 Distribution" />
         <concat destfile="${DIST_DIR}/vie2-${VERSION}.debug.js">
         	<fileset dir="${SRC_DIR}" includes="core/intro.js"/>
+        	<fileset dir="${SRC_DIR}" includes="core/util.js"/>
+        	<fileset dir="${SRC_DIR}" includes="core/namespaces.js"/>
         	<fileset dir="${SRC_DIR}" includes="core/core.js"/>
         	<fileset dir="${SRC_DIR}" includes="core/collection.js"/>
         	<fileset dir="${SRC_DIR}" includes="core/model.js"/>
         	<fileset dir="${SRC_DIR}" includes="core/connector.js"/>
         	<fileset dir="${SRC_DIR}" includes="core/mapping.js"/>
-        	<fileset dir="${SRC_DIR}" includes="core/util.js"/>
         	<fileset dir="${SRC_DIR}" includes="core/outro.js"/>
        	</concat>
         <copy file="${DIST_DIR}/vie2-${VERSION}.debug.js" tofile="${DIST_DIR}/vie2-latest.debug.js" overwrite="true" />

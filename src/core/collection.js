@@ -4,7 +4,6 @@
 
 //just for convenience, should be removed in a later revision
 VIE.EntityManager.initializeCollection();
-VIE2.namespaces["owl"] = "http://www.w3.org/2002/07/owl#";
 
 //<strong>VIE2.EntityCollection</strong>: TODO: document me
 VIE2.EntityCollection = VIE.RDFEntityCollection.extend({
@@ -22,7 +21,7 @@ VIE2.EntityCollection = VIE.RDFEntityCollection.extend({
                 model.get('id'), 
                 'a', 
                 'owl:Thing', 
-                {namespaces: VIE2.namespaces}
+                {namespaces: VIE2.namespaces.toObj()}
             );
             VIE2.globalCache.add(triple);    
         }
@@ -73,7 +72,7 @@ VIE2.ObjectCollection = Backbone.Collection.extend({
                 this.uri, 
                 this.property, 
                 model.tojQueryRdf(), 
-                {namespaces: VIE2.namespaces}
+                {namespaces: VIE2.namespaces.toObj()}
             );
             VIE2.globalCache.add(triple);
             if (this.parent) {

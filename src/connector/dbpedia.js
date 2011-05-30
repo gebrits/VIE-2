@@ -8,8 +8,9 @@
 //});
 new VIE2.Connector('dbpedia', {
     namespaces: {
-        owl : "http://www.w3.org/2002/07/owl#",
-        yago: "http://dbpedia.org/class/yago/"
+        'owl'    : "http://www.w3.org/2002/07/owl#",
+        'yago'   : "http://dbpedia.org/class/yago/",
+        'dbonto' : 'http://dbpedia.org/ontology/'
     }
 });
 

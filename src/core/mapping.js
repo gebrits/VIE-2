@@ -23,8 +23,7 @@ VIE2.Mapping = function(id, types, defaults, options) {
     //add given namespaces to VIE&sup2;'s namespaces
     if (this.options.namespaces) {
         jQuery.each(this.options.namespaces, function (k, v) {
-           VIE2.namespaces[k] = v;
-           VIE2.globalCache.prefix(k, v);
+            VIE2.namespaces.add(k, v);
         });
     }
     
@@ -33,7 +32,7 @@ VIE2.Mapping = function(id, types, defaults, options) {
     for (var i = 0; i < types.length; i++) {
         var type = types[i];
         if (!VIE2.Util.isCurie(type)) {
-            type = jQuery.createCurie(type.replace(/^</, '').replace(/>$/, ''), {namespaces : VIE2.namespaces, charcase: 'lower'}).toString();
+            type = jQuery.createCurie(type.replace(/^</, '').replace(/>$/, ''), {namespaces : VIE2.namespaces.toObj(), charcase: 'lower'}).toString();
         }
         this.types.push(type);
     }
@@ -43,7 +42,7 @@ VIE2.Mapping = function(id, types, defaults, options) {
     for (var i = 0; i < defaults.length; i++) {
         var d = defaults[i];
         if (!VIE2.Util.isCurie(d)) {
-            d = jQuery.createCurie(d.replace(/^</, '').replace(/>$/, ''), {namespaces : VIE2.namespaces, charcase: 'lower'}).toString();
+            d = jQuery.createCurie(d.replace(/^</, '').replace(/>$/, ''), {namespaces : VIE2.namespaces.toObj(), charcase: 'lower'}).toString();
         }
         this.defaults.push(d);
     }

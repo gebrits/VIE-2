@@ -1,69 +1,40 @@
 module("Core - Namespaces");
 
-test ("Parsing of Document namespaces", 1, function () {
-    var reference = {
-        "iks": "http://www.iks-ontology.net/",
-      "owl": "http://www.w3.org/2002/07/owl#",
-      "": "http://www.w3.org/1999/xhtml",
-      "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
-      "foaf": "http://xmlns.com/foaf/0.1/",
-      "dbonto": "http://dbpedia.org/ontology/",
-      "oc": "http://s.opencalais.com/1/type/em/e/",
-      "ocpred": "http://s.opencalais.com/1/pred/",
-      "rdfcal": "http://www.w3.org/2002/12/cal#"
-    };
-    deepEqual(VIE2.namespaces, reference, "Parsing the document's namespaces.");
-});
-
 test ("Manually adding namespaces", 2, function () {
-    VIE2.namespaces["test"] = "http://this.is.a/test#";
-    var reference = {
-        "iks": "http://www.iks-ontology.net/",
-      "owl": "http://www.w3.org/2002/07/owl#",
-      "": "http://www.w3.org/1999/xhtml",
-      "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
-      "foaf": "http://xmlns.com/foaf/0.1/",
-      "dbonto": "http://dbpedia.org/ontology/",
-      "oc": "http://s.opencalais.com/1/type/em/e/",
-      "ocpred": "http://s.opencalais.com/1/pred/",
-      "rdfcal": "http://www.w3.org/2002/12/cal#",
-      "test": "http://this.is.a/test#"
-    };
-    deepEqual(VIE2.namespaces, reference, "Manually adding namespaces.");
-    strictEqual(VIE2.namespaces["test"], "http://this.is.a/test#", "Manually adding namespaces.");
+    var reference = jQuery.extend(VIE2.namespaces.toObj(), {'test' : 'http://this.is.a/test#'});
+    
+    VIE2.namespaces.add("test","http://this.is.a/test#");
+    
+    deepEqual(VIE2.namespaces.toObj(), reference, "Manually adding namespaces.");
+    strictEqual(VIE2.namespaces.get("test"), "http://this.is.a/test#", "Manually adding namespaces.");
 });
 
 test ("Manually adding duplicate", 2, function () {
-    VIE2.namespaces["test"] = "http://this.is.a/test#";
-    var reference = {
-        "iks": "http://www.iks-ontology.net/",
-      "owl": "http://www.w3.org/2002/07/owl#",
-      "": "http://www.w3.org/1999/xhtml",
-      "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
-      "foaf": "http://xmlns.com/foaf/0.1/",
-      "dbonto": "http://dbpedia.org/ontology/",
-      "oc": "http://s.opencalais.com/1/type/em/e/",
-      "ocpred": "http://s.opencalais.com/1/pred/",
-      "rdfcal": "http://www.w3.org/2002/12/cal#",
-      "test": "http://this.is.a/test#"
-    };
-    deepEqual(VIE2.namespaces, reference, "Manually adding namespaces.");
-    strictEqual(VIE2.namespaces["test"], "http://this.is.a/test#", "Manually adding namespaces.");
+    var reference = jQuery.extend(VIE2.namespaces.toObj(), {'test' : 'http://this.is.a/test#'});
+    VIE2.namespaces.add("test", "http://this.is.a/test#");
+    deepEqual(VIE2.namespaces.toObj(), reference, "Manually adding namespaces.");
+    strictEqual(VIE2.namespaces.get("test"), "http://this.is.a/test#", "Manually adding namespaces.");
+});
+
+test ("Manually adding wrong duplicate (key)", 1, function () {
+    raises(function () {
+        VIE2.namespaces.add("test1", "http://this.is.a/test#");
+    });
+    
+});
+
+test ("Manually adding wrong duplicate (value)", 1, function () {
+    raises(function () {
+        VIE2.namespaces.add("test", "http://this.is.another/test#");
+    });
 });
 
 test ("Manually removing namespaces", 2, function () {
-    delete VIE2.namespaces["test"];
-    var reference = {
-        "iks": "http://www.iks-ontology.net/",
-      "owl": "http://www.w3.org/2002/07/owl#",
-      "": "http://www.w3.org/1999/xhtml",
-      "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
-      "foaf": "http://xmlns.com/foaf/0.1/",
-      "dbonto": "http://dbpedia.org/ontology/",
-      "oc": "http://s.opencalais.com/1/type/em/e/",
-      "ocpred": "http://s.opencalais.com/1/pred/",
-      "rdfcal": "http://www.w3.org/2002/12/cal#"
-    };
-    deepEqual(VIE2.namespaces, reference, "Manually removing namespaces.");
+    var reference = VIE2.namespaces.toObj();
+    delete reference["test"];
+     
+    VIE2.namespaces.remove("test");
+   
+    deepEqual(VIE2.namespaces.toObj(), reference, "Manually removing namespaces.");
     strictEqual(VIE2.namespaces['test'], undefined, "Manually removing namespaces.");
 });

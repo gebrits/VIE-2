@@ -221,6 +221,13 @@ VIE2.connectors['stanbol'].query = function (uri, props, callback) {
 
 VIE2.connectors['stanbol'].queryEntityHub = function (uri, callback) {
     var proxy = this._options.proxy_url;
+    
+    if (!this._options.entityhub_url) {
+        VIE2.log("warn", "VIE2.connectors(" + this.id + ")", "No URL found for entity hub!");
+        callback({status: 404});
+        return;
+    }
+    
     var entityhub_url = this._options.entityhub_url.replace(/\/$/, '');
     
     if (proxy) {
