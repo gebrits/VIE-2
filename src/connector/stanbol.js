@@ -135,6 +135,12 @@ VIE2.connectors['stanbol'].queryEnhancer = function (text, callback) {
 
     var proxy = this._options.proxy_url;
     var enhancer_url = this._options.enhancer_url;
+    
+    if (!this._options.enhancer_url) {
+        VIE2.log("warn", "VIE2.connectors(" + this.id + ")", "No URL found for enhancer hub!");
+        throw "VIE2.connector.stanbol.enhancer_url is empty";
+        return;
+    }
 
     if (proxy) {
         jQuery.ajax({
@@ -224,7 +230,7 @@ VIE2.connectors['stanbol'].queryEntityHub = function (uri, callback) {
     
     if (!this._options.entityhub_url) {
         VIE2.log("warn", "VIE2.connectors(" + this.id + ")", "No URL found for entity hub!");
-        callback({status: 404});
+        throw "VIE2.connector.stanbol.entityhub_url is empty";
         return;
     }
     
