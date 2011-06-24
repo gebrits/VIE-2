@@ -21,6 +21,9 @@ VIE2.Type = function(id, parent, attrs, namespaces) {
     
     this.id = id;
     this.parent = parent;
+    this.parent.children.push(this);
+    
+    this.children = [];
     
     this.attrs = (attrs)? attrs : [];
     
