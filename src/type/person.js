@@ -16,10 +16,10 @@ new VIE2.Type(
          'datatype' : 'EducationalOrganization'
          },
         {'id'       : 'awards',
-         'datatype' : 'xsd:string'
+         'datatype' : 'Text'
          },
         {'id'       : 'birthDate',
-         'datatype' : 'xsd:date'
+         'datatype' : 'Date'
          },
         {'id'       : 'children',
          'datatype' : 'Person'
@@ -31,37 +31,37 @@ new VIE2.Type(
          'datatype' : 'ContactPoint'
          },
         {'id'       : 'deathDate',
-         'datatype' : 'xsd:date'
+         'datatype' : 'Date'
          },
         {'id'       : 'email',
-         'datatype' : 'xsd:string'
+         'datatype' : 'Text'
          },
         {'id'       : 'faxNumber',
-         'datatype' : 'xsd:string'
+         'datatype' : 'Text'
          },
         {'id'       : 'follows',
          'datatype' : 'Person'
          },
         {'id'       : 'gender',
-         'datatype' : 'xsd:string'
+         'datatype' : 'Text'
          },
         {'id'       : 'homeLocation',
          'datatype' : 'Place'
          },
         {'id'       : 'interactionCount',
-         'datatype' : 'xsd:string'
+         'datatype' : 'Text'
          },
         {'id'       : 'jobTitle',
-         'datatype' : 'xsd:string'
+         'datatype' : 'Text'
          },
         {'id'       : 'knows',
          'datatype' : 'Person'
          },
         {'id'       : 'interactionCount',
-         'datatype' : 'xsd:string'
+         'datatype' : 'Text'
          },
         {'id'       : 'memberOf',
-         'datatype' : ':Organization'
+         'datatype' : 'Organization'
          },
         {'id'       : 'nationality',
          'datatype' : 'Country'
@@ -82,7 +82,7 @@ new VIE2.Type(
          'datatype' : 'Person'
          },
         {'id'       : 'telephone',
-         'datatype' : 'xsd:string'
+         'datatype' : 'Text'
          },
         {'id'       : 'workLocation',
          'datatype' : 'Place'
@@ -93,7 +93,6 @@ new VIE2.Type(
     ],
     { //the used namespaces, these can be given here, or placed directly into the HTML document's xmlns attribute.
         'schema' : 'http://schema.org/',
-        'xsd'    : 'http://www.w3.org/2001/XMLSchema#',
         'owl'    : 'http://www.w3.org/2002/07/owl#'
     }
 );

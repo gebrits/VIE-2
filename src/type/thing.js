@@ -7,13 +7,13 @@ new VIE2.Type (
     undefined,
     [
         {'id'       : 'description',
-         'datatype' : 'xsd:string'
+         'datatype' : 'Text'
          },
         {'id'       : 'image',
          'datatype' : 'xsd:anyURI'
          },
         {'id'       : 'name',
-         'datatype' : 'xsd:string'
+         'datatype' : 'Text'
          },
         {'id'       : 'url',
          'datatype' : 'xsd:anyURI'

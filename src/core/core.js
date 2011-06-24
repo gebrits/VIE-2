@@ -14,10 +14,10 @@
         
         //<strong>_create()</strong>: The private method **_create():** is called implicitly when
         //calling .vie2(); on any jQuery object.
-        _create: function () {            
+        _create: function () {
             //automatically scans for xmlns attributes in the **html** element
             //and adds them to the global VIE2.namespaces object
-            jQuery.each(jQuery('html').xmlns(), function (k, v) {
+            $.each(jQuery('html').xmlns(), function (k, v) {
                 var vStr = v.toString();
                 if (!VIE2.namespaces.containsKey(k) && !VIE2.namespaces.containsValue(vStr)) {
                     VIE2.namespaces.add(k, vStr);
@@ -27,7 +27,7 @@
             //automatically scans for xmlns attributes in the **given** element
             //and adds them to the global VIE2.namespaces object
             try {
-                jQuery.each(this.element.xmlns(), function(k, v) {
+                $.each(this.element.xmlns(), function(k, v) {
                     var vStr = v.toString();
                     if (!VIE2.namespaces.containsKey(k) && !VIE2.namespaces.containsValue(vStr)) {
                         VIE2.namespaces.add(k, vStr);
@@ -45,7 +45,7 @@
         
         //<strong>analyze(callback,[options])</strong>: The analyze() method sends the element to all connectors and lets
         //them analyze the content. The connectors' methods are asynchronously called and once all connectors
-        //returned the found enrichments in the form of **jQuery.rdf objects**, the *callback* method is
+        //returned the found enrichments in the form of **$.rdf objects**, the *callback* method is
         //executed (in the scope of the callback function, *this* refers to the given element).<br />
         //The returned enrichments are written into the global Cache of VIE&sup2; (VIE2.globalCache).<br />
         //Furthermore, each found subject in the returned knowledge is checked whether there is a mapping to 
@@ -65,7 +65,7 @@
                         
             //as the connectors work asynchronously, we need a queue to listen if all connectors are finished.
             var connectorQueue = [];
-            jQuery.each(VIE2.connectors, function () {
+            $.each(VIE2.connectors, function () {
                 //fill queue of connectors with 'id's to have an overview of running connectors.
                 //this supports the asynchronous calls.
                 if (options.connectors) {
@@ -78,7 +78,7 @@
             });
             
             //iterate over all connectors
-            jQuery.each(VIE2.connectors, function () {
+            $.each(VIE2.connectors, function () {
                 //the connector's success callback method
                 var successCallback = function (elem) {
                     return function (rdf) {
@@ -87,7 +87,7 @@
                         //we add all namespaces to the rdfQuery object. 
                         //Attention: this might override namespaces that were added by the connector!
                         //but needed to keep consistency through VIE&sup2;.
-                        jQuery.each(VIE2.namespaces.toObj(), function(k, v) {
+                        $.each(VIE2.namespaces.toObj(), function(k, v) {
                             rdf.prefix(k, v);
                         });
 
@@ -97,7 +97,7 @@
                         });
                         
                         //register all subjects as backbone model
-                        jQuery.each(rdf.databank.subjectIndex, function (subject, v) {
+                        $.each(rdf.databank.subjectIndex, function (subject, v) {
                             var subjStr = subject.toString();
                             if (that.options.entities.indexOf(subjStr) === -1) {
                                 that.options.entities.push(subjStr);
@@ -163,6 +163,11 @@
         uris: function () {
             return this.options.entities;
         },
+        
+        //<strong>addUri()</strong>: Manually adds a URI (string) to the list of entities within the scope of the current element!
+        addUri: function (uri) {
+            this.options.entitites.push(uri);
+        },
                 
         //<strong>copy(tar)</strong>: Copies all local knowledge to the target element(s).
         //Basically calls: <pre>
@@ -196,9 +201,12 @@
 //The global <strong>VIE2 object</strong>. If VIE2 is already defined, the
 //existing VIE2 object will not be overwritten so that the
 //defined object is preserved.
-if (typeof VIE2 == 'undefined' || !VIE2) {
+if (typeof VIE2 === 'undefined' || !VIE2) {
     VIE2 = {};
 }
+
+//<strong>VIE2.basename</strong>: The basis namespace of the VIE2 schema.
+VIE2.basename = 'http://schema.org';
 
 //<strong>VIE2.namespaces</strong>: This object contains all namespaces known to VIE2.
 //There are currently *one* default namespace:
@@ -207,8 +215,8 @@ if (typeof VIE2 == 'undefined' || !VIE2) {
 //Namespaces can be overridden directly using VIE2.namespaces.update(k, v) but
 //are parsed from the &lt;html> tag's xmlns: attribute anyway during initialization.
 VIE2.namespaces = new VIE2.Namespaces({
-    'iks' : 'http://www.iks-ontology.net/',
-    "owl" : "http://www.w3.org/2002/07/owl#"
+    'owl' : 'http://www.w3.org/2002/07/owl#',
+    'xsd' : 'http://www.w3.org/2001/XMLSchema#'
 });
 
 //<strong>VIE2.globalCache</strong>: The variable **globalCache** stores all knowledge in
@@ -216,9 +224,12 @@ VIE2.namespaces = new VIE2.Namespaces({
 //available via VIE2.globalCache, it is highly discouraged to access it directly.
 VIE2.globalCache = jQuery.rdf({namespaces: VIE2.namespaces.toObj()});
 
-//<strong>VIE2.clearCache()</strong>: Static method to clear the global Cache.
-VIE2.clearCache = function () {
-    VIE2.globalCache = jQuery.rdf({namespaces: VIE2.namespaces.toObj()});
+VIE2.addToCache = function (uri, prop, val) {
+    var triple = jQuery.rdf.triple(uri, prop, val, {namespaces: VIE2.namespaces.toObj()});
+    VIE2.log("info", "VIE2.addToCache()", "Adding triple to cache!");
+    VIE2.log("info", "VIE2.addToCache()", "Global Cache now holds " + VIE2.globalCache.databank.triples().length + " triples!");
+    VIE2.globalCache.add(triple);
+    VIE2.log("info", "VIE2.addToCache()", "Global Cache now holds " + VIE2.globalCache.databank.triples().length + " triples!");
 };
 
 //<strong>VIE2.getFromCache(uri, prop)</strong>: Retrieve properties from the given
@@ -257,16 +268,21 @@ VIE2.getFromCache = function (parent, uri, prop) {
 
 VIE2.removeFromCache = function (uri, prop, val) {
     var pattern = jQuery.rdf.pattern(
-    uri, 
-    (prop)? prop : '?x',
-    (val)? val : '?y', 
-    {namespaces: VIE2.namespaces.toObj()});
+        uri, 
+        (prop)? prop : '?x',
+        (val)? val : '?y', 
+        {namespaces: VIE2.namespaces.toObj()});
     VIE2.log("info", "VIE2.removeFromCache()", "Removing triples that match: '" + pattern.toString() + "'!");
     VIE2.log("info", "VIE2.removeFromCache()", "Global Cache now holds " + VIE2.globalCache.databank.triples().length + " triples!");
     VIE2.globalCache
-    .where(pattern)
-    .remove(pattern);
+        .where(pattern)
+        .remove(pattern);
     VIE2.log("info", "VIE2.removeFromCache()", "Global Cache now holds " + VIE2.globalCache.databank.triples().length + " triples!");
+};
+
+//<strong>VIE2.clearCache()</strong>: Static method to clear the global Cache.
+VIE2.clearCache = function () {
+    VIE2.globalCache = jQuery.rdf({namespaces: VIE2.namespaces.toObj()});
 };
 
 //<strong>VIE2.lookup(uri, props, callback)</strong>: The query function supports querying for properties. The uri needs
@@ -408,26 +424,24 @@ VIE2.serialize = function (model, options) {
     });
 };
 
-//<strong>VIE2.mappings</strong>: Contains for all registered mappings (mapping.id is the key), the
+//<strong>VIE2.types</strong>: Contains for all registered types (type.id is the key), the
 //following items:<br/>
-//* VIE2.mappings[id].a -> an array of strings (curies) of the corresponding type.
-//* VIE2.mappings[id].mapping -> the mapping itself
-//* VIE2.mappings[id].collection -> the backbone JS collection, that has the Model registered. 
-VIE2.mappings = {};
+//* VIE2.types[id].type -> the type object itself
+//* VIE2.types[id].collection -> the Backbone.js collection, that has the type registered. 
+VIE2.types = {};
 
-//<strong>VIE2.registerMapping(mapping)</strong>: Static method to register a mapping (is automatically called 
-//during construction of mapping class. This allocates an object in *VIE2.mappings[mapping.id]*.
-VIE2.registerMapping = function (mapping) {
+//<strong>VIE2.registerType(type)</strong>: Static method to register a type (is automatically called 
+//during construction of type class. This allocates an object in *VIE2.types[type.id]*.
+VIE2.registerType = function (type) {
     //first check if there is already 
     //a mapping with 'mapping.id' registered    
-    if (!VIE2.mappings[mapping.id]) {
+    if (!VIE2.types[type.id]) {
                 
         var Collection = VIE2.EntityCollection.extend({model: VIE2.Entity});
         
-        VIE2.mappings[mapping.id] = {
-            "a" : (jQuery.isArray(mapping.types))? mapping.types : [mapping.types],
+        VIE2.types[type.id] = {
             "collection" : new Collection(),
-            "mapping" : mapping
+            "type" : type
         };
         
         //trigger filling of collections!
@@ -435,15 +449,15 @@ VIE2.registerMapping = function (mapping) {
             VIE2.entities.at(i).searchCollections();
         }
     } else {
-        VIE2.log("warn", "VIE2.registerMapping()", "Did not register mapping, as there is" +
-                "already a mapping with the same id registered.");
+        VIE2.log("warn", "VIE2.registerType()", "Did not register type, as there is" +
+                "already a type with the same id registered.");
     }
 };
 
-//<strong>VIE2.unregisterMapping(mappingId)</strong>: Unregistering of mappings. There is currently
-//no usecase for that, but it wasn't that hard to implement ;)
-VIE2.unregisterMapping = function (mappingId) {
-    VIE2.mappings[mappingId] = undefined;
+//<strong>VIE2.unregisterType(typeId)</strong>: Unregistering of types. 
+// There is currently no usecase for that, but it wasn't that hard to implement ;)
+VIE2.unregisterType = function (typeId) {
+    VIE2.types[typeId] = undefined;
 };
 
 //<strong>VIE2.connectors</strong>: Static object of all registered connectors.
