@@ -48,7 +48,7 @@
         //returned the found enrichments in the form of **$.rdf objects**, the *callback* method is
         //executed (in the scope of the callback function, *this* refers to the given element).<br />
         //The returned enrichments are written into the global Cache of VIE&sup2; (VIE2.globalCache).<br />
-        //Furthermore, each found subject in the returned knowledge is checked whether there is a mapping to 
+        //Furthermore, each found subject in the returned knowledge is checked whether there is a type-mapping to 
         //backbone JS available and if so, the entity is added to the corresponding backbone collection(s).
         //*options* can contain a 'connectors' field. If so, only these connectors will be used
         //for the analysis. If not specified, all connectors are used.
@@ -434,7 +434,7 @@ VIE2.types = {};
 //during construction of type class. This allocates an object in *VIE2.types[type.id]*.
 VIE2.registerType = function (type) {
     //first check if there is already 
-    //a mapping with 'mapping.id' registered    
+    //a type with 'type.id' registered    
     if (!VIE2.types[type.id]) {
                 
         var Collection = VIE2.EntityCollection.extend({model: VIE2.Entity});

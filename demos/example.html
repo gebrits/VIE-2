@@ -35,13 +35,7 @@
 		<script type="text/javascript" src="../src/connector/opencalais.js"></script>
 		<script type="text/javascript" src="../src/connector/dbpedia.js"></script>
 		<script type="text/javascript" src="../src/connector/rdfa.js"></script>
-		
-		<!-- Mapping plug-ins -->
-		<script type="text/javascript" src="../src/mapping/person.js"></script>
-		<script type="text/javascript" src="../src/mapping/place.js"></script>
-		<script type="text/javascript" src="../src/mapping/organization.js"></script>
-		<script type="text/javascript" src="../src/mapping/task.js"></script>
-		
+				
 		<script type="text/javascript" src="../utils/zemanta_api_key.js"></script>
 		<script type="text/javascript" src="../utils/opencalais_api_key.js"></script>
         
@@ -72,7 +66,7 @@
                 VIE2.connectors['dbpedia'].options({
 	                "proxy_url" : "../utils/proxy/proxy.php"
                 });
-                
+                /*
                 VIE2.mappings['person']['collection'].bind("add", function (entity, collection) {
                     if (collection === VIE2.mappings['person']['collection']) {
                         new PersonView({id: 'person-' + (UUID++), model: entity});
@@ -206,9 +200,9 @@
                         
                         return this;
                     }
-                });
+                });*/
             });
-            
+            /*
 			function analyzeText (elem, buttonSelector) {
 				//disable button
                 var button = $(buttonSelector);
@@ -358,7 +352,7 @@
                     elem: $('.age', elem),
                     connectors: ['rdfa']
                 });
-            };
+            };*/
 		</script>
 	</head>
 	<body>

@@ -42,7 +42,6 @@
         <zip destfile="${DIST_DIR}/vie2-${VERSION}.zip">
             <zipfileset dir="docs/" prefix="docs"/>
             <zipfileset dir="src/connector/" prefix="connector"/>
-            <zipfileset dir="src/mapping/" prefix="mapping"/>
             <zipfileset dir="dist/" includes="*.js"/>
         </zip>  
     </target>
@@ -57,7 +56,24 @@
         	<fileset dir="${SRC_DIR}" includes="core/collection.js"/>
         	<fileset dir="${SRC_DIR}" includes="core/model.js"/>
         	<fileset dir="${SRC_DIR}" includes="core/connector.js"/>
-        	<fileset dir="${SRC_DIR}" includes="core/mapping.js"/>
+            <!-- BEGIN: Add ontology projection here -->
+        	<fileset dir="${SRC_DIR}" includes="core/type.js"/>
+            <!-- add datatypes -->
+        	<fileset dir="${SRC_DIR}" includes="type/datatype.js"/>
+        	<fileset dir="${SRC_DIR}" includes="type/dt_boolean.js"/>
+        	<fileset dir="${SRC_DIR}" includes="type/dt_number.js"/>
+        	<fileset dir="${SRC_DIR}" includes="type/dt_date.js"/>
+        	<fileset dir="${SRC_DIR}" includes="type/dt_text.js"/>
+        	<fileset dir="${SRC_DIR}" includes="type/dt_float.js"/>
+        	<fileset dir="${SRC_DIR}" includes="type/dt_integer.js"/>
+        	<fileset dir="${SRC_DIR}" includes="type/dt_url.js"/>
+            <!-- add types -->
+        	<fileset dir="${SRC_DIR}" includes="type/thing.js"/>
+        	<fileset dir="${SRC_DIR}" includes="type/person.js"/>
+        	<fileset dir="${SRC_DIR}" includes="type/intangible.js"/>
+        	<fileset dir="${SRC_DIR}" includes="type/structured_value.js"/>
+        	<fileset dir="${SRC_DIR}" includes="type/geo_coordinates.js"/>
+            <!-- END:   Add ontology projection here -->
         	<fileset dir="${SRC_DIR}" includes="core/outro.js"/>
        	</concat>
         <copy file="${DIST_DIR}/vie2-${VERSION}.debug.js" tofile="${DIST_DIR}/vie2-latest.debug.js" overwrite="true" />
