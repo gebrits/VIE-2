@@ -115,9 +115,10 @@ VIE2.connectors['stanbol'].enhance = function (text, callback) {
     else {
         var that = this;
         var c = function(data) {
-            if (data) {
+            if (data && data.status === 200) {
                 try {
-                    var rdf = jQuery.rdf().load(data, {});
+                    var obj = $.parseJSON(data.responseText);
+                    var rdf = jQuery.rdf().load(obj, {});
                     callback(rdf);
                 } 
                 catch (e) {
@@ -145,8 +146,7 @@ VIE2.connectors['stanbol'].queryEnhancer = function (text, callback) {
     if (proxy) {
         jQuery.ajax({
             async: true,
-            success: callback,
-            error: callback,
+            complete: callback,
             type: "POST",
             url: proxy,
             data: {
@@ -159,8 +159,7 @@ VIE2.connectors['stanbol'].queryEnhancer = function (text, callback) {
     } else {
         jQuery.ajax({
             async: true,
-            success: callback,
-            error: callback,
+            complete: callback,
             type: "POST",
             url: enhancer_url,
             data: text,
