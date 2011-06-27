@@ -25,12 +25,6 @@ VIE2.EntityCollection = VIE.RDFEntityCollection.extend({
             );
             VIE2.globalCache.add(triple);    
         }
-        //in any case, we query all connectors for the types of the entity.
-        VIE2.lookup(model.get('id'), ['a'], function (m) {
-            return function () {
-                m.trigger('change:a');
-            };
-        }(model));
     },
     
     _remove: function (model, opts) {

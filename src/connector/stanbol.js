@@ -18,7 +18,7 @@
 
 
 // The stanbol connector needs to be initialized like this:
-//$.VIE2.getConnector('stanbol').options({
+//VIE2.getConnector('stanbol').options({
 //    "proxy_url" : "../utils/proxy/proxy.php",
 //    "enhancer_url" : "http://stanbol.iksfordrupal.net:9000/engines/",
 //    "entityhub_url" : "http://stanbol.iksfordrupal.net:9000/entityhub/"
@@ -32,30 +32,39 @@ new VIE2.Connector('stanbol', {
         geonames : "http://www.geonames.org/ontology#",
         fise : "http://fise.iks-project.eu/ontology/",
         rick: "http://www.iks-project.eu/ontology/rick/model/"
+    },
+    //rules to add backwards-relations to the triples
+    //this makes querying for entities a lot easier!
+    rules: {
+        'prefix' :  {
+            'fise': 'http://fise.iks-project.eu/ontology/',
+            'dc'  : 'http://purl.org/dc/terms/'
+        },
+        'rules':  [
+            {'left' : [
+                '?subject a <http://fise.iks-project.eu/ontology/EntityAnnotation>',
+                '?subject fise:entity-type ?type',
+                '?subject fise:confidence ?confidence',
+                '?subject fise:entity-reference ?entity',
+                '?subject dc:relation ?relation',
+                '?relation a <http://fise.iks-project.eu/ontology/TextAnnotation>',
+                '?relation fise:selected-text ?selected-text',
+                '?relation fise:selection-context ?selection-context',
+                '?relation fise:start ?start',
+                '?relation fise:end ?end'
+            ],
+             'right' : [
+                 '?entity a ?type',
+                 '?entity fise:hasTextAnnotation ?relation',
+                 '?entity fise:hasEntityAnnotation ?subject'
+             ]
+             }
+        ]
     }
 });
 
 VIE2.connectors['stanbol'].analyze = function (object, options) {
     var rdf = jQuery.rdf();
-    
-    //rules to add backwards-relations to the triples
-    //this makes querying for entities a lot easier!
-    var rules = jQuery.rdf.ruleset()
-    .prefix('fise', 'http://fise.iks-project.eu/ontology/')
-    .prefix('dc', 'http://purl.org/dc/terms/')
-    .add(['?subject a <http://fise.iks-project.eu/ontology/EntityAnnotation>',
-          '?subject fise:entity-type ?type',
-          '?subject fise:confidence ?confidence',
-          '?subject fise:entity-reference ?entity',
-          '?subject dc:relation ?relation',
-          '?relation a <http://fise.iks-project.eu/ontology/TextAnnotation>',
-          '?relation fise:selected-text ?selected-text',
-          '?relation fise:selection-context ?selection-context',
-          '?relation fise:start ?start',
-          '?relation fise:end ?end'],
-          ['?entity a ?type',
-           '?entity fise:hasTextAnnotation ?relation',
-           '?entity fise:hasEntityAnnotation ?subject']);
     
     if (object === undefined) {
         VIE2.log ("warn", "VIE2.Connector('" + this.id + "')", "Given object is undefined!");
@@ -73,10 +82,19 @@ VIE2.connectors['stanbol'].analyze = function (object, options) {
             rdfc.databank.triples().each(function () {
                 rdf.add(this);
             });
-            //let's see if there are children to be enhanced.
-            VIE2.log("info", "VIE2.Connector(" + self.id + ")", "Start reasoning '" + (rdf.databank.triples().length) + "'");
-            rdf.reason(rules);    
-            VIE2.log("info", "VIE2.Connector(" + self.id + ")", "End   reasoning '" + (rdf.databank.triples().length) + "'");
+
+            if (self._options.rules) {
+                VIE2.log("info", "VIE2.Connector(" + self.id + ")", "Start reasoning '" + (rdf.databank.triples().length) + "'");
+                var rules = jQuery.rdf.ruleset();
+                for (var prefix in self._options.rules.prefix) {
+                    rules.prefix(prefix, self._options.rules.prefix[prefix]);
+                }
+                for (var i = 0; i < self._options.rules.rules.length; i++) {
+                    rules.add(self._options.rules.rules[i]['left'], self._options.rules.rules[i]['right']);
+                }
+                rdf.reason(rules);
+                VIE2.log("info", "VIE2.Connector(" + self.id + ")", "End   reasoning '" + (rdf.databank.triples().length) + "'");
+            }
             if (options && options.success) {
                 options.success.call(self, rdf);
             } else {
@@ -162,100 +180,6 @@ VIE2.connectors['stanbol'].queryEnhancer = function (text, callback) {
             complete: callback,
             type: "POST",
             url: enhancer_url,
-            data: text,
-            dataType: "application/rdf+json"
-        });
-    }
-};
-
-
-//////////////////////
-
-VIE2.connectors['stanbol'].query = function (uri, props, callback) {
-    if (uri instanceof jQuery.rdf.resource &&
-            uri.type === 'uri') {
-        this.query(uri.toString().replace(/^</, '').replace(/>$/, ''), props, callback);
-        return;
-    }
-    if (!jQuery.isArray(props)) {
-        this.query(uri, [props], callback);
-        return;
-    }
-    if ((typeof uri !== 'string') || uri.match(/^<urn:.*/) || uri.match(/^_:.*/)) {
-        VIE2.log ("warn", "VIE2.Connector(" + this.id + ")", "Query does not support the given URI '" + uri + "'!");
-        callback.call(this, {});
-        return;
-    }
-    var uri = uri.replace(/^</, '').replace(/>$/, '');
-    //initialize the returning object
-    var ret = {};
-    var that = this;
-    
-    var c = function (data) {
-        if (data && data.status === 200) {
-            try {
-                var json = jQuery.parseJSON(data.responseText);
-                var rdfc = jQuery.rdf().load(json);
-
-                jQuery.each(VIE2.namespaces, function(k, v) {
-                    rdfc.prefix(k, v);
-                });
-                
-                for (var i=0; i < props.length; i++) {
-                    var prop = props[i].toString();
-                    ret[prop] = [];
-                    
-                    rdfc
-                    .where(jQuery.rdf.pattern('<' + uri + '>', prop, '?object', { namespaces: VIE2.namespaces}))
-                    .each(function () {
-                        ret[prop].push(this.object);
-                    });
-                }
-            } catch (e) {
-                VIE2.log ("warn", "VIE2.Connector(" + that.id + ")", "Could not query for uri '" + uri + "' because of the following parsing error: '" + e.message + "'!");
-            }
-            callback.call(that, ret);
-        } else {
-            //we need to send back something in order to clear the queue.
-            callback.call(that, {});
-        }
-    };
-    
-    this.queryEntityHub(uri, c);
-};
-
-VIE2.connectors['stanbol'].queryEntityHub = function (uri, callback) {
-    var proxy = this._options.proxy_url;
-    
-    if (!this._options.entityhub_url) {
-        VIE2.log("warn", "VIE2.connectors(" + this.id + ")", "No URL found for entity hub!");
-        throw "VIE2.connector.stanbol.entityhub_url is empty";
-        return;
-    }
-    
-    var entityhub_url = this._options.entityhub_url.replace(/\/$/, '');
-    
-    if (proxy) {
-        jQuery.ajax({
-            async: true,
-            type: "POST",
-            success: callback,
-            error: callback,
-            url: proxy,
-            data: {
-                proxy_url: entityhub_url + "/sites/entity?id=" + uri, 
-                content: '',
-                verb: "GET",
-                format: "application/rdf+json"
-            }
-        });
-    } else {
-        jQuery.ajax({
-            async: true,
-            success: callback,
-            error: callback,
-            type: "GET",
-            url: entityhub_url + "/sites/entity?id=" + uri,
             data: text,
             dataType: "application/rdf+json"
         });

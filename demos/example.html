@@ -36,6 +36,7 @@
 		<script type="text/javascript" src="../src/connector/dbpedia.js"></script>
 		<script type="text/javascript" src="../src/connector/rdfa.js"></script>
 				
+		<script type="text/javascript" src="../utils/stanbol_base_uri.js"></script>
 		<script type="text/javascript" src="../utils/zemanta_api_key.js"></script>
 		<script type="text/javascript" src="../utils/opencalais_api_key.js"></script>
         
@@ -47,8 +48,8 @@
                 
                 VIE2.connectors['stanbol'].options({
              	    "proxy_url" : "../utils/proxy/proxy.php",
-             	    "enhancer_url" : "http://134.96.189.12:8080/engines/",
-             	    "entityhub_url" : "http://134.96.189.12:8080/entityhub/"
+             	    "enhancer_url" : STANBOL_BASE_URI + "engines/",
+             	    "entityhub_url" : STANBOL_BASE_URI + "entityhub/"
                 });
                 
                 VIE2.connectors['zemanta'].options({
@@ -67,14 +68,14 @@
 	                "proxy_url" : "../utils/proxy/proxy.php"
                 });
                 
-                VIE2.types['Person']['collection'].bind("add", function (entity, collection) {
-                    if (collection === VIE2.mappings['Person']['collection']) {
+                VIE2.Persons.bind("add", function (entity, collection) {
+                    if (collection === VIE2.Persons) {
                         new PersonView({id: 'person-' + (UUID++), model: entity});
                     }
                 });
                 
-                VIE2.mappings['Thing']['collection'].bind("add", function (entity, collection) {
-                     if (collection === VIE2.mappings['Thing']['collection']) {
+                VIE2.Things.bind("add", function (entity, collection) {
+                     if (collection === VIE2.Things) {
                          new ThingView({id: 'thing-' + (UUID++), model: entity});
                      }
                 });
@@ -161,11 +162,11 @@
                 });
             */
             });
-			/*function analyzeText (elem, buttonSelector) {
+			function analyzeText (elem, buttonSelector) {
 				//disable button
                 var button = $(buttonSelector);
 				button.attr('disabled', 'disabled');
-                button.text('Analyzing...');
+                button.text('Thinking...');
 				
 				//start analysis
 				elem.vie2().vie2('analyze', 
@@ -194,7 +195,7 @@
                     } //restrict to these connectors
                 );
 			};
-
+/*
             function addTask (agent, todo, targetDate) {
                  var agentModel = VIE.EntityManager.getBySubject(agent);
                  
@@ -315,31 +316,31 @@
 	</head>
 	<body>
 	    <div style="width:960px;margin-left:auto;margin-right:auto">
-	    <p><h2>Use VIE&sup2; to query backend services to analyze the following text for entities.</h2>
+	    <div><h2>Use VIE&sup2; to query backend services to analyze the following text for entities.</h2>
         <span id="test">This is a small test, where Steve Jobs and Barack Obama sing a song.</span><br/>
         <button onclick='analyzeText($("#test"), this);'>Click to start analysis!</button><br />
-        </p>
+        </div>
         
-        <p><h2>Use VIE&sup2; to parse RDFa</h2>
+        <div><h2>Use VIE&sup2; to parse RDFa</h2>
         <span id="test2" about="[demo:Thomas_Unknown]" typeof="foaf:Person"><span property="foaf:name">Thomas Unknown</span></span><br />
         <button onclick='analyzeRDFa($("#test2"), this);'>Click to start parsing!</button><br />
-        </p>
+        </div>
         
-        <p><h2>Add manual annotations</h2>
+        <div><h2>Add manual annotations</h2>
     		<button onclick='addName("<http://dbpedia.org/resource/Barack_Obama>", "\"B. Obama\"", "en");$(this).attr("disabled", "disabled")'>Add a fake name of Barack Obama in english (B. Obama).</button><br />
             <button onclick='addName("<http://dbpedia.org/resource/Barack_Obama>", "\"Bobby Obama\"", "nl");$(this).attr("disabled", "disabled")'>Add another fake name of Barack Obama in dutch (Bobby Obama).</button><br />
-        </p>
+        </div>
         
-        <p><h2>Alter the annotations</h2>
+        <div><h2>Alter the annotations</h2>
         <button onclick='changeName("<http://dbpedia.org/resource/Barack_Obama>", "\"B. Obama\"", "\"Barack Thomas Oliver Obama\"");$(this).attr("disabled", "disabled")'>Change the fake name of Barack Obama (B. Obama -> Barack Thomas Oliver Obama).</button><br />
         <button onclick='removeName("<http://dbpedia.org/resource/Barack_Obama>", "\"Barack Thomas Oliver Obama\"");$(this).attr("disabled", "disabled")'>Remove the fake name of Barack Obama (Barack Thomas Oliver Obama).</button><br />
         <button onclick='removeEntity("<http://this.demo.eu/Thomas_Unknown>", this);'>Remove the entity 'Thomas Unknown'.</button><br /><br />
-         </p>
+         </div>
          
-        <p><h2>Use VIE&sup2; to serialize knowledge in RDFa</h2>
+        <div><h2>Use VIE&sup2; to serialize knowledge in RDFa</h2>
         <button onclick='annotate();$(this).attr("disabled", "disabled");'>Serialize annotations of Barack Obama.</button><br />
         <div id="rdfa_obama">This is a sample text with <span class="name">Barack Obama</span> <span class="age"></span> in RDFa format.</div>
-        </p>
+        </div>
         <table style="width:100%;">
             <tr>
                 <td style="background-color: #CDCDCD;width:40%;vertical-align:top;">

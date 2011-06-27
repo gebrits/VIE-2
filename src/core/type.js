@@ -24,9 +24,9 @@ VIE2.Type = function(id, parent, attrs, namespaces) {
     
     this.attrs = (attrs)? attrs : [];
     
-    if (this.parent !== undefined) {
+    if (this.parent && this.parent.id) {
         //import attributes from parent!
-        this.attrs = this.attrs.concat(VIE2.types[this.parent]['type'].attrs);
+        this.attrs = this.attrs.concat(VIE2.getType[this.parent.id].attrs);
     }
     
     this.namespaces = (namespaces)? namespaces : {};
@@ -35,6 +35,28 @@ VIE2.Type = function(id, parent, attrs, namespaces) {
     jQuery.each(this.namespaces, function (k, v) {
         VIE2.namespaces.add(k, v);
     });
+    
+    this.getParent = function () {
+        if (typeof this.parent === 'string') {
+            this.parent = VIE2.types[this.parent];
+        }
+        return this.parent;
+    },
+    
+    this.isTypeOf = function (type) {
+        var searchFor = type;
+        if (typeof type === 'string') {
+            searchFor = VIE2.types[type];
+        }
+        
+        if (this.id === searchFor.id) {
+            return true;
+        }
+        if (this.getParent() !== undefined) {
+            return this.getParent().isTypeOf(searchFor);
+        }
+        return false;
+    };
     
     //automatically registers the mapping in VIE^2.
     VIE2.registerType(this);

@@ -110,6 +110,7 @@
                                   id : subjStr
                                 }, {backend: true});
                             } else {
+                                //inform client(s) that new data is possibly available
                                 VIE.EntityManager.getBySubject(subjStr).change();
                             }
                         });
@@ -206,7 +207,7 @@ if (typeof VIE2 === 'undefined' || !VIE2) {
 }
 
 //<strong>VIE2.basename</strong>: The basis namespace of the VIE2 schema.
-VIE2.basename = 'http://schema.org';
+VIE2.baseNamespace = 'http://schema.org';
 
 //<strong>VIE2.namespaces</strong>: This object contains all namespaces known to VIE2.
 //There are currently *one* default namespace:
@@ -439,10 +440,10 @@ VIE2.registerType = function (type) {
                 
         var Collection = VIE2.EntityCollection.extend({model: VIE2.Entity});
         
-        VIE2.types[type.id] = {
-            "collection" : new Collection(),
-            "type" : type
-        };
+        VIE2.types[type.id] = type;
+        
+        //Person -> VIE2.Persons
+        VIE2[type.id + "s"] = new Collection();
         
         //trigger filling of collections!
         for (var i = 0; i < VIE2.entities.length; i++) {
@@ -454,10 +455,15 @@ VIE2.registerType = function (type) {
     }
 };
 
+VIE2.getType = function (typeId) {
+    return VIE2.types[typeId];
+}
+
 //<strong>VIE2.unregisterType(typeId)</strong>: Unregistering of types. 
 // There is currently no usecase for that, but it wasn't that hard to implement ;)
 VIE2.unregisterType = function (typeId) {
-    VIE2.types[typeId] = undefined;
+    delete VIE2.types[typeId];
+    delete VIE2[typeId + "s"];
 };
 
 //<strong>VIE2.connectors</strong>: Static object of all registered connectors.

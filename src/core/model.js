@@ -8,7 +8,7 @@ VIE2.Entity = VIE.RDFEntity.extend({
     
     initialize: function (attrs, opts) {
         //if the type has changed, we need to search through the
-        //mappings if the model needs to be inserted.
+        //types if the model needs to be inserted.
         this.bind('change:a', this.searchCollections);
         
         if (!opts) { opts = {};}
@@ -17,31 +17,34 @@ VIE2.Entity = VIE.RDFEntity.extend({
             for (var attr in attrs) {
                 var val = attrs[attr];
                 if (attr !== 'id') {
-                    if (jQuery.isArray(val)) {
-                        for (var i = 0; i < val.length; i++) {
-                            var triple = jQuery.rdf.triple(this.id, attr, val[i], {
-                                namespaces: VIE2.namespaces.toObj()
-                            });
-                            VIE2.globalCache.add(triple);
-                        }
+                    var valArr;
+                    if (!jQuery.isArray(val)) {
+                        valArr = [ val ];
+                    } else {
+                        valArr = val;
                     }
-                    else {
-                        var triple = jQuery.rdf.triple(this.id, attr, val, {
+                    for (var i = 0; i < valArr.length; i++) {
+                        var triple = jQuery.rdf.triple(this.id, attr, valArr[i], {
                             namespaces: VIE2.namespaces.toObj()
                         });
-                        console.log("init", triple);
                         VIE2.globalCache.add(triple);
                     }
                 }
             }
         }
+        //in any case, we query all connectors for the types of the entity.
+        VIE2.lookup(this.get('id'), ['a', 'sameAs'], function (m) {
+            return function () {
+                m.trigger('change:a');
+            };
+        }(this));
     },
     
     searchCollections: function () {
         var self = this;
         var types = VIE2.getFromCache(this, this.get('id'), 'a');
 
-        jQuery.each(VIE2.mappings, function (i, mapping) {
+        jQuery.each(VIE2.types, function (i, type) {
             var belongsHere = false;
             
             for (var x = 0; x < types.length; x++) {
@@ -52,7 +55,7 @@ VIE2.Entity = VIE.RDFEntity.extend({
                         charcase: 'lower'
                     }).toString();
                 }
-                if (mapping['a'].indexOf(curie) !== -1) {
+                if (type['a'].indexOf(curie) !== -1) {
                     belongsHere = true;
                     break;
                 }
@@ -60,12 +63,12 @@ VIE2.Entity = VIE.RDFEntity.extend({
             //entity needs to be registered with this mapping
             if (belongsHere) {
                 //adding model instance to collection
-                if (!mapping['collection'].get(self.id)) {
-                    mapping['collection'].add(self, {backend: true});
+                if (!type['collection'].get(self.id)) {
+                    type['collection'].add(self, {backend: true});
                     VIE2.log("info", "VIE2.Entity.searchCollections()", "Added entity '" + self.get('id') + "' to collection of type '" + i + "'!");
                     
-                    VIE2.log("info", "VIE2.Entity.searchCollections()", "Querying for default properties for entity '" + self.get('id') + "': [" + mapping['mapping'].defaults.join(", ") + "]!");
-                    VIE2.lookup(self.get('id'), mapping['mapping'].defaults, function(defProps, model){
+                    VIE2.log("info", "VIE2.Entity.searchCollections()", "Querying for default properties for entity '" + self.get('id') + "': [" + type['mapping'].defaults.join(", ") + "]!");
+                    VIE2.lookup(self.get('id'), type['mapping'].defaults, function(defProps, model){
                         return function(){
                             VIE2.log("info", "VIE2.Entity.searchCollections()", "Finished querying for default properties for entity '" + model.get('id') + "': [" + defProps.join(", ") + "]!");
                             //trigger change when finished
@@ -74,7 +77,7 @@ VIE2.Entity = VIE.RDFEntity.extend({
                             }
                             model.change();
                         };
-                    }(mapping['mapping'].defaults, self));
+                    }(type['mapping'].defaults, self));
                 }
             }
         });
@@ -94,7 +97,9 @@ VIE2.createEntity = function (attrs, opts) {
     	attrs.id = $.rdf.blank('[]').toString();
     }
     var model = new VIE2.Entity(attrs, opts);
+    //automatically adds model to global VIE2.entities bucket
     VIE2.entities.add(model, opts);
+    
     return model;
 };
 
