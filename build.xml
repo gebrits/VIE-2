@@ -31,7 +31,7 @@
         <mkdir dir="${DIST_DIR}" />
 	</target>
 	
-    <target name="all" depends="init, dist, doc, zip"/>
+    <target name="all" depends="init, dist"/>
 	
     <target name="dist">
         <antcall target="combine" />
@@ -39,6 +39,7 @@
     </target>
     
     <target name="zip">
+	<antcall target="doc" />
         <zip destfile="${DIST_DIR}/vie2-${VERSION}.zip">
             <zipfileset dir="docs/" prefix="docs"/>
             <zipfileset dir="src/connector/" prefix="connector"/>
@@ -73,6 +74,8 @@
         	<fileset dir="${SRC_DIR}" includes="type/intangible.js"/>
         	<fileset dir="${SRC_DIR}" includes="type/structured_value.js"/>
         	<fileset dir="${SRC_DIR}" includes="type/geo_coordinates.js"/>
+        	<fileset dir="${SRC_DIR}" includes="type/place.js"/>
+        	<fileset dir="${SRC_DIR}" includes="type/tourist_attraction.js"/>
             <!-- END:   Add ontology projection here -->
         	<fileset dir="${SRC_DIR}" includes="core/outro.js"/>
        	</concat>
