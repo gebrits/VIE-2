@@ -17,6 +17,9 @@ new VIE2.Type (
          },
         {'id'       : 'url',
          'datatype' : 'xsd:anyURI'
+         }, 
+         {'id'      : 'sameAs',
+         'datatype' : 'xsd:anyURI'
          }
     ],
     { //the used namespaces, these can be given here, or placed directly into the HTML document's xmlns attribute.
