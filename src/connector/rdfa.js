@@ -16,7 +16,7 @@ VIE2.connectors['rdfa'].analyze = function (object, options) {
         if (object.attr('typeof')) {
             //use rdfQuery to analyze the object
             //RDF.add() is broken -> workaround!
-            jQuery(object).rdf().databank.triples().each(function () {
+            jQuery(object).rdfa().databank.triples().each(function () {
                 rdf.add(this);
             });
             

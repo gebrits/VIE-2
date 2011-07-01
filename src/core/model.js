@@ -93,6 +93,12 @@ VIE2.Entity = VIE.RDFEntity.extend({
 });
 
 VIE2.createEntity = function (attrs, opts) {
+    if (!attrs) {
+        attrs = {};
+    }
+    if (!opts) {
+        opts = {};
+    }
     if (!('id' in attrs)) {
     	attrs.id = $.rdf.blank('[]').toString();
     }
@@ -201,7 +207,7 @@ VIE2.createLiteral = function (value, opts) {
 VIE2.createResource = function (value, opts) {
      if (!opts) { opts = {};}
      return new VIE2.Object({
-        'value': '<' + value + '>',
+        'value': (value.indexOf('<') === 0)? value : '<' + value + '>',
         isLiteral: false,
         isResource: true
     }, jQuery.extend(opts, {isLiteral: false}));

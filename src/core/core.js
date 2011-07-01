@@ -167,7 +167,7 @@
         
         //<strong>addUri()</strong>: Manually adds a URI (string) to the list of entities within the scope of the current element!
         addUri: function (uri) {
-            this.options.entitites.push(uri);
+            this.options.entities.push(uri);
         },
                 
         //<strong>copy(tar)</strong>: Copies all local knowledge to the target element(s).
@@ -207,7 +207,7 @@ if (typeof VIE2 === 'undefined' || !VIE2) {
 }
 
 //<strong>VIE2.basename</strong>: The basis namespace of the VIE2 schema.
-VIE2.baseNamespace = 'http://schema.org';
+VIE2.baseNamespace = 'http://schema.org/';
 
 //<strong>VIE2.namespaces</strong>: This object contains all namespaces known to VIE2.
 //There are currently *one* default namespace:
@@ -456,7 +456,17 @@ VIE2.registerType = function (type) {
 };
 
 VIE2.getType = function (typeId) {
-    return VIE2.types[typeId];
+    
+    if (typeId.indexOf('<') === 0) {
+        return VIE2.types[typeId];
+    }
+    else if (typeId.indexOf(VIE2.baseNamespace) === 0) {
+        return VIE2.getType('<' + typeId + '>');
+    }
+    else {
+        return VIE2.getType('<' + VIE2.baseNamespace + typeId + '>');
+    }
+    return undefined;
 }
 
 //<strong>VIE2.unregisterType(typeId)</strong>: Unregistering of types. 

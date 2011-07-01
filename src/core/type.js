@@ -19,7 +19,13 @@ VIE2.Type = function(id, parent, attrs, namespaces) {
         throw "The type constructor needs 'attributes'!";
     }
     
-    this.id = id;
+    this._expandId = function (id) {
+        return '<' + VIE2.baseNamespace + id + '>';
+    }
+    
+    this.id = this._expandId(id);
+    this.sid = id;
+    
     this.parent = parent;
     
     this.attrs = (attrs)? attrs : [];
@@ -37,8 +43,9 @@ VIE2.Type = function(id, parent, attrs, namespaces) {
     });
     
     this.getParent = function () {
+        //in case the parent was not resolved during init
         if (typeof this.parent === 'string') {
-            this.parent = VIE2.types[this.parent];
+            this.parent = VIE2.getType(this.parent);
         }
         return this.parent;
     },
@@ -46,7 +53,7 @@ VIE2.Type = function(id, parent, attrs, namespaces) {
     this.isTypeOf = function (type) {
         var searchFor = type;
         if (typeof type === 'string') {
-            searchFor = VIE2.types[type];
+            searchFor = VIE2.getType(type);
         }
         
         if (this.id === searchFor.id) {
@@ -57,6 +64,10 @@ VIE2.Type = function(id, parent, attrs, namespaces) {
         }
         return false;
     };
+    
+    this.toResource = function () {
+        return VIE2.createResource(this.id);
+    }
     
     //automatically registers the mapping in VIE^2.
     VIE2.registerType(this);
