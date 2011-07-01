@@ -192,7 +192,7 @@
         
         //<strong>clear()</strong>: Clears the local entities.
         clear: function () {
-            this.options.entities = {};
+            this.options.entities = [];
             return this;
         }
         
