@@ -26,14 +26,28 @@ VIE2.Type = function(id, parent, attrs, namespaces) {
     this.id = this._expandId(id);
     this.sid = id;
     
-    this.parent = parent;
+    this._parent = parent;
     
-    this.attrs = (attrs)? attrs : [];
-    
-    if (this.parent && this.parent.id) {
-        //import attributes from parent!
-        this.attrs = this.attrs.concat(VIE2.getType[this.parent.id].attrs);
-    }
+    this._attrs = (attrs)? attrs : [];
+        
+    this.getAttrs = function () {
+        var attrs = this._attrs;
+        if (this.getParent()) {
+            var parentAttrs = this.getParent().getAttrs();
+            for (var i = 0; i < parentAttrs.length; i++) {
+                var contains = false;
+                for (var j = 0; j < this._attrs.length; j++) {
+                    if (this._attrs[j].id === parentAttrs[i].id) {
+                        contains = true;
+                    }
+                }
+                if (!contains) {
+                    attrs.push(parentAttrs[i]);
+                }
+            }
+        }
+        return attrs;
+    };
     
     this.namespaces = (namespaces)? namespaces : {};
         
@@ -44,10 +58,10 @@ VIE2.Type = function(id, parent, attrs, namespaces) {
     
     this.getParent = function () {
         //in case the parent was not resolved during init
-        if (typeof this.parent === 'string') {
-            this.parent = VIE2.getType(this.parent);
+        if (typeof this._parent === 'string') {
+            this._parent = VIE2.getType(this._parent);
         }
-        return this.parent;
+        return this._parent;
     },
     
     this.isTypeOf = function (type) {
