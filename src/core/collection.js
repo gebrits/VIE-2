@@ -11,6 +11,11 @@ VIE2.EntityCollection = VIE.RDFEntityCollection.extend({
     //overwrite the internal _add method
     _add: function (model, opts) {
         if (!opts) { opts = {};}
+        
+        if (this.get(model.get('id'))) {
+            return;
+        }
+        
         VIE.RDFEntityCollection.prototype._add.call(this, model, opts);
         
         //if the annotation does *not* come from the analyze() method
@@ -20,7 +25,7 @@ VIE2.EntityCollection = VIE.RDFEntityCollection.extend({
             var triple = jQuery.rdf.triple(
                 model.get('id'), 
                 'a', 
-                'owl:Thing', 
+                VIE2.getType('Thing').id, 
                 {namespaces: VIE2.namespaces.toObj()}
             );
             VIE2.globalCache.add(triple);    
