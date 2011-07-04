@@ -58,6 +58,7 @@
         	<fileset dir="${SRC_DIR}" includes="core/model.js"/>
         	<fileset dir="${SRC_DIR}" includes="core/connector.js"/>
             <!-- BEGIN: Add ontology projection here -->
+        	<fileset dir="${SRC_DIR}" includes="core/attribute.js"/>
         	<fileset dir="${SRC_DIR}" includes="core/type.js"/>
             <!-- add datatypes -->
         	<fileset dir="${SRC_DIR}" includes="type/datatype.js"/>

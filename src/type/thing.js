@@ -10,16 +10,16 @@ new VIE2.Type (
          'datatype' : 'Text'
          },
         {'id'       : 'image',
-         'datatype' : 'xsd:anyURI'
+         'datatype' : 'URL'
          },
         {'id'       : 'name',
          'datatype' : 'Text'
          },
         {'id'       : 'url',
-         'datatype' : 'xsd:anyURI'
+         'datatype' : 'URL'
          }, 
          {'id'      : 'sameAs',
-         'datatype' : 'xsd:anyURI'
+         'datatype' : 'URL'
          }
     ],
     { //the used namespaces, these can be given here, or placed directly into the HTML document's xmlns attribute.

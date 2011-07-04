@@ -92,8 +92,11 @@ VIE2.Entity = VIE.RDFEntity.extend({
     }
 });
 
-VIE2.createEntity = function (attrs, opts) {
-    if (!attrs) {
+VIE2.createEntity = function (type, attrs, opts) {
+    if (!type) {
+    	type = VIE2.getType("Thing");	
+	} 
+	if (!attrs) {
         attrs = {};
     }
     if (!opts) {
@@ -102,7 +105,12 @@ VIE2.createEntity = function (attrs, opts) {
     if (!('id' in attrs)) {
     	attrs.id = $.rdf.blank('[]').toString();
     }
+    //setting the type of the entity
+    attrs.a = type.id;
+    
+    //create the model
     var model = new VIE2.Entity(attrs, opts);
+    
     //automatically adds model to global VIE2.entities bucket
     VIE2.entities.add(model, opts);
     
@@ -114,7 +122,7 @@ VIE2.Object = Backbone.Model.extend({
     initialize: function (attrs, opts) {
         if (!opts) { opts = {};}
         
-        this.isLiteral = opts.isLiteral;
+        this.isLiteral = (opts.isLiteral)? opts.isLiteral : false;
     },
     
     set: function (attrs, opts) {
