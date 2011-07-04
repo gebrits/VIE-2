@@ -134,28 +134,33 @@ VIE2.Object = Backbone.Model.extend({
         
         if (oldValue !== undefined && oldValue !== newValue) {
             if (this.collection) {
-                var inst = VIE2.createLiteral(newValue, {
-                    lang: this.attributes['lang'],
-                    datatype: this.attributes['datatype']
-                });
-                this.collection.add(inst);
+            	//remove old triple, add new triple!
+            	VIE2.removeFromCache(this.collection.uri, 
+            						 this.collection.property, 
+    								 oldValue);
+            	
+            	var triple = jQuery.rdf.triple(
+	                this.collection.uri, 
+	                this.collection.property, 
+	                this.tojQueryRdf(newValue), 
+                {namespaces: VIE2.namespaces.toObj()});
+	            VIE2.globalCache.add(triple);
+            
                 this.collection.parent.change();
-                //remove the old one
-                this.collection.remove(this);
             }   
         }
         return Backbone.Model.prototype.set.call(this, attrs, opts);
     },
     
-    tojQueryRdf: function () {
+    tojQueryRdf: function (val) {
         if (this.isLiteral) {
-            return this._tojQueryRdfLit();
+            return this._tojQueryRdfLit(val);
         } else {
-            return this._tojQueryRdfRes();
+            return this._tojQueryRdfRes(val);
         }
     },
     
-    _tojQueryRdfLit: function () {
+    _tojQueryRdfLit: function (val) {
         var lang = (this.get('lang')) ? this.get('lang') : undefined;
         var datatype = (this.get('datatype')) ? this.get('datatype') : undefined;
         
@@ -163,25 +168,26 @@ VIE2.Object = Backbone.Model.extend({
             datatype = undefined;
         }
         
-        var val = this.get('value');
+        var val = (val)? val : this.get('value');
         
-        return jQuery.rdf.literal(
-            this.get('value'), {
+        var lit =  jQuery.rdf.literal(
+            val, {
                 namespaces: VIE2.namespaces.toObj(),
                 datatype: datatype,
                 lang: lang
         });
+        return lit;
     },
     
-    _tojQueryRdfRes: function () {
+    _tojQueryRdfRes: function (val) {
         return jQuery.rdf.resource(
-            this.get('value'), {
+            (val)? val : this.get('value'), {
                 namespaces: VIE2.namespaces.toObj()
         });
     },
     
     tojQueryRdfTriple: function () {
-        var triple = jQuery.rdf.triple(this.collection.parent.get('id') + " " + this.collection.property + " " + this.tojQueryRdf().toString(), {
+        var triple = jQuery.rdf.triple(this.collection.uri + " " + this.collection.property + " " + this.tojQueryRdf().toString(), {
                 namespaces: VIE2.namespaces.toObj()
         });
         
@@ -199,7 +205,15 @@ VIE2.Object = Backbone.Model.extend({
     //for convenience
     lang: function () {
         return this.get('lang');
-    }
+    },
+    
+    isResource: function () {
+    	return this.get('isResource');
+    },
+    
+    isLiteral: function () {
+    	return this.get('isLiteral');
+    },
 });
 
 VIE2.createLiteral = function (value, opts) {
@@ -215,7 +229,7 @@ VIE2.createLiteral = function (value, opts) {
 VIE2.createResource = function (value, opts) {
      if (!opts) { opts = {};}
      return new VIE2.Object({
-        'value': (value.indexOf('<') === 0)? value : '<' + value + '>',
+        'value': (value.indexOf('<') === 0 || value.indexOf('_:') === 0)? value : '<' + value + '>',
         isLiteral: false,
         isResource: true
     }, jQuery.extend(opts, {isLiteral: false}));

@@ -253,8 +253,9 @@ VIE2.getFromCache = function (parent, uri, prop) {
                 var inst = VIE2.createLiteral(this.object.representation ? this.object.representation : (/*'"' + */this.object.value/* + '"'*/), {lang: this.object.lang, datatype: this.object.datatype, backend:true, silent:true});
                 ret.add(inst, {backend:true, silent:true});
             } else if (this.object.type === 'uri' || this.object.type === 'bnode') {
-                if (VIE.EntityManager.getBySubject(this.object.toString()) !== undefined) {
-                    ret.add(VIE.EntityManager.getBySubject(this.object.toString()), {backend:true, silent:true});
+            	var entity = VIE.EntityManager.getBySubject(this.object.toString());
+            	if (entity) {
+                    ret.add(entity, {backend:true, silent:true});
                 }
                 else {
                     var inst = VIE2.createResource(this.object.value.toString(), {backend:true, silent:true});
@@ -381,7 +382,7 @@ VIE2.serialize = function (model, options) {
     });
     
     //iterate over all connectors
-    jQuery.each(VIE2.connectors, function(){
+    jQuery.each(VIE2.connectors, function() {
         //the connector's success callback method
         var successCallback = function(){
             VIE2.log("info", "VIE2.serialize(" + model.get('id') + ")", "Successfully serialized the annotation!");
