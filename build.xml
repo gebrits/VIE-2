@@ -78,6 +78,8 @@
         	<fileset dir="${SRC_DIR}" includes="type/postal_address.js"/>
         	<fileset dir="${SRC_DIR}" includes="type/geo_coordinates.js"/>
         	<fileset dir="${SRC_DIR}" includes="type/place.js"/>
+        	<fileset dir="${SRC_DIR}" includes="type/administrative_area.js"/>
+    		<fileset dir="${SRC_DIR}" includes="type/country.js"/>
         	<fileset dir="${SRC_DIR}" includes="type/tourist_attraction.js"/>
             <!-- END:   Add ontology projection here -->
         	<fileset dir="${SRC_DIR}" includes="core/outro.js"/>

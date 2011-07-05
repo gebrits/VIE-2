@@ -16,16 +16,26 @@ VIE2.EntityCollection = VIE.RDFEntityCollection.extend({
             return;
         }
         
+        if (!model.isEntity()) {
+        	return;
+        }
+        
         VIE.RDFEntityCollection.prototype._add.call(this, model, opts);
         
         //if the annotation does *not* come from the analyze() method
         //it comes from the user and hence,
         //we need to add the subject to the internal triple store.
         if (!opts.backend) {
+        	var type = model.get('a');
+        	if (type.length > 0) {
+        		type = type.at(0).value();
+        	} else {
+        		type = VIE2.getType('Thing').id //TODO: hack!
+        	}
             var triple = jQuery.rdf.triple(
                 model.get('id'), 
                 'a', 
-                VIE2.getType('Thing').id, 
+                type,
                 {namespaces: VIE2.namespaces.toObj()}
             );
             VIE2.globalCache.add(triple);    
@@ -53,6 +63,8 @@ VIE2.EntityCollection = VIE.RDFEntityCollection.extend({
     }
 });
 
+//<strong>VIE2.entities</strong>: Is a global Backbone JS Collection
+//which stores all models of all known entities.
 VIE2.entities = new VIE2.EntityCollection();
 
 //<strong>VIE2.ObjectCollection</strong>: TODO: document me
@@ -76,6 +88,7 @@ VIE2.ObjectCollection = Backbone.Collection.extend({
             VIE2.globalCache.add(triple);
             if (this.parent) {
                 this.parent.change();
+            	this.parent.trigger('change:' + this.property);
             }
         }
     },
@@ -88,7 +101,7 @@ VIE2.ObjectCollection = Backbone.Collection.extend({
             Backbone.Collection.prototype._remove.call(this, model, opts);
              
             //update parent entity
-            this.parent.change();
+            this.parent.trigger('change:' + this.property);
         }
      },
      

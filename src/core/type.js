@@ -40,20 +40,22 @@ VIE2.Type = function(id, parent, attrs, namespaces) {
     // allocate attributes
     this._attrs = attrs;
         
-    this.listAttrs = function () {
+    this.listAttrs = function (targetType) {
         var attrs = [];
         for (var a = 0; a < this._attrs.length; a++) {
 	    	var aId = this._attrs[a].id;
 	    	var dt = (VIE2.getType(this._attrs[a].datatype))? VIE2.getType(this._attrs[a].datatype) : this._attrs[a].datatype;
-	    	attrs.push(new VIE2.Attribute(this, aId, dt, this.namespaces));
+	    	if (!targetType || VIE2.getType(targetType).id === dt.id) {
+	    		attrs.push(new VIE2.Attribute(this, aId, dt, this.namespaces));
+	    	}
 	    }
     
         if (this.getParent()) {
-            var parentAttrs = this.getParent().listAttrs();
+            var parentAttrs = this.getParent().listAttrs(targetType);
             for (var i = 0; i < parentAttrs.length; i++) {
                 var contains = false;
-                for (var j = 0; j < this._attrs.length; j++) {
-                    if (this._attrs[j].id === parentAttrs[i].id) {
+                for (var j = 0; j < attrs.length; j++) {
+                    if (attrs[j].id === parentAttrs[i].id) {
                         contains = true;
                     }
                 }

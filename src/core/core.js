@@ -233,14 +233,14 @@ VIE2.addToCache = function (uri, prop, val) {
     VIE2.log("info", "VIE2.addToCache()", "Global Cache now holds " + VIE2.globalCache.databank.triples().length + " triples!");
 };
 
-//<strong>VIE2.getFromCache(uri, prop)</strong>: Retrieve properties from the given
+//<strong>VIE2.getPropFromCache(parent, uri, prop)</strong>: Retrieve properties from the given
 // *uri* directly from the global Cache. 
-VIE2.getFromCache = function (parent, uri, prop) {
+VIE2.getPropFromCache = function (parent, uri, prop) {
     //initialize collection
     var Collection = VIE2.ObjectCollection.extend({
         uri      : uri,
         property : prop,
-        parent: parent
+        parent   : parent
     });
     
     var ret = new Collection();
@@ -250,7 +250,7 @@ VIE2.getFromCache = function (parent, uri, prop) {
     .each(function () {
         if (this.object.type) {
             if (this.object.type === 'literal') {
-                var inst = VIE2.createLiteral(this.object.representation ? this.object.representation : (/*'"' + */this.object.value/* + '"'*/), {lang: this.object.lang, datatype: this.object.datatype, backend:true, silent:true});
+                var inst = VIE2.createLiteral(this.object.representation ? this.object.representation : this.object.value, {lang: this.object.lang, datatype: this.object.datatype, backend:true, silent:true});
                 ret.add(inst, {backend:true, silent:true});
             } else if (this.object.type === 'uri' || this.object.type === 'bnode') {
             	var entity = VIE.EntityManager.getBySubject(this.object.toString());
@@ -444,7 +444,7 @@ VIE2.registerType = function (type) {
         VIE2.types[type.id] = type;
         
         //Person -> VIE2.Persons
-        VIE2[type.id + "s"] = new Collection();
+        VIE2[type.sid + "s"] = new Collection();
         
         //trigger filling of collections!
         for (var i = 0; i < VIE2.entities.length; i++) {

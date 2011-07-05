@@ -24,7 +24,7 @@ VIE2.Entity = VIE.RDFEntity.extend({
                         valArr = val;
                     }
                     for (var i = 0; i < valArr.length; i++) {
-                        var triple = jQuery.rdf.triple(this.id, attr, valArr[i], {
+                        var triple = jQuery.rdf.triple(this.get('id'), attr, valArr[i], {
                             namespaces: VIE2.namespaces.toObj()
                         });
                         VIE2.globalCache.add(triple);
@@ -32,55 +32,30 @@ VIE2.Entity = VIE.RDFEntity.extend({
                 }
             }
         }
+        
         //in any case, we query all connectors for the types of the entity.
         VIE2.lookup(this.get('id'), ['a', 'sameAs'], function (m) {
             return function () {
                 m.trigger('change:a');
+                m.trigger('change:sameAs');
             };
         }(this));
     },
     
     searchCollections: function () {
         var self = this;
-        var types = VIE2.getFromCache(this, this.get('id'), 'a');
-
-        jQuery.each(VIE2.types, function (i, type) {
-            var belongsHere = false;
-            
-            for (var x = 0; x < types.length; x++) {
-                var curie = types.at(x).get('value');
-                if (!VIE2.Util.isCurie(curie)) {
-                    curie = jQuery.createCurie(curie.replace(/^</, '').replace(/>$/, ''), {
-                        namespaces: VIE2.namespaces.toObj(),
-                        charcase: 'lower'
-                    }).toString();
+        
+        var types = VIE2.getPropFromCache(this, this.get('id'), 'a');
+		
+		for (var t = 0; t < types.length; t++) {
+			var type = VIE2.getType(types.at(t).value());
+			if (type) {
+				if (!VIE2[type.sid + "s"].get(self.id)) {
+                    VIE2[type.sid + "s"].add(self, {backend: true});
+                    VIE2.log("info", "VIE2.Entity.searchCollections()", "Added entity '" + self.get('id') + "' to collection of type '" + type.id + "'!");
                 }
-                if (type['a'].indexOf(curie) !== -1) {
-                    belongsHere = true;
-                    break;
-                }
-            }
-            //entity needs to be registered with this mapping
-            if (belongsHere) {
-                //adding model instance to collection
-                if (!type['collection'].get(self.id)) {
-                    type['collection'].add(self, {backend: true});
-                    VIE2.log("info", "VIE2.Entity.searchCollections()", "Added entity '" + self.get('id') + "' to collection of type '" + i + "'!");
-                    
-                    VIE2.log("info", "VIE2.Entity.searchCollections()", "Querying for default properties for entity '" + self.get('id') + "': [" + type['mapping'].defaults.join(", ") + "]!");
-                    VIE2.lookup(self.get('id'), type['mapping'].defaults, function(defProps, model){
-                        return function(){
-                            VIE2.log("info", "VIE2.Entity.searchCollections()", "Finished querying for default properties for entity '" + model.get('id') + "': [" + defProps.join(", ") + "]!");
-                            //trigger change when finished
-                            for (var y = 0; y < defProps.length; y++) {
-                                model.trigger('change:' + defProps[y]);
-                            }
-                            model.change();
-                        };
-                    }(type['mapping'].defaults, self));
-                }
-            }
-        });
+			}
+		}
     },
 
     //overwritten to directly access the global Cache
@@ -88,14 +63,20 @@ VIE2.Entity = VIE.RDFEntity.extend({
         if (attr === 'id') {
             return VIE.RDFEntity.prototype.get.call(this, attr);
         }
-        return VIE2.getFromCache(this, this.get('id'), attr);
+        return VIE2.getPropFromCache(this, this.get('id'), attr);
+    },
+    
+    isEntity: function () {
+    	return true;
     }
 });
 
 VIE2.createEntity = function (type, attrs, opts) {
     if (!type) {
     	type = VIE2.getType("Thing");	
-	} 
+	} else if (typeof type === 'string') {
+		type = VIE2.getType(type);
+	}
 	if (!attrs) {
         attrs = {};
     }
@@ -105,6 +86,7 @@ VIE2.createEntity = function (type, attrs, opts) {
     if (!('id' in attrs)) {
     	attrs.id = $.rdf.blank('[]').toString();
     }
+    
     //setting the type of the entity
     attrs.a = type.id;
     
@@ -146,7 +128,7 @@ VIE2.Object = Backbone.Model.extend({
                 {namespaces: VIE2.namespaces.toObj()});
 	            VIE2.globalCache.add(triple);
             
-                this.collection.parent.change();
+                this.collection.parent.trigger('change:a');
             }   
         }
         return Backbone.Model.prototype.set.call(this, attrs, opts);
@@ -180,10 +162,16 @@ VIE2.Object = Backbone.Model.extend({
     },
     
     _tojQueryRdfRes: function (val) {
-        return jQuery.rdf.resource(
-            (val)? val : this.get('value'), {
-                namespaces: VIE2.namespaces.toObj()
-        });
+    	val = (val)? val : this.get('value');
+    	
+    	if (val.indexOf('_:') === 0) {
+    		return jQuery.rdf.blank(val);
+    	} else {
+	        return jQuery.rdf.resource(
+	            	val, {
+	                namespaces: VIE2.namespaces.toObj()
+	        });
+        }
     },
     
     tojQueryRdfTriple: function () {
@@ -214,6 +202,10 @@ VIE2.Object = Backbone.Model.extend({
     isLiteral: function () {
     	return this.get('isLiteral');
     },
+    
+    isEntity: function () {
+    	return false;
+    }
 });
 
 VIE2.createLiteral = function (value, opts) {
