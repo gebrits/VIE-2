@@ -29,17 +29,14 @@
 	
 	<target name="init" depends="clean">
         <mkdir dir="${DIST_DIR}" />
+        <mkdir dir="${DOCS_DIR}" />
 	</target>
 	
-    <target name="all" depends="init, dist"/>
+    <target name="all" depends="dist"/>
 	
-    <target name="dist">
-        <antcall target="combine" />
-        <antcall target="minimise" />
-    </target>
+    <target name="dist" depends="init, combine, minimise" />
     
-    <target name="zip">
-	<antcall target="doc" />
+    <target name="zip" depends="dist">
         <zip destfile="${DIST_DIR}/vie2-${VERSION}.zip">
             <zipfileset dir="docs/" prefix="docs"/>
             <zipfileset dir="src/connector/" prefix="connector"/>
