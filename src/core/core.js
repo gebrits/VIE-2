@@ -2,216 +2,20 @@
 // Author: <a href="mailto:sebastian.germesin@dfki.de">Sebastian Germesin</a>
 //
 
-(function($, undefined) {
-
-//VIE&sup2; is implmented as a [jQuery UI widget](http://semantic-interaction.org/blog/2011/03/01/jquery-ui-widget-factory/). 
-    $.widget('VIE2.vie2', {
-        
-        // default options
-        options: {
-            entities : []
-        },
-        
-        //<strong>_create()</strong>: The private method **_create():** is called implicitly when
-        //calling .vie2(); on any jQuery object.
-        _create: function () {
-            //automatically scans for xmlns attributes in the **html** element
-            //and adds them to the global VIE2.namespaces object
-            $.each(jQuery('html').xmlns(), function (k, v) {
-                var vStr = v.toString();
-                if (!VIE2.namespaces.containsKey(k) && !VIE2.namespaces.containsValue(vStr)) {
-                    VIE2.namespaces.add(k, vStr);
-                }
-            });
-            
-            //automatically scans for xmlns attributes in the **given** element
-            //and adds them to the global VIE2.namespaces object
-            try {
-                $.each(this.element.xmlns(), function(k, v) {
-                    var vStr = v.toString();
-                    if (!VIE2.namespaces.containsKey(k) && !VIE2.namespaces.containsValue(vStr)) {
-                        VIE2.namespaces.add(k, vStr);
-                    }
-                });
-            } catch (ex) {
-                //needs to be ignored when called on $(document);
-                if (this.element.get(0) !== document) {
-                    VIE2.log("warn", "VIE2.core#create()", "Could not retrieve namespaces from element: '" + e + "'!");
-                }
-            }
-            
-            return this;
-        },
-        
-        //<strong>analyze(callback,[options])</strong>: The analyze() method sends the element to all connectors and lets
-        //them analyze the content. The connectors' methods are asynchronously called and once all connectors
-        //returned the found enrichments in the form of **$.rdf objects**, the *callback* method is
-        //executed (in the scope of the callback function, *this* refers to the given element).<br />
-        //The returned enrichments are written into the global Cache of VIE&sup2; (VIE2.globalCache).<br />
-        //Furthermore, each found subject in the returned knowledge is checked whether there is a type-mapping to 
-        //backbone JS available and if so, the entity is added to the corresponding backbone collection(s).
-        //*options* can contain a 'connectors' field. If so, only these connectors will be used
-        //for the analysis. If not specified, all connectors are used.
-        analyze: function (callback, options) {
-            if (!options) { options = {};}
-            var that = this;
-            
-            //analyze() does not actually need a callback method, but it is usually good to use it 
-            if (callback === undefined) {
-                VIE2.log("warn", "VIE2.core#analyze()", "No callback method specified!");
-            }
-            
-            VIE2.log("info", "VIE2.core#analyze()", "Started.");
-                        
-            //as the connectors work asynchronously, we need a queue to listen if all connectors are finished.
-            var connectorQueue = [];
-            $.each(VIE2.connectors, function () {
-                //fill queue of connectors with 'id's to have an overview of running connectors.
-                //this supports the asynchronous calls.
-                if (options.connectors) {
-                    if (options.connectors.indexOf(this.id) !== -1) {
-                        connectorQueue.push(this.id);
-                    }
-                } else {
-                    connectorQueue.push(this.id);
-                }
-            });
-            
-            //iterate over all connectors
-            $.each(VIE2.connectors, function () {
-                //the connector's success callback method
-                var successCallback = function (elem) {
-                    return function (rdf) {
-                        VIE2.log("info", "VIE2.core#analyze()", "Received RDF annotation from connector '" + this.id + "'!");
-                        
-                        //we add all namespaces to the rdfQuery object. 
-                        //Attention: this might override namespaces that were added by the connector!
-                        //but needed to keep consistency through VIE&sup2;.
-                        $.each(VIE2.namespaces.toObj(), function(k, v) {
-                            rdf.prefix(k, v);
-                        });
-
-                        rdf.databank.triples().each(function () {
-                            //add all triples to the global cache!
-                            VIE2.globalCache.add(this);
-                        });
-                        
-                        //register all subjects as backbone model
-                        $.each(rdf.databank.subjectIndex, function (subject, v) {
-                            var subjStr = subject.toString();
-                            if (that.options.entities.indexOf(subjStr) === -1) {
-                                that.options.entities.push(subjStr);
-                            }
-                            
-                            if (!VIE.EntityManager.getBySubject(subjStr)) {
-                                VIE2.log("info", "VIE2.core#analyze()", "Register new entity (" + subjStr + ")!");
-                                
-                                VIE2.createEntity({
-                                  id : subjStr
-                                }, {backend: true});
-                            } else {
-                                //inform client(s) that new data is possibly available
-                                VIE.EntityManager.getBySubject(subjStr).change();
-                            }
-                        });
-                        VIE2.Util.removeElement(connectorQueue, this.id);
-                        //everytime we receive annotations from each connector, we remove the connector's id from the
-                        //queue and check whether the queue is empty.
-                        if (connectorQueue.length === 0) {
-                            //if the queue is empty, all connectors have successfully returned and we can execute the
-                            //callback function.
-                            VIE2.log("info", "VIE2.core#analyze()", "Finished! Global Cache holds now " + VIE2.globalCache.databank.triples().length + " triples!");
-                            VIE2.log("info", "VIE2.core#analyze()", "Finished! Local element holds now "  + that.options.entities.length + " entities!");
-                            //provide a status field in the callback object: status = {'ok', 'error'};
-                            if (callback) {
-                                callback.call(elem);
-                            }
-                        }
-                    };
-                } (that.element);
-                
-                //the connector's error callback method
-                var errorCallback = function (reason) {
-                    VIE2.log("error", "VIE2.core#analyze()", "Connector (" + this.id + ") returned with the following error: '" + reason + "'!");
-                    VIE2.Util.removeElement(connectorQueue, this.id);
-                };
-                
-                //check if we may need to filter for the connector
-                if (options.connectors) {
-                    if (options.connectors.indexOf(this.id) !== -1) {
-                        //start analysis with the connector.
-                        VIE2.log("info", "VIE2.core#analyze()", "Starting analysis with connector: '" + this.id + "'!");
-                        this.analyze(that.element, {
-                            success: successCallback,
-                            error: errorCallback
-                        });
-                    }
-                    else {
-                        VIE2.log("info", "VIE2.core#analyze()", "Will not use connector " + this.id + " as it is filtered!");
-                    }
-                } else {
-                    //start analysis with the connector.
-                     VIE2.log("info", "VIE2.core#analyze()", "Starting analysis with connector: '" + this.id + "'!");
-                    this.analyze(that.element, {
-                        success: successCallback,
-                        error: errorCallback
-                    });
-                }
-            });
-        },
-                
-        //<strong>uris()</strong>: Returns a list of all uris, that are within the scope of the current element!
-        uris: function () {
-            return this.options.entities;
-        },
-        
-        //<strong>addUri()</strong>: Manually adds a URI (string) to the list of entities within the scope of the current element!
-        addUri: function (uri) {
-            this.options.entities.push(uri);
-        },
-                
-        //<strong>copy(tar)</strong>: Copies all local knowledge to the target element(s).
-        //Basically calls: <pre>
-        //$(tar).vie2().vie2('option', 'entities', this.options.entities);
-        //</pre>
-        copy: function (tar) {
-            //copy all knowledge from src to target
-            var that = this;
-            if (!tar) {
-                VIE2.log("warn", "VIE2.core#copy()", "Invoked 'copy()' without target element!");
-                return;
-            }
-            VIE2.log("info", "VIE2.core#copy()", "Start.");
-            VIE2.log("info", "VIE2.core#copy()", "Found " + this.options.entities.length + " entities for source.");
-            
-            jQuery(tar).vie2().vie2('option', 'entities', this.options.entities);
-            VIE2.log("info", "VIE2.core#copy()", "Finished.");
-            VIE2.log("info", "VIE2.core#copy()", "Target element has now " + jQuery(tar).vie2('option', 'entities') + " entities.");
-            return this;
-        },
-        
-        //<strong>clear()</strong>: Clears the local entities.
-        clear: function () {
-            this.options.entities = [];
-            return this;
-        }
-        
-    });
-}(jQuery));
-
 //The global <strong>VIE2 object</strong>. If VIE2 is already defined, the
 //existing VIE2 object will not be overwritten so that the
 //defined object is preserved.
-if (typeof VIE2 === 'undefined' || !VIE2) {
-    VIE2 = {};
+if (this.VIE2 === undefined) {
+	this.VIE2 = {};
 }
+var VIE2 = this.VIE2;
 
 //<strong>VIE2.basename</strong>: The basis namespace of the VIE2 schema.
 VIE2.baseNamespace = 'http://schema.org/';
 
 //<strong>VIE2.namespaces</strong>: This object contains all namespaces known to VIE2.
 //There are currently *one* default namespace:
-// iks -> http://www.iks-ontology.net/
+// xsd -> http://www.w3.org/2001/XMLSchema#
 // owl -> http://www.w3.org/2002/07/owl#
 //Namespaces can be overridden directly using VIE2.namespaces.update(k, v) but
 //are parsed from the &lt;html> tag's xmlns: attribute anyway during initialization.
@@ -226,11 +30,42 @@ VIE2.namespaces = new VIE2.Namespaces({
 VIE2.globalCache = jQuery.rdf({namespaces: VIE2.namespaces.toObj()});
 
 VIE2.addToCache = function (uri, prop, val) {
-    var triple = jQuery.rdf.triple(uri, prop, val, {namespaces: VIE2.namespaces.toObj()});
-    VIE2.log("info", "VIE2.addToCache()", "Adding triple to cache!");
-    VIE2.log("info", "VIE2.addToCache()", "Global Cache now holds " + VIE2.globalCache.databank.triples().length + " triples!");
+    try {
+        var triple = jQuery.rdf.triple(uri, prop, val, {
+            namespaces: VIE2.namespaces.toObj()
+        });
+    } catch (e) {
+        VIE2.log("error", "VIE2.addToCache()", "Cannot create triple from these parameters: (" + uri + "," + prop + "," + val + ")! Results in: " + e);
+        return;
+    }
+    VIE2.log("info", "VIE2.addToCache()", "Adding triple (" + triple.toString() + ") to cache!");
+    VIE2.log("info", "VIE2.addToCache()", "Global Cache now (before) holds " + VIE2.globalCache.databank.triples().length + " triples!");
     VIE2.globalCache.add(triple);
-    VIE2.log("info", "VIE2.addToCache()", "Global Cache now holds " + VIE2.globalCache.databank.triples().length + " triples!");
+    VIE2.log("info", "VIE2.addToCache()", "Global Cache now (after ) holds " + VIE2.globalCache.databank.triples().length + " triples!");
+};
+
+//<strong>VIE2.removeFromCache</strong>: TODO: document me
+VIE2.removeFromCache = function (uri, prop, val) {
+    try {
+        var pattern = jQuery.rdf.pattern(
+            uri, 
+            (prop)? prop : '?x',
+            (val)? val : '?y', 
+            {namespaces: VIE2.namespaces.toObj()
+        });
+    } catch (e) {
+        VIE2.log("error", "VIE2.removeFromCache()", "Cannot create pattern from these parameters: (" + uri + "," + prop + "," + val + ")! Results in: " + e);
+        return;
+    }
+    VIE2.log("info", "VIE2.removeFromCache()", "Removing triples that match: '" + pattern.toString() + "'!");
+    VIE2.log("info", "VIE2.removeFromCache()", "Global Cache now holds " + VIE2.globalCache.databank.triples().length + " triples!");
+    VIE2.globalCache.where(pattern).remove(pattern);
+    VIE2.log("info", "VIE2.removeFromCache()", "Global Cache now holds " + VIE2.globalCache.databank.triples().length + " triples!");
+};
+
+//<strong>VIE2.clearCache()</strong>: Static method to clear the global Cache.
+VIE2.clearCache = function () {
+    VIE2.globalCache = jQuery.rdf({namespaces: VIE2.namespaces.toObj()});
 };
 
 //<strong>VIE2.getPropFromCache(parent, uri, prop)</strong>: Retrieve properties from the given
@@ -253,6 +88,7 @@ VIE2.getPropFromCache = function (parent, uri, prop) {
                 var inst = VIE2.createLiteral(this.object.representation ? this.object.representation : this.object.value, {lang: this.object.lang, datatype: this.object.datatype, backend:true, silent:true});
                 ret.add(inst, {backend:true, silent:true});
             } else if (this.object.type === 'uri' || this.object.type === 'bnode') {
+                //germi
             	var entity = VIE.EntityManager.getBySubject(this.object.toString());
             	if (entity) {
                     ret.add(entity, {backend:true, silent:true});
@@ -268,23 +104,143 @@ VIE2.getPropFromCache = function (parent, uri, prop) {
     return ret;
 };
 
-VIE2.removeFromCache = function (uri, prop, val) {
-    var pattern = jQuery.rdf.pattern(
-        uri, 
-        (prop)? prop : '?x',
-        (val)? val : '?y', 
-        {namespaces: VIE2.namespaces.toObj()});
-    VIE2.log("info", "VIE2.removeFromCache()", "Removing triples that match: '" + pattern.toString() + "'!");
-    VIE2.log("info", "VIE2.removeFromCache()", "Global Cache now holds " + VIE2.globalCache.databank.triples().length + " triples!");
-    VIE2.globalCache
-        .where(pattern)
-        .remove(pattern);
-    VIE2.log("info", "VIE2.removeFromCache()", "Global Cache now holds " + VIE2.globalCache.databank.triples().length + " triples!");
-};
-
-//<strong>VIE2.clearCache()</strong>: Static method to clear the global Cache.
-VIE2.clearCache = function () {
-    VIE2.globalCache = jQuery.rdf({namespaces: VIE2.namespaces.toObj()});
+//<strong>VIE2.analyze(elem, callback, [options])</strong>: TODO: document me!
+VIE2.analyze = function (elem, callback, options) {
+    
+    var that = this;
+    
+    if (!options) { options = {};}
+    
+    //automatically scans for xmlns attributes in the **given** element
+    //and adds them to the global VIE2.namespaces object
+    try {
+        jQuery.each(jQuery(elem).xmlns(), function(k, v) {
+            var vStr = v.toString();
+            if (!VIE2.namespaces.containsKey(k) && !VIE2.namespaces.containsValue(vStr)) {
+                VIE2.namespaces.add(k, vStr);
+            }
+        });
+    } catch (ex) {
+        //needs to be ignored when called on $(document);
+        if (jQuery(elem).get(0) !== document) {
+            VIE2.log("warn", "VIE2.core#create()", "Could not retrieve namespaces from element: '" + e + "'!");
+        }
+    }
+    
+    //analyze() does not actually need a callback method, but it is usually good to use it 
+    if (callback === undefined) {
+        VIE2.log("warn", "VIE2.core#analyze()", "No callback method specified!");
+    }
+    
+    VIE2.log("info", "VIE2.core#analyze()", "Started.");
+                
+    jQuery(elem).each(function () {
+        var element = $(this);
+        element.data('uri', []); //initialize URIs, associated with this element
+        
+        //as the connectors work asynchronously, we need a queue to listen if all connectors are finished.
+        var connectorQueue = [];
+        for (var connId in VIE2.connectors) {
+            //fill queue of connectors with 'id's to have an overview of running connectors.
+            //this supports the asynchronous calls.
+            if (options.connectors) {
+                if (options.connectors.indexOf(connId) !== -1) {
+                    connectorQueue.push(connId);
+                }
+            } else {
+                connectorQueue.push(connId);
+            }
+        }
+        
+        //iterate over all connectors
+        for (var connId in VIE2.connectors) {
+            var connector = VIE2.connectors[connId];
+            
+            //the connector's success callback method
+            var successCallback = function (elem) {
+                return function (rdf) {
+                    VIE2.log("info", "VIE2.core#analyze()", "Received RDF annotation from connector '" + this.id + "'!");
+                    
+                    //we add all namespaces to the rdfQuery object. 
+                    //Attention: this might override namespaces that were added by the connector!
+                    //but needed to keep consistency through VIE&sup2;.
+                    jQuery.each(VIE2.namespaces.toObj(), function(k, v) {
+                        rdf.prefix(k, v);
+                    });
+    
+                    rdf.databank.triples().each(function () {
+                        //add all triples to the global cache!
+                        VIE2.globalCache.add(this);
+                    });
+                    
+                    
+                    //register all subjects as backbone model
+                    jQuery.each(rdf.databank.subjectIndex, function (subject, v) {
+                        var subjStr = subject.toString();
+                        
+                        var uris = elem.data('uri');
+                        if (uris.indexOf(subjStr) === -1) {
+                            uris.push(subjStr);
+                            elem.data('uri', uris);
+                        }
+                        
+                        if (!VIE2.EntityManager.getBySubject(subjStr)) {
+                            VIE2.log("info", "VIE2.core#analyze()", "Register new entity (" + subjStr + ")!");
+                            
+                            VIE2.createEntity('Thing', {
+                              id : subjStr
+                            }, {backend: true});
+                        } else {
+                            //inform client(s) that new data is possibly available
+                            VIE.EntityManager.getBySubject(subjStr).change();
+                        }
+                    });
+                    
+                    VIE2.Util.removeElement(connectorQueue, this.id);
+                    //everytime we receive annotations from each connector, we remove the connector's id from the
+                    //queue and check whether the queue is empty.
+                    if (connectorQueue.length === 0) {
+                        //if the queue is empty, all connectors have successfully returned and we can execute the
+                        //callback function.
+                        VIE2.log("info", "VIE2.analyze()", "Finished! Global Cache holds now " + VIE2.globalCache.databank.triples().length + " triples!");
+                        VIE2.log("info", "VIE2.analyze()", "Finished! Local element holds now "  + that.options.entities.length + " entities!");
+                        //provide a status field in the callback object: status = {'ok', 'error'};
+                        if (callback) {
+                            callback.call(elem);
+                        }
+                    }
+                };
+            } (element);
+            
+            //the connector's error callback method
+            var errorCallback = function (reason) {
+                VIE2.log("error", "VIE2.analyze()", "Connector (" + connId + ") returned with the following error: '" + reason + "'!");
+                VIE2.Util.removeElement(connectorQueue, connId);
+            };
+            
+            //check if we may need to filter for the connector
+            if (options.connectors) {
+                if (options.connectors.indexOf(connId) > 0) {
+                    //start analysis with the connector.
+                    VIE2.log("info", "VIE2.analyze()", "Starting analysis with connector: '" + connId + "'!");
+                    connector.analyze(element, {
+                        success: successCallback,
+                        error: errorCallback
+                    });
+                }
+                else {
+                    VIE2.log("info", "VIE2.analyze()", "Will not use connector " + connId + " as it is filtered!");
+                }
+            } else {
+                //start analysis with the connector.
+                VIE2.log("info", "VIE2.analyze()", "Starting analysis with connector: '" + connId + "'!");
+                connector.analyze(element, {
+                    success: successCallback,
+                    error: errorCallback
+                });
+            }
+        }
+    });
 };
 
 //<strong>VIE2.lookup(uri, props, callback)</strong>: The query function supports querying for properties. The uri needs
@@ -426,94 +382,3 @@ VIE2.serialize = function (model, options) {
     });
 };
 
-//<strong>VIE2.types</strong>: Contains for all registered types (type.id is the key), the
-//following items:<br/>
-//* VIE2.types[id].type -> the type object itself
-//* VIE2.types[id].collection -> the Backbone.js collection, that has the type registered. 
-VIE2.types = {};
-
-//<strong>VIE2.registerType(type)</strong>: Static method to register a type (is automatically called 
-//during construction of type class. This allocates an object in *VIE2.types[type.id]*.
-VIE2.registerType = function (type) {
-    //first check if there is already 
-    //a type with 'type.id' registered    
-    if (!VIE2.types[type.id]) {
-                
-        var Collection = VIE2.EntityCollection.extend({model: VIE2.Entity});
-        
-        VIE2.types[type.id] = type;
-        
-        //Person -> VIE2.Persons
-        VIE2[type.sid + "s"] = new Collection();
-        
-        //trigger filling of collections!
-        for (var i = 0; i < VIE2.entities.length; i++) {
-            VIE2.entities.at(i).searchCollections();
-        }
-    } else {
-        VIE2.log("warn", "VIE2.registerType()", "Did not register type, as there is" +
-                "already a type with the same id registered.");
-    }
-};
-
-VIE2.getType = function (typeId) {
-    
-    if (typeId.indexOf('<') === 0) {
-        return VIE2.types[typeId];
-    }
-    else if (typeId.indexOf(VIE2.baseNamespace) === 0) {
-        return VIE2.getType('<' + typeId + '>');
-    }
-    else {
-        return VIE2.getType('<' + VIE2.baseNamespace + typeId + '>');
-    }
-    return undefined;
-}
-
-//<strong>VIE2.unregisterType(typeId)</strong>: Unregistering of types. 
-// There is currently no usecase for that, but it wasn't that hard to implement ;)
-VIE2.unregisterType = function (typeId) {
-    delete VIE2.types[typeId];
-    delete VIE2[typeId + "s"];
-};
-
-//<strong>VIE2.connectors</strong>: Static object of all registered connectors.
-VIE2.connectors = {};
-
-//<strong>VIE2.registerConnector(connector)</strong>: Static method to register a connector (is automatically called 
-//during construction of connector class. If set, inserts connector-specific namespaces to the known Caches.
-VIE2.registerConnector = function (connector) {
-    //first check if there is already 
-    //a connector with 'connector.id' registered
-    if (!VIE2.connectors[connector.id]) {
-        VIE2.connectors[connector.id] = connector;        
-    } else {
-        VIE2.log("warn", "VIE2.registerConnector()", "Did not register connector, as there is" +
-                "already a connector with the same id registered.");
-    }
-};
-
-//<strong>VIE2.unregisterConnector(connectorId)</strong>: Unregistering of connectors. There is currently
-//no usecase for that, but it wasn't that hard to implement ;)
-VIE2.unregisterConnector = function (connectorId) {
-    VIE2.connectors[connector.id] = undefined;
-};
-
-VIE2.logLevels = ["info", "warn", "error"];
-
-//<strong>VIE2.log(level, component, message)</strong>: Static convenience method for logging.
-VIE2.log = function (level, component, message) {
-    if (VIE2.logLevels.indexOf(level) > -1) {
-        switch (level) {
-            case "info":
-                console.info([component, message]);
-                break;
-            case "warn":
-                console.warn([component, message]);
-                break;
-            case "error":
-                console.error([component, message]);
-                break;
-        }
-    }
-};

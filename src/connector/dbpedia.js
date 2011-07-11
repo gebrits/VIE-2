@@ -2,11 +2,19 @@
 // Author: <a href="mailto:sebastian.germesin@dfki.de">Sebastian Germesin</a>
 //
 
-//The dbpedia connector needs to be initialized like this:
-//VIE2.getConnector('dbpedia').options({
-//    "proxy_url" : "../utils/proxy/proxy.php"
-//});
+if (this.VIE2 === undefined) {
+	/*
+	 * The VIE2 global namespace object. If VIE2 is already defined, the
+	 * existing VIE2 object will not be overwritten so that defined
+	 * namespaces are preserved.
+	 */
+	this.VIE2 = {};
+}
+
+var VIE2 = this.VIE2;
+
 new VIE2.Connector('dbpedia', {
+	proxy_url: "../utils/proxy/proxy.php",
     namespaces: {
         'owl'    : "http://www.w3.org/2002/07/owl#",
         'yago'   : "http://dbpedia.org/class/yago/",

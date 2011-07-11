@@ -21,62 +21,18 @@
 		<script type="text/javascript" src="../dist/vie2-latest.debug.js"></script>
 		<script type="text/javascript">VIE2.logLevels = ["info", "warn", "error"];</script>
 		
-        <!-- Mapping plug-ins -->
-		<script type="text/javascript" src="../src/mapping/person.js"></script>
-		<script type="text/javascript" src="../src/mapping/place.js"></script>
-		<script type="text/javascript" src="../src/mapping/organization.js"></script>
-		<script type="text/javascript" src="../src/mapping/task.js"></script>
-        
-        <!-- Connector plug-ins -->
-		<script type="text/javascript" src="../src/connector/dbpedia.js"></script>
-		<script type="text/javascript" src="../src/connector/rdfa.js"></script>
-		<script type="text/javascript" src="../src/connector/stanbol.js"></script>
-		<script type="text/javascript" src="../src/connector/opencalais.js"></script>
-		<script type="text/javascript" src="../src/connector/zemanta.js"></script>
-		<script type="text/javascript" src="../src/connector/semantictweet.js"></script>
-        
-		<script type="text/javascript" src="../utils/zemanta_api_key.js"></script>
-		<script type="text/javascript" src="../utils/opencalais_api_key.js"></script>
-        
         <!-- How the API would look like! -->
 		<script type="text/javascript">
 		    $(function() {
                 
-                UUID = 0;
-                
-                VIE2.connectors['stanbol'].options({
-             	    "proxy_url" : "../utils/proxy/proxy.php",
-             	    "enhancer_url" : "http://localhost:8080/engines/",
-             	    "entityhub_url" : "http://localhost:8080/entityhub/"
-                });
-                
-                if (VIE2.connectors['zemanta'] && ZEMANTA_API_KEY) {
-                    VIE2.connectors['zemanta'].options({
-                 	    "proxy_url" : "../utils/proxy/proxy.php",
-                 	    "zemanta_url" : "http://api.zemanta.com/services/rest/0.0/",
-                        "zemanta_api_key" : ZEMANTA_API_KEY
-                    });
-                }
-                
-                if (VIE2.connectors['opencalais'] && OPENCALAIS_API_KEY) {
-                    VIE2.connectors['opencalais'].options({
-                 	    "proxy_url" : "../utils/proxy/proxy.php",
-                 	    "opencalais_url" : "http://api.opencalais.com/enlighten/rest/",
-                        "opencalais_api_key" : OPENCALAIS_API_KEY
-                    });
-                }
-                
-                VIE2.connectors['dbpedia'].options({
-	                "proxy_url" : "../utils/proxy/proxy.php"
-                });
-                
+            });                
         </script>
         
         <!-- load test scripts -->
         <script type="text/javascript" src="core/vie2.js"></script>
+        <script type="text/javascript" src="core/type.js"></script>
+        <script type="text/javascript" src="core/attribute.js"></script>
         <script type="text/javascript" src="core/namespaces.js"></script>
-        <script type="text/javascript" src="core/annotate.js"></script>
-        <script type="text/javascript" src="connector/stanbol.js"></script>
     </head>
     <body>
         <h1 id="qunit-header">Unit tests for VIE&#178; - using QUnit</h1>

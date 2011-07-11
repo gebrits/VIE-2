@@ -2,6 +2,17 @@
 // Author: <a href="mailto:sebastian.germesin@dfki.de">Sebastian Germesin</a>
 //
 
+if (this.VIE2 === undefined) {
+	/*
+	 * The VIE2 global namespace object. If VIE2 is already defined, the
+	 * existing VIE2 object will not be overwritten so that defined
+	 * namespaces are preserved.
+	 */
+	this.VIE2 = {};
+}
+
+var VIE2 = this.VIE2;
+
 VIE2.Util = {};
 
 // <strong>VIE2.Util.(haystack, needle)</strong>: Removes the *needle* from the *haystack* array.<br>

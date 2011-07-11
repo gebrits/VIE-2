@@ -16,8 +16,8 @@
         </style>
 		
 		<!-- 3rd-party libs -->
-		<script type="text/javascript"                  src="../lib/jquery/1.4/jquery-1.4.4.min.js"></script>
-		<script type="text/javascript" src="../lib/jquery-ui/1.8/js/jquery-ui-1.8.11.custom.min.js"></script>
+		<script type="text/javascript"                  src="../lib/jquery/1.6/jquery-1.6.1.min.js"></script>
+		<script type="text/javascript" src="../lib/jquery-ui/1.8/js/jquery-ui-1.8.14.min.js"></script>
 		<script type="text/javascript"          src="../lib/rdfquery/latest/jquery.rdfquery.debug.js"></script>
 		<script type="text/javascript"                  src="../lib/underscoreJS/underscore.min.js"></script>
 		<script type="text/javascript"                      src="../lib/backboneJS/backbone.min.js"></script>
@@ -43,31 +43,12 @@
 		<!-- How the API would look like! -->
 		<script type="text/javascript">
 		    $(function() {
-                
-                UUID = 0;
-                
-                VIE2.connectors['stanbol'].options({
-             	    "proxy_url" : "../utils/proxy/proxy.php",
-             	    "enhancer_url" : STANBOL_BASE_URI + "engines/",
-             	    "entityhub_url" : STANBOL_BASE_URI + "entityhub/"
+                VIE2.getConnector('stanbol').options({
+                    enhancer_url  : VIE2.STANBOL_BASE_URI + "/engines/",
+                    entityhub_url : VIE2.STANBOL_BASE_URI + "/entityhub/"
                 });
-                
-                VIE2.connectors['zemanta'].options({
-             	    "proxy_url" : "../utils/proxy/proxy.php",
-             	    "zemanta_url" : "http://api.zemanta.com/services/rest/0.0/",
-                    "zemanta_api_key" : ZEMANTA_API_KEY
-                });
-                
-                VIE2.connectors['opencalais'].options({
-             	    "proxy_url" : "../utils/proxy/proxy.php",
-             	    "opencalais_url" : "http://api.opencalais.com/enlighten/rest/",
-                    "opencalais_api_key" : OPENCALAIS_API_KEY
-                });
-                
-                VIE2.connectors['dbpedia'].options({
-	                "proxy_url" : "../utils/proxy/proxy.php"
-                });
-                
+                          
+                UUID = 0;      
                 VIE2.Persons.bind("add", function (entity, collection) {
                     if (collection === VIE2.Persons) {
                         new PersonView({id: 'person-' + (UUID++), model: entity});
@@ -119,49 +100,8 @@
                       return this;
                     }
                 });
-                
-/*
-                var PersonView = Backbone.View.extend({
-                    tagName: 'li',
-                    
-                    initialize: function() {
-                        _.bindAll(this, "render", "remove");
-                        this.model.bind('change', this.render);
-                        this.model.bind('remove', this.remove);
-                        $(this.el).hide();
-                        $('.persons').append($(this.el));
-                        this.render();
-                    },
-                    
-                    render: function() {
-                        var names = this.model.get("foaf:name");
-                        var str = "";
-
-                        if (names.length) {
-                            var name = names.at(0);
-                            str += name.get('value').replace(/"/g, '');
-                            if (name.get('lang')) 
-                                str += '@' + name.get('lang');
-                            for (var i = 1, l = names.length; i < l; i++) {
-                                var name = names.at(i);
-                                var literal = name.isLiteral;
-                                str += " aka. " + name.get('value').replace(/"/g, '');
-                                if (name.get('lang')) 
-                                    str += '@' + name.get('lang');
-                            }
-                        }
-                        str.trim();
-                        if (str.length > 0) {
-                            $(this.el).text(str);
-                            $(this.el).show();
-                        } else {
-                           $(this.el).hide();
-                        }
-                      return this;
-                    }
-                });
-            */
             });
+            
 			function analyzeText (elem, buttonSelector) {
 				//disable button
                 var button = $(buttonSelector);
@@ -169,7 +109,7 @@
                 button.text('Thinking...');
 				
 				//start analysis
-				elem.vie2().vie2('analyze', 
+				VIE2.analyze(elem, 
                     function (status) {
                         button.text('Done!');
                     },
@@ -186,7 +126,7 @@
                 button.text('Analyzing...');
 				
 				//start analysis
-				elem.vie2().vie2('analyze', 
+				VIE2.analyze(elem,
                     function (status) {
                         button.text('Done!');
                     },

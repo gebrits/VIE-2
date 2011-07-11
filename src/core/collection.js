@@ -2,8 +2,20 @@
 // Author: <a href="mailto:sebastian.germesin@dfki.de">Sebastian Germesin</a>
 //
 
+if (this.VIE2 === undefined) {
+	/*
+	 * The VIE2 global namespace object. If VIE2 is already defined, the
+	 * existing VIE2 object will not be overwritten so that defined
+	 * namespaces are preserved.
+	 */
+	this.VIE2 = {};
+}
+
+var VIE2 = this.VIE2;
+
 //just for convenience, should be removed in a later revision
-VIE.EntityManager.initializeCollection();
+VIE2.EntityManager = VIE.EntityManager; // for typo issues ;)
+VIE2.EntityManager.initializeCollection();
 
 //<strong>VIE2.EntityCollection</strong>: TODO: document me
 VIE2.EntityCollection = VIE.RDFEntityCollection.extend({
@@ -61,6 +73,7 @@ VIE2.EntityCollection = VIE.RDFEntityCollection.extend({
             VIE.RDFEntityCollection.prototype._remove.call(this, model, opts);
         }
     }
+    //TODO
 });
 
 //<strong>VIE2.entities</strong>: Is a global Backbone JS Collection
@@ -69,67 +82,7 @@ VIE2.entities = new VIE2.EntityCollection();
 
 //<strong>VIE2.ObjectCollection</strong>: TODO: document me
 VIE2.ObjectCollection = Backbone.Collection.extend({
-        
-    _add: function (model, opts) {
-        //TODO: propagate event to parent model
-        if (!opts) { opts = {};}
-        
-        //adding a back-reference to the model
-        model.collection = this;
-        Backbone.Collection.prototype._add.call(this, model, opts);
-        
-        if (!opts.backend) {
-            var triple = jQuery.rdf.triple(
-                this.uri, 
-                this.property, 
-                model.tojQueryRdf(), 
-                {namespaces: VIE2.namespaces.toObj()}
-            );
-            VIE2.globalCache.add(triple);
-            if (this.parent) {
-                this.parent.change();
-            	this.parent.trigger('change:' + this.property);
-            }
-        }
-    },
-    
-     _remove: function (model, opts) {
-         if (model) {
-             //remove corresponding triples
-            VIE2.removeFromCache(this.uri, this.property, model.tojQueryRdf());
-            
-            Backbone.Collection.prototype._remove.call(this, model, opts);
-             
-            //update parent entity
-            this.parent.trigger('change:' + this.property);
-        }
-     },
-     
-     getByValue: function (value, opts) {
-         if (!opts) { opts = {}; }
-         
-         var found;
-         $.each(this.models, function (i, model) {
-             if (model.get('value') === value) {
-                 if (opts.lang) {
-                     if (opts.lang === model.get('lang')) {
-                         found = model;
-                         return false;
-                     }
-                 } else if (opts.datatype) {
-                     if (opts.datatype === model.get('datatype')) {
-                         found = model;
-                         return false;
-                     }
-                 } else {
-                     found = model;
-                     return false;
-                 }
-             }
-         });
-         
-         return found;
-     }
+    //TODO
 });
 
 

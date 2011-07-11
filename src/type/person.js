@@ -87,8 +87,8 @@ new VIE2.Type(
         {'id'       : 'workLocation',
          'datatype' : 'Place'
          },
-        {'id': 'worksFor',
-         'datatype': 'Organization'
+        {'id'       : 'worksFor',
+         'datatype' : 'Organization'
         }
     ],
     { //the used namespaces, these can be given here, or placed directly into the HTML document's xmlns attribute.

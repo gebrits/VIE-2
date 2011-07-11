@@ -2,6 +2,17 @@
 // Author: <a href="mailto:sebastian.germesin@dfki.de">Sebastian Germesin</a>
 //
 
+if (this.VIE2 === undefined) {
+	/*
+	 * The VIE2 global namespace object. If VIE2 is already defined, the
+	 * existing VIE2 object will not be overwritten so that defined
+	 * namespaces are preserved.
+	 */
+	this.VIE2 = {};
+}
+
+var VIE2 = this.VIE2;
+
 new VIE2.Connector('rdfa');
 
 VIE2.connectors['rdfa'].analyze = function (object, options) {

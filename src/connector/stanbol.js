@@ -2,29 +2,21 @@
 // Author: <a href="mailto:sebastian.germesin@dfki.de">Sebastian Germesin</a>
 //
 
-// Ontology structure:
-//type == http://fise.iks-project.eu/ontology/TextAnnotation
-// => fise:start
-// => fise:end
-// => fise:selected-text
-// => fise:selection-context
-//type == http://fise.iks-project.eu/ontology/EntityAnnotation
-// => fise:entity-reference
-// => entity-label
-// => fise:entity-type
-//type == http://fise.iks-project.eu/ontology/Enhancement    
-// => fise:confidence <float>
-// => dc:type
+if (this.VIE2 === undefined) {
+	/*
+	 * The VIE2 global namespace object. If VIE2 is already defined, the
+	 * existing VIE2 object will not be overwritten so that defined
+	 * namespaces are preserved.
+	 */
+	this.VIE2 = {};
+}
 
-
-// The stanbol connector needs to be initialized like this:
-//VIE2.getConnector('stanbol').options({
-//    "proxy_url" : "../utils/proxy/proxy.php",
-//    "enhancer_url" : "http://stanbol.iksfordrupal.net:9000/engines/",
-//    "entityhub_url" : "http://stanbol.iksfordrupal.net:9000/entityhub/"
-//});
+var VIE2 = this.VIE2;
 
 new VIE2.Connector('stanbol', {
+	proxy_url     : "../utils/proxy/proxy.php",
+    enhancer_url  : "/engines/",
+    entityhub_url : "/entityhub/",
     namespaces: {
         semdesk : "http://www.semanticdesktop.org/ontologies/2007/03/22/nfo#",
         owl : "http://www.w3.org/2002/07/owl#",

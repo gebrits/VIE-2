@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <project name="VIE^2" basedir="." default="all">
     
-	<property name="VERSION" value="1.1.0"/>
+	<property name="VERSION" value="1.1.1"/>
 	    
     <property name="DOCS_DIR" value="./docs" description="API documentation"/>
     <property name="DIST_DIR" value="./dist"/>
@@ -50,6 +50,7 @@
         	<fileset dir="${SRC_DIR}" includes="core/intro.js"/>
         	<fileset dir="${SRC_DIR}" includes="core/util.js"/>
         	<fileset dir="${SRC_DIR}" includes="core/namespaces.js"/>
+        	<fileset dir="${SRC_DIR}" includes="core/log.js"/>
         	<fileset dir="${SRC_DIR}" includes="core/core.js"/>
         	<fileset dir="${SRC_DIR}" includes="core/collection.js"/>
         	<fileset dir="${SRC_DIR}" includes="core/model.js"/>

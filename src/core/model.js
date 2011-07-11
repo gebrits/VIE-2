@@ -2,72 +2,72 @@
 // Author: <a href="mailto:sebastian.germesin@dfki.de">Sebastian Germesin</a>
 //
 
+if (this.VIE2 === undefined) {
+	/*
+	 * The VIE2 global namespace object. If VIE2 is already defined, the
+	 * existing VIE2 object will not be overwritten so that defined
+	 * namespaces are preserved.
+	 */
+	this.VIE2 = {};
+}
+
+var VIE2 = this.VIE2;
+
 //<strong>VIE2.Entity</strong>: The parent backbone entity class for all other entites.
 //Inherits from VIE.RDFEntity.
 VIE2.Entity = VIE.RDFEntity.extend({
     
-    initialize: function (attrs, opts) {
-        //if the type has changed, we need to search through the
-        //types if the model needs to be inserted.
-        this.bind('change:a', this.searchCollections);
+    set: function (attrs, opts) {
+        if (!attrs) {attrs = {};}
+        if (!opts) {opts = {};}
         
-        if (!opts) { opts = {};}
+        if (opts.backend) {
+            //only allocate the model
+            //everything has already been loaded
+            //into the internal triple cache!
+            if ('id' in attrs) {
+                this.id = attrs['id'];
+            }
+            return;
+        } else {
+        //TODO: VIE2.addToCache
+        var uri = this.getSubject();
         
-        if (!opts.backend) {
-            for (var attr in attrs) {
-                var val = attrs[attr];
-                if (attr !== 'id') {
-                    var valArr;
-                    if (!jQuery.isArray(val)) {
-                        valArr = [ val ];
-                    } else {
-                        valArr = val;
-                    }
-                    for (var i = 0; i < valArr.length; i++) {
-                        var triple = jQuery.rdf.triple(this.get('id'), attr, valArr[i], {
-                            namespaces: VIE2.namespaces.toObj()
-                        });
-                        VIE2.globalCache.add(triple);
-                    }
-                }
+        this._changing = true;
+        var now = this.attributes, escaped = this._escapedAttributes;
+        
+        if (!options.silent && this.validate && !this._performValidation(attrs, options)) 
+            return false;
+        if ('id' in attrs) {
+            //TODO!
+            this.id = attrs[this.idAttribute];
+        }
+        var alreadyChanging = this._changing;
+        
+        
+        for (var attr in attrs) {
+            var val = attrs[attr];
+            if (!_.isEqual(now[attr], val)) {
+                now[attr] = val;
+                delete escaped[attr];
+                this._changed = true;
+                if (!options.silent) this.trigger('change:' + attr, this, val, options);
             }
         }
         
-        //in any case, we query all connectors for the types of the entity.
-        VIE2.lookup(this.get('id'), ['a', 'sameAs'], function (m) {
-            return function () {
-                m.trigger('change:a');
-                m.trigger('change:sameAs');
-            };
-        }(this));
+        if (!alreadyChanging && !options.silent && this._changed) this.change(options);
+        this._changing = false;
+        
+        return this;
+        }
     },
     
-    searchCollections: function () {
-        var self = this;
-        
-        var types = VIE2.getPropFromCache(this, this.get('id'), 'a');
-		
-		for (var t = 0; t < types.length; t++) {
-			var type = VIE2.getType(types.at(t).value());
-			if (type) {
-				if (!VIE2[type.sid + "s"].get(self.id)) {
-                    VIE2[type.sid + "s"].add(self, {backend: true});
-                    VIE2.log("info", "VIE2.Entity.searchCollections()", "Added entity '" + self.get('id') + "' to collection of type '" + type.id + "'!");
-                }
-			}
-		}
+    get: function () {
+      //TODO!  
     },
 
-    //overwritten to directly access the global Cache
-    get: function (attr) {
-        if (attr === 'id') {
-            return VIE.RDFEntity.prototype.get.call(this, attr);
-        }
-        return VIE2.getPropFromCache(this, this.get('id'), attr);
-    },
-    
     isEntity: function () {
-    	return true;
+        return true;
     }
 });
 
@@ -84,7 +84,7 @@ VIE2.createEntity = function (type, attrs, opts) {
         opts = {};
     }
     if (!('id' in attrs)) {
-    	attrs.id = $.rdf.blank('[]').toString();
+    	attrs.id = jQuery.rdf.blank('[]').toString();
     }
     
     //setting the type of the entity
@@ -101,118 +101,18 @@ VIE2.createEntity = function (type, attrs, opts) {
 
 VIE2.Object = Backbone.Model.extend({
     
-    initialize: function (attrs, opts) {
-        if (!opts) { opts = {};}
-        
-        this.isLiteral = (opts.isLiteral)? opts.isLiteral : false;
-    },
-    
-    set: function (attrs, opts) {
-        if (!opts) { opts = {};}
-        if (!attrs) return this;
-        
-        var oldValue = this.attributes['value'];
-        var newValue = attrs['value'];
-        
-        if (oldValue !== undefined && oldValue !== newValue) {
-            if (this.collection) {
-            	//remove old triple, add new triple!
-            	VIE2.removeFromCache(this.collection.uri, 
-            						 this.collection.property, 
-    								 oldValue);
-            	
-            	var triple = jQuery.rdf.triple(
-	                this.collection.uri, 
-	                this.collection.property, 
-	                this.tojQueryRdf(newValue), 
-                {namespaces: VIE2.namespaces.toObj()});
-	            VIE2.globalCache.add(triple);
-            
-                this.collection.parent.trigger('change:a');
-            }   
-        }
-        return Backbone.Model.prototype.set.call(this, attrs, opts);
-    },
-    
-    tojQueryRdf: function (val) {
-        if (this.isLiteral) {
-            return this._tojQueryRdfLit(val);
-        } else {
-            return this._tojQueryRdfRes(val);
-        }
-    },
-    
-    _tojQueryRdfLit: function (val) {
-        var lang = (this.get('lang')) ? this.get('lang') : undefined;
-        var datatype = (this.get('datatype')) ? this.get('datatype') : undefined;
-        
-        if (lang !== undefined && datatype !== undefined) {
-            datatype = undefined;
-        }
-        
-        var val = (val)? val : this.get('value');
-        
-        var lit =  jQuery.rdf.literal(
-            val, {
-                namespaces: VIE2.namespaces.toObj(),
-                datatype: datatype,
-                lang: lang
-        });
-        return lit;
-    },
-    
-    _tojQueryRdfRes: function (val) {
-    	val = (val)? val : this.get('value');
-    	
-    	if (val.indexOf('_:') === 0) {
-    		return jQuery.rdf.blank(val);
-    	} else {
-	        return jQuery.rdf.resource(
-	            	val, {
-	                namespaces: VIE2.namespaces.toObj()
-	        });
-        }
-    },
-    
-    tojQueryRdfTriple: function () {
-        var triple = jQuery.rdf.triple(this.collection.uri + " " + this.collection.property + " " + this.tojQueryRdf().toString(), {
-                namespaces: VIE2.namespaces.toObj()
-        });
-        
-        return triple;
-    },
-    
-    //for convenience
-    value: function () {
-        return this.get('value');
-    },
-    //for convenience
-    datatype: function () {
-        return this.get('datatype');
-    },
-    //for convenience
-    lang: function () {
-        return this.get('lang');
-    },
-    
-    isResource: function () {
-    	return this.get('isResource');
-    },
-    
-    isLiteral: function () {
-    	return this.get('isLiteral');
-    },
-    
     isEntity: function () {
-    	return false;
+        return false;
     }
 });
 
 VIE2.createLiteral = function (value, opts) {
     if (!opts) { opts = {};}
+    
     return new VIE2.Object({
-        'value': value,
-        isResource: false,
+        value      : value,
+        isLiteral  : true,
+        isResource : false,
         lang: opts.lang,
         datatype: opts.datatype,
     }, jQuery.extend(opts, {isLiteral: true}));
@@ -220,9 +120,20 @@ VIE2.createLiteral = function (value, opts) {
 
 VIE2.createResource = function (value, opts) {
      if (!opts) { opts = {};}
-     return new VIE2.Object({
-        'value': (value.indexOf('<') === 0 || value.indexOf('_:') === 0)? value : '<' + value + '>',
-        isLiteral: false,
-        isResource: true
-    }, jQuery.extend(opts, {isLiteral: false}));
+
+     var val = (value.indexOf('<') === 0 || value.indexOf('_:') === 0)? value : '<' + value + '>';
+     
+     var ent = VIE2.EntityManager.getBySubject(val);
+     if (ent) {
+         return ent;
+     }
+     else {
+         return new VIE2.Object({
+             value     : val,
+             isLiteral : false,
+             isResource: true
+         }, jQuery.extend(opts, {
+             isLiteral: false
+         }));
+     }
 };

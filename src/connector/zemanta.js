@@ -1,4 +1,22 @@
+// File:   zemanta.js
+// Author: <a href="mailto:sebastian.germesin@dfki.de">Sebastian Germesin</a>
+//
+
+if (this.VIE2 === undefined) {
+	/*
+	 * The VIE2 global namespace object. If VIE2 is already defined, the
+	 * existing VIE2 object will not be overwritten so that defined
+	 * namespaces are preserved.
+	 */
+	this.VIE2 = {};
+}
+
+var VIE2 = this.VIE2;
+
 new VIE2.Connector('zemanta', {
+	proxy_url       : "../utils/proxy/proxy.php",
+    zemanta_url     : "http://api.zemanta.com/services/rest/0.0/",
+    zemanta_api_key : VIE2.ZEMANTA_API_KEY,
     namespaces: {
         z: "http://s.zemanta.com/ns#"
     }

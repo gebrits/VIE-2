@@ -16,6 +16,18 @@
 //<pre>
 //   VIE2.connectors['<id>'].options({...});
 //</pre>
+
+if (this.VIE2 === undefined) {
+	/*
+	 * The VIE2 global namespace object. If VIE2 is already defined, the
+	 * existing VIE2 object will not be overwritten so that defined
+	 * namespaces are preserved.
+	 */
+	this.VIE2 = {};
+}
+
+var VIE2 = this.VIE2;
+
 VIE2.Connector = function(id, options) {
     //A connector needs an id of type string.    
     if (id === undefined || typeof id !== 'string') {
@@ -69,4 +81,31 @@ VIE2.Connector.prototype.serialize = function (rdf, options) {
     if (options && options.success) {
         options.success.call(this, {});
     }
+};
+
+//<strong>VIE2.connectors</strong>: Static object of all registered connectors.
+VIE2.connectors = {};
+
+//<strong>VIE2.getConnector(connectorId)</strong>: TODO: document me
+VIE2.getConnector(connectorId) = function () {
+    return VIE2.connectors[connectorId];
+};
+
+//<strong>VIE2.registerConnector(connector)</strong>: Static method to register a connector (is automatically called 
+//during construction of connector class. If set, inserts connector-specific namespaces to the known Caches.
+VIE2.registerConnector = function (connector) {
+    //first check if there is already 
+    //a connector with 'connector.id' registered
+    if (!VIE2.connectors[connector.id]) {
+        VIE2.connectors[connector.id] = connector;        
+    } else {
+        VIE2.log("warn", "VIE2.registerConnector()", "Did not register connector, as there is" +
+                "already a connector with the same id registered.");
+    }
+};
+
+//<strong>VIE2.unregisterConnector(connectorId)</strong>: Unregistering of connectors. There is currently
+//no usecase for that, but it wasn't that hard to implement ;)
+VIE2.unregisterConnector = function (connectorId) {
+    VIE2.connectors[connector.id] = undefined;
 };
