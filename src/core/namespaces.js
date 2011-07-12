@@ -15,7 +15,7 @@ VIE2.Namespaces = function(namespaces) {
     
     this.add = function (k, v) {
         //check if we overwrite existing mappings
-        if (this.containsKey(k) && v !== this.namespaces[k]) { 
+        if (this.containsKey(k) && v !== this.namespaces[k]) {
             throw "ERROR: Trying to register namespace prefix mapping (" + k + "," + v + ")!" +
                   "There is already a mapping existing: '(" + k + "," + this.get(k) + ")'!";
         } else {

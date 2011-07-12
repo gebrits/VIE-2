@@ -21,49 +21,39 @@ VIE2.Entity = VIE.RDFEntity.extend({
         if (!attrs) {attrs = {};}
         if (!opts) {opts = {};}
         
-        if (opts.backend) {
-            //only allocate the model
-            //everything has already been loaded
-            //into the internal triple cache!
-            if ('id' in attrs) {
-                this.id = attrs['id'];
+        //do the whole magic from the parent class
+        VIE.RDFEntity.prototype.set.call(this, attrs, opts);
+        
+        if (!opts.backend) {
+            //add triple to global VIE2 cache via VIE2.addToCache
+            var uri = this.get('id');
+            
+            if (!VIE2.EntityManager.getBySubject(uri)) {
+                //TODO: add 'subject a type' if not yet in VIE2.entities
+                //TODO: search for most specific type in attrs['a'].
             }
-            return;
-        } else {
-        //TODO: VIE2.addToCache
-        var uri = this.getSubject();
-        
-        this._changing = true;
-        var now = this.attributes, escaped = this._escapedAttributes;
-        
-        if (!options.silent && this.validate && !this._performValidation(attrs, options)) 
-            return false;
-        if ('id' in attrs) {
-            //TODO!
-            this.id = attrs[this.idAttribute];
-        }
-        var alreadyChanging = this._changing;
-        
-        
-        for (var attr in attrs) {
-            var val = attrs[attr];
-            if (!_.isEqual(now[attr], val)) {
-                now[attr] = val;
-                delete escaped[attr];
-                this._changed = true;
-                if (!options.silent) this.trigger('change:' + attr, this, val, options);
+                        
+            for (var attr in attrs) {
+                if (attr !== 'id') {
+                    var val = attrs[attr];
+                    VIE2.addToCache(uri, attr, val);
+                    if (!opts.silent) 
+                        this.trigger('change:' + attr, this, val, opts);
+                }
             }
         }
-        
-        if (!alreadyChanging && !options.silent && this._changed) this.change(options);
-        this._changing = false;
-        
         return this;
-        }
     },
     
-    get: function () {
-      //TODO!  
+    get: function (attr) {
+        if (attr === 'id') {
+            return VIE.RDFEntity.prototype.get.call(this, attr);
+        } else {
+            //overwrite completely with VIE2.getPropFromCache();
+            var uri = this.get('id');
+            var ret = VIE2.getPropFromCache(this, uri, attr);
+            return ret;
+        }
     },
 
     isEntity: function () {

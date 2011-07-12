@@ -87,7 +87,7 @@ VIE2.Connector.prototype.serialize = function (rdf, options) {
 VIE2.connectors = {};
 
 //<strong>VIE2.getConnector(connectorId)</strong>: TODO: document me
-VIE2.getConnector(connectorId) = function () {
+VIE2.getConnector = function (connectorId) {
     return VIE2.connectors[connectorId];
 };
 

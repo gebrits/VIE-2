@@ -25,33 +25,16 @@ VIE2.EntityCollection = VIE.RDFEntityCollection.extend({
         if (!opts) { opts = {};}
         
         if (this.get(model.get('id'))) {
-            return;
+            //TODO: verify this code!
+            return model;
         }
         
         if (!model.isEntity()) {
-        	return;
+            //TODO: verify this code!
+        	return model;
         }
         
-        VIE.RDFEntityCollection.prototype._add.call(this, model, opts);
-        
-        //if the annotation does *not* come from the analyze() method
-        //it comes from the user and hence,
-        //we need to add the subject to the internal triple store.
-        if (!opts.backend) {
-        	var type = model.get('a');
-        	if (type.length > 0) {
-        		type = type.at(0).value();
-        	} else {
-        		type = VIE2.getType('Thing').id //TODO: hack!
-        	}
-            var triple = jQuery.rdf.triple(
-                model.get('id'), 
-                'a', 
-                type,
-                {namespaces: VIE2.namespaces.toObj()}
-            );
-            VIE2.globalCache.add(triple);    
-        }
+        return VIE.RDFEntityCollection.prototype._add.call(this, model, opts);
     },
     
     _remove: function (model, opts) {
