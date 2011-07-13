@@ -32,6 +32,14 @@ VIE2.Util.removeElement = function (haystack, needle) {
     }
 };
 
+VIE2.Util.js2turtle = function (lit) {
+    if (typeof lit === 'string' && !lit.match(/^".*"$/)) {
+        return '"' + lit + '"';
+    } else {
+        return lit;
+    }
+};
+
 // <strong>VIE2.Util.isCurie(str)</strong>: Checks whether the given string is a curie.<br>
 // <code>return boolean</code> 
 VIE2.Util.isCurie = function (str) {

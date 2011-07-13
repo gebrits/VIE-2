@@ -1,5 +1,27 @@
 module("VIE2 - Type");
 
+test("VIE2.Type API", 12, function() {
+  
+  ok(VIE2.Type);
+  ok(typeof VIE2.Type === 'function');
+  
+  ok(VIE2.types);
+  ok(typeof VIE2.types === 'object');
+  
+  ok(VIE2.registerType);
+  ok(typeof VIE2.registerType === 'function');
+  
+  ok(VIE2.listTypes);
+  ok(typeof VIE2.listTypes === 'function');
+  
+  ok(VIE2.getType);
+  ok(typeof VIE2.listTypes === 'function');
+  
+  ok(VIE2.unregisterType);
+  ok(typeof VIE2.unregisterType === 'function');
+    
+});
+
 test("VIE2.Type initialization", 8, function() {
 
     var t1 = VIE2.getType('TestType1');
@@ -79,13 +101,16 @@ test("VIE2.Type.getAttr()", 2, function () {
     var t1 = VIE2.getType('TestTypeAttr1');
     
     ok(t1.getAttr('test'));
-    equal(t1.getAttr('foo'), undefined);
+    
+    raises(function(){
+        t1.getAttr('notKnownAttribute');
+    });
     
     VIE2.unregisterType('TestTypeAttr1');
         
 });
 
-test("VIE2.getType()", 5, function () {
+test("VIE2.getType()", 4, function () {
     
     var newType1 = new VIE2.Type('TestType1', undefined, [], {});
     
@@ -100,8 +125,6 @@ test("VIE2.getType()", 5, function () {
     equal(t2, t3);
     equal(t3, t4);
     
-    ok(VIE2['TestType1' + 's']);
-
 });
 
 

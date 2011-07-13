@@ -1,6 +1,9 @@
 module("VIE2 - Attribute");
 
-test("VIE2.Attribute initialization", 12, function() {
+test("VIE2.Attribute initialization", 14, function() {
+    
+    ok(VIE2.Attribute);
+    ok(typeof VIE2.Attribute === 'function');
 
     var newType2 = new VIE2.Type('TestTypeAttr2', undefined, [
     {

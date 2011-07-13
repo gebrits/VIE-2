@@ -35,11 +35,10 @@ VIE2.addToCache = function (uri, prop, val) {
             namespaces: VIE2.namespaces.toObj()
         });
     } catch (e) {
-        VIE2.log("error", "VIE2.addToCache()", "Cannot create triple from these parameters: (" + uri + "," + prop + "," + val + ")! Results in: " + e);
-        return;
+        throw new Error("VIE2.addToCache() - Cannot create triple from these parameters: (" + uri + "," + prop + "," + val + ")! Results in: " + e);
     }
-    VIE2.log("info", "VIE2.addToCache()", "Adding triple (" + triple.toString() + ") to cache!");
     VIE2.log("info", "VIE2.addToCache()", "Global Cache now (before) holds " + VIE2.globalCache.databank.triples().length + " triples!");
+    VIE2.log("info", "VIE2.addToCache()", "Adding triple (" + triple.toString() + ") to cache!");
     VIE2.globalCache.add(triple);
     VIE2.log("info", "VIE2.addToCache()", "Global Cache now (after ) holds " + VIE2.globalCache.databank.triples().length + " triples!");
 };
@@ -54,13 +53,13 @@ VIE2.removeFromCache = function (uri, prop, val) {
             {namespaces: VIE2.namespaces.toObj()
         });
     } catch (e) {
-        VIE2.log("error", "VIE2.removeFromCache()", "Cannot create pattern from these parameters: (" + uri + "," + prop + "," + val + ")! Results in: " + e);
+        throw new Error("VIE2.removeFromCache() - Cannot create pattern from these parameters: (" + uri + "," + prop + "," + val + ")! Results in: " + e);
         return;
     }
+    VIE2.log("info", "VIE2.addToCache()", "Global Cache now (before) holds " + VIE2.globalCache.databank.triples().length + " triples!");
     VIE2.log("info", "VIE2.removeFromCache()", "Removing triples that match: '" + pattern.toString() + "'!");
-    VIE2.log("info", "VIE2.removeFromCache()", "Global Cache now holds " + VIE2.globalCache.databank.triples().length + " triples!");
     VIE2.globalCache.where(pattern).remove(pattern);
-    VIE2.log("info", "VIE2.removeFromCache()", "Global Cache now holds " + VIE2.globalCache.databank.triples().length + " triples!");
+    VIE2.log("info", "VIE2.addToCache()", "Global Cache now (after ) holds " + VIE2.globalCache.databank.triples().length + " triples!");
 };
 
 //<strong>VIE2.clearCache()</strong>: Static method to clear the global Cache.
@@ -71,6 +70,21 @@ VIE2.clearCache = function () {
 //<strong>VIE2.getPropFromCache(parent, uri, prop)</strong>: Retrieve properties from the given
 // *uri* directly from the global Cache. 
 VIE2.getPropFromCache = function (parent, uri, prop) {
+    
+    //handle type of entity special!
+    if (prop === 'a') {
+        var types = VIE2.globalCache
+        .where(jQuery.rdf.pattern(uri, prop, '?type', {namespaces: VIE2.namespaces.toObj()}));
+        //germi2
+        if (types.size() > 0) {
+            //only return the first type!
+            return VIE2.getType(types.get(0).type.toString());
+        } else {
+            VIE2.log("warn", "VIE2.getPropFromCache()", "No type found, assuming 'Thing'!");
+            return VIE2.getType('Thing');
+        }
+    }
+    
     //initialize collection
     var Collection = VIE2.ObjectCollection.extend({
         uri      : uri,
@@ -88,7 +102,6 @@ VIE2.getPropFromCache = function (parent, uri, prop) {
                 var inst = VIE2.createLiteral(this.object.representation ? this.object.representation : this.object.value, {lang: this.object.lang, datatype: this.object.datatype, backend:true, silent:true});
                 ret.add(inst, {backend:true, silent:true});
             } else if (this.object.type === 'uri' || this.object.type === 'bnode') {
-                //germi
             	var entity = VIE.EntityManager.getBySubject(this.object.toString());
             	if (entity) {
                     ret.add(entity, {backend:true, silent:true});
@@ -187,12 +200,12 @@ VIE2.analyze = function (elem, callback, options) {
                         if (!VIE2.EntityManager.getBySubject(subjStr)) {
                             VIE2.log("info", "VIE2.core#analyze()", "Register new entity (" + subjStr + ")!");
                             
-                            VIE2.createEntity('Thing', {
+                            new VIE2.Entity({
                               id : subjStr
                             }, {backend: true});
                         } else {
                             //inform client(s) that new data is possibly available
-                            VIE.EntityManager.getBySubject(subjStr).change();
+                            VIE2.EntityManager.getBySubject(subjStr).change();
                         }
                     });
                     
@@ -380,5 +393,19 @@ VIE2.serialize = function (model, options) {
             }));
         }
     });
+};
+
+VIE2.howMuchDoIKnow = function () {
+    return "You have " + VIE2.globalCache.databank.size() + " triples stored in the local cache!";
+}
+
+VIE2.all = function (typeId) {
+    //TODO!
+    var type = VIE2.getType(typeId);
+    
+    //TODO!
+    var arr = [];
+    
+    return arr;  
 };
 

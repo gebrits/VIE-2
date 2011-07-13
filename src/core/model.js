@@ -15,79 +15,83 @@ var VIE2 = this.VIE2;
 
 //<strong>VIE2.Entity</strong>: The parent backbone entity class for all other entites.
 //Inherits from VIE.RDFEntity.
-VIE2.Entity = VIE.RDFEntity.extend({
+VIE2.Entity = function (attrs, opts) {
     
-    set: function (attrs, opts) {
-        if (!attrs) {attrs = {};}
-        if (!opts) {opts = {};}
+    if (!attrs) {attrs = {};}
+    if (!opts) {opts = {};}
+    
+    //check if model already exists, if so, throw Error
+    if (attrs['id'] && VIE2.entities.get(attrs['id'])) {
+        throw new Error(["Can't add the same model to a set twice", attrs['id']]);
+    }
+    
+    //generate blank id if none was given
+    if (!('id' in attrs)) {
+    	attrs['id'] = jQuery.rdf.blank('[]').toString();
+    }
+    
+    //set type Thing if none was given
+    //OR convert given type
+    if (!('a' in attrs)) {
+    	attrs['a'] = VIE2.getType("Thing").id;
+	} else {
+        // in the current implementation, we only allow *one* type per entity
+		attrs['a'] = VIE2.getType(jQuery.isArray(attrs['a'])? attrs['a'][0] : attrs['a']).id;
+	}
+    
+    var Model = VIE.RDFEntity.extend({
         
-        //do the whole magic from the parent class
-        VIE.RDFEntity.prototype.set.call(this, attrs, opts);
-        
-        if (!opts.backend) {
-            //add triple to global VIE2 cache via VIE2.addToCache
-            var uri = this.get('id');
+        set: function (attrs, opts) {
             
-            if (!VIE2.EntityManager.getBySubject(uri)) {
-                //TODO: add 'subject a type' if not yet in VIE2.entities
-                //TODO: search for most specific type in attrs['a'].
-            }
+            //do the whole magic from the parent class
+            VIE.RDFEntity.prototype.set.call(this, attrs, opts);
+            
+            if (!opts.backend) {
+                //add triple to global VIE2 cache via VIE2.addToCache
+                var uri = this.get('id');
+                
+                //add type of entity first!
+                VIE2.addToCache(uri, 'a', attrs['a']);
+                            
+                for (var attr in attrs) {
+                    if (attr !== 'id' && attr !== 'a') {
+                        var val = attrs[attr];
+                        var attrUri = this.get('a').getAttr(attr).id;
+                        VIE2.addToCache(uri, attrUri, VIE2.Util.js2turtle(val));
                         
-            for (var attr in attrs) {
-                if (attr !== 'id') {
-                    var val = attrs[attr];
-                    VIE2.addToCache(uri, attr, val);
-                    if (!opts.silent) 
-                        this.trigger('change:' + attr, this, val, opts);
+                        if (!opts.silent) 
+                            this.trigger('change:' + attr, this, val, opts);
+                    }
                 }
             }
-        }
-        return this;
-    },
+            return this;
+        },
+        
+        get: function (attr) {
+            if (attr === 'id') {
+                return VIE.RDFEntity.prototype.get.call(this, attr);
+            } else {
+                //overwrite completely with VIE2.getPropFromCache();
+                var uri = this.get('id');
+                var ret = VIE2.getPropFromCache(this, uri, attr);
+                return ret;
+            }
+        },
     
-    get: function (attr) {
-        if (attr === 'id') {
-            return VIE.RDFEntity.prototype.get.call(this, attr);
-        } else {
-            //overwrite completely with VIE2.getPropFromCache();
-            var uri = this.get('id');
-            var ret = VIE2.getPropFromCache(this, uri, attr);
-            return ret;
-        }
-    },
-
-    isEntity: function () {
-        return true;
-    }
-});
-
-VIE2.createEntity = function (type, attrs, opts) {
-    if (!type) {
-    	type = VIE2.getType("Thing");	
-	} else if (typeof type === 'string') {
-		type = VIE2.getType(type);
-	}
-	if (!attrs) {
-        attrs = {};
-    }
-    if (!opts) {
-        opts = {};
-    }
-    if (!('id' in attrs)) {
-    	attrs.id = jQuery.rdf.blank('[]').toString();
-    }
+        //for convenience
+        isEntity: true
+    });
     
-    //setting the type of the entity
-    attrs.a = type.id;
-    
-    //create the model
-    var model = new VIE2.Entity(attrs, opts);
-    
+    var model = new Model(attrs, jQuery.extend(opts, {
+        collection: VIE2.entities
+    }));
+            
     //automatically adds model to global VIE2.entities bucket
     VIE2.entities.add(model, opts);
     
     return model;
 };
+
 
 VIE2.Object = Backbone.Model.extend({
     

@@ -82,7 +82,7 @@ VIE2.Type = function(id, parent, attrs, namespaces) {
 				return attrs[a];
 			}
 	    }
-    	return undefined;
+        throw new Error("The attribute '" + aId + "' is not valid for the type '" + this.id + "'!");
     };
        
     this.getParent = function () {
@@ -145,23 +145,27 @@ VIE2.registerType = function (type) {
                 
         VIE2.types[type.id] = type;
         
-        var Collection = VIE2.EntityCollection.extend({model: VIE2.Object});
-        
-        //Person -> VIE2.Persons
-        VIE2[type.sid + "s"] = new Collection();
-        
-        //trigger filling of collections!
-        VIE2.entities.each(function () {
-            this.searchCollections();
-        })
     } else {
         VIE2.log("warn", "VIE2.registerType()", "Did not register type, as there is" +
                 "already a type with the same id registered.");
     }
 };
 
+VIE2.listTypes = function () {
+    var arr = [];
+    
+    for (var t in VIE2.types) {
+        arr.push(t);
+    }
+    
+    return arr;
+};
+
 VIE2.getType = function (typeId) {
     
+    if (typeId instanceof VIE2.Type) {
+        return VIE2.getType(typeId.id);
+    }
     if (typeId.indexOf('<') === 0) {
         return VIE2.types[typeId];
     }
@@ -183,5 +187,4 @@ VIE2.unregisterType = function (typeId) {
     var t = VIE2.getType(typeId);
     
     delete VIE2.types[t.id];
-    delete VIE2[t.sid + "s"];
 };

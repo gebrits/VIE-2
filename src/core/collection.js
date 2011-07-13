@@ -24,12 +24,12 @@ VIE2.EntityCollection = VIE.RDFEntityCollection.extend({
     _add: function (model, opts) {
         if (!opts) { opts = {};}
         
-        if (this.get(model.get('id'))) {
+        if (this.get(model)) {
             //TODO: verify this code!
             return model;
         }
         
-        if (!model.isEntity()) {
+        if (!model.isEntity) {
             //TODO: verify this code!
         	return model;
         }
