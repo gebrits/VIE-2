@@ -58,9 +58,6 @@ VIE2.Entity = function (attrs, opts) {
                         var val = attrs[attr];
                         var attrUri = this.get('a').getAttr(attr).id;
                         VIE2.addToCache(uri, attrUri, VIE2.Util.js2turtle(val));
-                        
-                        if (!opts.silent) 
-                            this.trigger('change:' + attr, this, val, opts);
                     }
                 }
             }
@@ -90,44 +87,4 @@ VIE2.Entity = function (attrs, opts) {
     VIE2.entities.add(model, opts);
     
     return model;
-};
-
-
-VIE2.Object = Backbone.Model.extend({
-    
-    isEntity: function () {
-        return false;
-    }
-});
-
-VIE2.createLiteral = function (value, opts) {
-    if (!opts) { opts = {};}
-    
-    return new VIE2.Object({
-        value      : value,
-        isLiteral  : true,
-        isResource : false,
-        lang: opts.lang,
-        datatype: opts.datatype,
-    }, jQuery.extend(opts, {isLiteral: true}));
-};
-
-VIE2.createResource = function (value, opts) {
-     if (!opts) { opts = {};}
-
-     var val = (value.indexOf('<') === 0 || value.indexOf('_:') === 0)? value : '<' + value + '>';
-     
-     var ent = VIE2.EntityManager.getBySubject(val);
-     if (ent) {
-         return ent;
-     }
-     else {
-         return new VIE2.Object({
-             value     : val,
-             isLiteral : false,
-             isResource: true
-         }, jQuery.extend(opts, {
-             isLiteral: false
-         }));
-     }
 };
