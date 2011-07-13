@@ -63,10 +63,6 @@ VIE2.EntityCollection = VIE.RDFEntityCollection.extend({
 //which stores all models of all known entities.
 VIE2.entities = new VIE2.EntityCollection();
 
-//<strong>VIE2.ObjectCollection</strong>: TODO: document me
-VIE2.ObjectCollection = Backbone.Collection.extend({
-    //TODO
-});
 
 
 

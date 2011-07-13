@@ -41,10 +41,10 @@ VIE2.Entity = function (attrs, opts) {
     
     var Model = VIE.RDFEntity.extend({
         
-        set: function (attrs, opts) {
+        initialize: function (attrs, opts) {
             
             //do the whole magic from the parent class
-            VIE.RDFEntity.prototype.set.call(this, attrs, opts);
+            VIE.RDFEntity.prototype.initialize.call(this, attrs, opts);
             
             if (!opts.backend) {
                 //add triple to global VIE2 cache via VIE2.addToCache
@@ -56,21 +56,34 @@ VIE2.Entity = function (attrs, opts) {
                 for (var attr in attrs) {
                     if (attr !== 'id' && attr !== 'a') {
                         var val = attrs[attr];
+                        if (!jQuery.isArray(val)) {
+                            val = [ val ];
+                        }
                         var attrUri = this.get('a').getAttr(attr).id;
-                        VIE2.addToCache(uri, attrUri, VIE2.Util.js2turtle(val));
+                        for (var i = 0; i < val.length; i++) {
+                            VIE2.addToCache(uri, attrUri, VIE2.Util.js2turtle(val[i]));
+                        }
                     }
                 }
             }
             return this;
         },
         
+        set: function (attrs, opts) {
+            //TODO: update cache if needed!
+            VIE.RDFEntity.prototype.set.call(this, attrs, opts);
+        },
+        
         get: function (attr) {
             if (attr === 'id') {
                 return VIE.RDFEntity.prototype.get.call(this, attr);
+            } else if (attr === 'a') {
+                return VIE2.getPropFromCache.call(this, attr);
             } else {
                 //overwrite completely with VIE2.getPropFromCache();
-                var uri = this.get('id');
-                var ret = VIE2.getPropFromCache(this, uri, attr);
+                var attrUri = this.get('a').getAttr(attr).id;
+                var ret = VIE2.getPropFromCache.call(this, attrUri);
+                
                 return ret;
             }
         },

@@ -31,7 +31,7 @@ VIE2.globalCache = jQuery.rdf({namespaces: VIE2.namespaces.toObj()});
 
 VIE2.addToCache = function (uri, prop, val) {
     try {
-        var triple = jQuery.rdf.triple(uri, prop, val, {
+        var triple = jQuery.rdf.triple(uri + ' ' + prop + ' ' + val, {
             namespaces: VIE2.namespaces.toObj()
         });
     } catch (e) {
@@ -40,7 +40,7 @@ VIE2.addToCache = function (uri, prop, val) {
     VIE2.log("info", "VIE2.addToCache()", "Global Cache now (before) holds " + VIE2.globalCache.databank.triples().length + " triples!");
     VIE2.log("info", "VIE2.addToCache()", "Adding triple (" + triple.toString() + ") to cache!");
     VIE2.globalCache.add(triple);
-    VIE2.log("info", "VIE2.addToCache()", "Global Cache now (after ) holds " + VIE2.globalCache.databank.triples().length + " triples!");
+    VIE2.log("info", "VIE2.addToCache()", "Global Cache now (after) holds " + VIE2.globalCache.databank.triples().length + " triples!");
 };
 
 //<strong>VIE2.removeFromCache</strong>: TODO: document me
@@ -56,10 +56,10 @@ VIE2.removeFromCache = function (uri, prop, val) {
         throw new Error("VIE2.removeFromCache() - Cannot create pattern from these parameters: (" + uri + "," + prop + "," + val + ")! Results in: " + e);
         return;
     }
-    VIE2.log("info", "VIE2.addToCache()", "Global Cache now (before) holds " + VIE2.globalCache.databank.triples().length + " triples!");
+    VIE2.log("info", "VIE2.removeFromCache()", "Global Cache now (before) holds " + VIE2.globalCache.databank.triples().length + " triples!");
     VIE2.log("info", "VIE2.removeFromCache()", "Removing triples that match: '" + pattern.toString() + "'!");
     VIE2.globalCache.where(pattern).remove(pattern);
-    VIE2.log("info", "VIE2.addToCache()", "Global Cache now (after ) holds " + VIE2.globalCache.databank.triples().length + " triples!");
+    VIE2.log("info", "VIE2.removeFromCache()", "Global Cache now (after) holds " + VIE2.globalCache.databank.triples().length + " triples!");
 };
 
 //<strong>VIE2.clearCache()</strong>: Static method to clear the global Cache.
@@ -67,9 +67,10 @@ VIE2.clearCache = function () {
     VIE2.globalCache = jQuery.rdf({namespaces: VIE2.namespaces.toObj()});
 };
 
-//<strong>VIE2.getPropFromCache(parent, uri, prop)</strong>: Retrieve properties from the given
+//<strong>VIE2.getPropFromCache(uri, prop)</strong>: Retrieve properties from the given
 // *uri* directly from the global Cache. 
-VIE2.getPropFromCache = function (parent, uri, prop) {
+VIE2.getPropFromCache = function (prop) {
+    var uri = this.get('id');
     
     //handle type of entity special!
     if (prop === 'a') {
@@ -85,30 +86,24 @@ VIE2.getPropFromCache = function (parent, uri, prop) {
         }
     }
     
-    //initialize collection
-    var Collection = VIE2.ObjectCollection.extend({
-        uri      : uri,
-        property : prop,
-        parent   : parent
-    });
-    
-    var ret = new Collection();
+    var ret = [];
     
     VIE2.globalCache
     .where(jQuery.rdf.pattern(uri, prop, '?object', {namespaces: VIE2.namespaces.toObj()}))
     .each(function () {
         if (this.object.type) {
             if (this.object.type === 'literal') {
-                var inst = VIE2.createLiteral(this.object.representation ? this.object.representation : this.object.value, {lang: this.object.lang, datatype: this.object.datatype, backend:true, silent:true});
-                ret.add(inst, {backend:true, silent:true});
+                var inst = this.object.representation ? this.object.representation : this.object;
+                inst = this.object.value ? this.object.value : inst;
+                ret.push(inst);
             } else if (this.object.type === 'uri' || this.object.type === 'bnode') {
-            	var entity = VIE.EntityManager.getBySubject(this.object.toString());
+            	var entity = VIE2.EntityManager.getBySubject(this.object.toString());
             	if (entity) {
-                    ret.add(entity, {backend:true, silent:true});
+                    ret.push(entity);
                 }
                 else {
-                    var inst = VIE2.createResource(this.object.value.toString(), {backend:true, silent:true});
-                    ret.add(inst, {backend:true, silent:true});
+                    var res =this.object.value.toString();
+                    ret.push(res);
                 }
             }
         }
@@ -408,4 +403,3 @@ VIE2.all = function (typeId) {
     
     return arr;  
 };
-

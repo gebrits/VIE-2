@@ -33,11 +33,13 @@ VIE2.Util.removeElement = function (haystack, needle) {
 };
 
 VIE2.Util.js2turtle = function (lit) {
-    if (typeof lit === 'string' && !lit.match(/^".*"$/)) {
-        return '"' + lit + '"';
-    } else {
+    if (VIE2.Util.isResource(lit)) {
         return lit;
     }
+    if (typeof lit === 'string' && !lit.match(/^".*"$/)) {
+        return '"' + lit + '"';
+    }
+    return lit;
 };
 
 // <strong>VIE2.Util.isCurie(str)</strong>: Checks whether the given string is a curie.<br>
@@ -46,30 +48,9 @@ VIE2.Util.isCurie = function (str) {
     return !str.substring(0, 1).match(/^<$/) && !(str.substring(0, 7).match(/^http:\/\/$/));
 }
 
-// <strong>VIE2.Util.isLiteral(str)</strong>: Checks whether the given string is a literal.<br>
+// <strong>VIE2.Util.isResource(str)</strong>: Checks whether the given string is a resource.<br>
 // <code>return boolean</code> 
-VIE2.Util.isLiteral = function (str) {
-    try {
-        jQuery.rdf.resource(str, {namespaces: VIE2.namespaces.toObj()});
-        return false;
-    } catch (e) {
-        try {
-            jQuery.rdf.blank(str, {namespaces: VIE2.namespaces.toObj()});
-            return false;
-        } catch (f) {
-            try {
-                jQuery.rdf.literal(str, {namespaces: VIE2.namespaces.toObj()});
-                return true;
-            } catch (g) {
-                return false;
-            }
-        }
-    }
-};
-
-// <strong>VIE2.Util.isLiteral(str)</strong>: Checks whether the given string is a blank.<br>
-// <code>return boolean</code> 
-VIE2.Util.isBlank = function (str) {
+VIE2.Util.isResource = function (str) {
     try {
         jQuery.rdf.resource(str, {namespaces: VIE2.namespaces.toObj()});
         return false;
