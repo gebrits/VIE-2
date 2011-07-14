@@ -4,14 +4,17 @@ test("VIE2 Model API", 3, function () {
    ok(VIE2);
    ok(VIE2.Entity);
    ok(typeof VIE2.Entity === 'function');
-
+   
+   VIE2.clear();
 });
 
 
-test("VIE2 Model Manually create entity without attributes", 21, function () {
+test("VIE2 Model Manually create entity without attributes", 25, function () {
    //create anonymous entity with no given type 
     
    var entity = new VIE2.Entity();
+   
+   
    ok(entity);
    ok(entity.isEntity);
    ok(entity.get('id').match(/^_:.+$/)); //should be a blank id
@@ -52,6 +55,18 @@ test("VIE2 Model Manually create entity without attributes", 21, function () {
    equal(entity4.id, 'http://test.org/AwesomeId');
    ok(entity4.get('a'));
    equal(entity4.get('a').id, VIE2.getType('Person').id);
+   
+   //create anonymous entity with given type
+   var entity5 = VIE2.Entity({
+       a: VIE2.getType('Person')
+   });
+   
+   ok(entity5);
+   ok(entity5.isEntity);
+   ok(entity5.get('a'));
+   equal(entity5.get('a').id, VIE2.getType('Person').id);
+   
+   VIE2.clear();
 });
 
 test("VIE2 Model Manually create entity with attributes", 8, function () {
@@ -99,10 +114,152 @@ test("VIE2 Model Manually create entity with attributes", 8, function () {
    ok(entity4.get('a'));
    equal(entity4.get('a').id, VIE2.getType('Person').id);
    
-   console.log(entity4.get('name'));
-   console.log(entity4.get('description'));
-   console.log(entity4.get('knows'));
-   console.log(entity3.get('age'));
   
    VIE2.unregisterType('PersonWithAge');
+   
+   VIE2.clear();
 });
+
+
+test("VIE2 Model Change attributes", 9, function () {
+    
+    var newPersonType = new VIE2.Type('PersonWithAge', 'Person', [
+        {id       : 'age',
+         datatype : 'Integer'
+         }], {});
+         
+   var entity = new VIE2.Entity({
+       a: 'PersonWithAge',
+       name : 'John Doe',
+       age: 23,
+       description : 'This is a test'
+   });
+   
+   ok(entity);
+   equal(entity.get('name')[0], 'John Doe');
+   equal(entity.get('age')[0], 23);
+   
+   entity.set({
+      name: 'Johnny The Doe',
+      age: 24,
+      description : ['This is a test', 'This is another test']
+   });
+
+   ok(entity);
+   equal(entity.get('name')[0], 'Johnny The Doe');
+   equal(entity.get('age')[0], 24);
+   equal(entity.get('description').length, 2);
+   equal(entity.get('description')[0], 'This is a test');
+   equal(entity.get('description')[1], 'This is another test');
+  
+   VIE2.unregisterType('PersonWithAge');
+   
+   VIE2.clear();      
+});
+
+
+
+test("VIE2 Model unset attributes", 8, function () {
+    
+   var newPersonType = new VIE2.Type('PersonWithAge', 'Person', [
+        {id       : 'age',
+         datatype : 'Integer'
+         }], {}
+   );
+         
+   var entity = new VIE2.Entity({
+       a: 'PersonWithAge',
+       name : 'John Doe',
+       age: 23,
+       description : 'This is a test'
+   });
+   
+   ok(entity);
+   equal(entity.get('name')[0], 'John Doe');
+   equal(entity.get('age')[0], 23);
+   
+   entity.unset('name');
+   
+   entity.set({age : []}); //should be the same as entity.unset('age');
+
+   ok(entity);
+   equal(entity.get('name').length, 0);
+   equal(entity.get('age').length, 0);
+   equal(entity.get('description').length, 1);
+   equal(entity.get('description')[0], 'This is a test');
+  
+   VIE2.unregisterType('PersonWithAge');
+   
+   VIE2.clear();      
+});
+
+
+test("VIE2 Model clear model", 10, function () {
+    
+   var newPersonType = new VIE2.Type('PersonWithAge', 'Person', [
+        {id       : 'age',
+         datatype : 'Integer'
+         }], {}
+   );
+         
+   var entity = new VIE2.Entity({
+       a: 'PersonWithAge',
+       name : 'John Doe',
+       age: 23,
+       description : 'This is a test'
+   });
+   
+   ok(entity);
+   var id = entity.get('id');
+   equal(entity.get('name')[0], 'John Doe');
+   equal(entity.get('age')[0], 23);
+   equal(entity.get('description').length, 1);
+   equal(entity.get('description')[0], 'This is a test');
+
+   entity.clear();
+   
+   ok(entity);
+   equal(entity.get('id'), id);
+   equal(entity.get('name').length, 0);
+   equal(entity.get('age').length, 0);
+   equal(entity.get('description').length, 0);
+  
+   VIE2.unregisterType('PersonWithAge');
+   
+   VIE2.clear();      
+});
+
+
+test("VIE2 Model destroy model", 10, function () {
+    
+   var newPersonType = new VIE2.Type('PersonWithAge', 'Person', [
+        {id       : 'age',
+         datatype : 'Integer'
+         }], {}
+   );
+         
+   var entity = new VIE2.Entity({
+       a: 'PersonWithAge',
+       name : 'John Doe',
+       age: 23,
+       description : 'This is a test'
+   });
+   
+   ok(entity);
+   var id = entity.get('id');
+   ok(VIE2.entities.get(id));
+   equal(entity.get('name')[0], 'John Doe');
+   equal(entity.get('age')[0], 23);
+   equal(entity.get('description').length, 1);
+   equal(entity.get('description')[0], 'This is a test');
+
+   entity.destroy();
+   
+   ok(entity);
+   ok(VIE2.entities.get(id) == undefined);
+
+   VIE2.unregisterType('PersonWithAge');
+   
+   VIE2.clear();      
+});
+

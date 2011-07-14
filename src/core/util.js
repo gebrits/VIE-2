@@ -15,6 +15,19 @@ var VIE2 = this.VIE2;
 
 VIE2.Util = {};
 
+
+VIE2.Util.sort = function (a, b) {
+    
+    if (a instanceof VIE2.Type) {
+        a = a.id;
+        b = b.id;
+    }
+    
+    if (a === b) return 0;
+    if (a < b)  return -1;
+    return 1;    
+}
+
 // <strong>VIE2.Util.(haystack, needle)</strong>: Removes the *needle* from the *haystack* array.<br>
 // <code>return void</code> 
 VIE2.Util.removeElement = function (haystack, needle) {
@@ -33,6 +46,9 @@ VIE2.Util.removeElement = function (haystack, needle) {
 };
 
 VIE2.Util.js2turtle = function (lit) {
+    if (lit instanceof VIE2.Type) {
+        return lit.id;
+    }
     if (VIE2.Util.isResource(lit)) {
         return lit;
     }

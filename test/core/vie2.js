@@ -15,10 +15,11 @@ test("VIE2 API", 25, function () {
 	ok(typeof VIE2.addToCache === 'function');
 	ok(VIE2.removeFromCache);
 	ok(typeof VIE2.removeFromCache === 'function');
-	ok(VIE2.clearCache);
-	ok(typeof VIE2.clearCache === 'function');
 	ok(VIE2.getPropFromCache);
 	ok(typeof VIE2.getPropFromCache === 'function');
+    
+	ok(VIE2.clear);
+	ok(typeof VIE2.clear === 'function');
     
 	ok(VIE2.analyze);
 	ok(typeof VIE2.analyze === 'function');

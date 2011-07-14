@@ -46,25 +46,23 @@ VIE2.addToCache = function (uri, prop, val) {
 //<strong>VIE2.removeFromCache</strong>: TODO: document me
 VIE2.removeFromCache = function (uri, prop, val) {
     try {
-        var pattern = jQuery.rdf.pattern(
-            uri, 
-            (prop)? prop : '?x',
-            (val)? val : '?y', 
+        var pattern = jQuery.rdf.triple(uri + ' ' + ((prop)? prop : '?x') + ' ' + ((val)? val : '?y'), 
             {namespaces: VIE2.namespaces.toObj()
         });
     } catch (e) {
-        throw new Error("VIE2.removeFromCache() - Cannot create pattern from these parameters: (" + uri + "," + prop + "," + val + ")! Results in: " + e);
+        throw new Error("VIE2.removeFromCache() - Cannot create pattern from these parameters: (" + uri + ", " + prop + ", " + val + ")! Results in: " + e);
         return;
     }
     VIE2.log("info", "VIE2.removeFromCache()", "Global Cache now (before) holds " + VIE2.globalCache.databank.triples().length + " triples!");
     VIE2.log("info", "VIE2.removeFromCache()", "Removing triples that match: '" + pattern.toString() + "'!");
-    VIE2.globalCache.where(pattern).remove(pattern);
+    VIE2.globalCache.remove(pattern);
     VIE2.log("info", "VIE2.removeFromCache()", "Global Cache now (after) holds " + VIE2.globalCache.databank.triples().length + " triples!");
 };
 
-//<strong>VIE2.clearCache()</strong>: Static method to clear the global Cache.
-VIE2.clearCache = function () {
+//<strong>VIE2.clear()</strong>: Static method to clear VIE2.
+VIE2.clear = function () {
     VIE2.globalCache = jQuery.rdf({namespaces: VIE2.namespaces.toObj()});
+    VIE2.entities.reset();
 };
 
 //<strong>VIE2.getPropFromCache(uri, prop)</strong>: Retrieve properties from the given
@@ -76,13 +74,12 @@ VIE2.getPropFromCache = function (prop) {
     if (prop === 'a') {
         var types = VIE2.globalCache
         .where(jQuery.rdf.pattern(uri, prop, '?type', {namespaces: VIE2.namespaces.toObj()}));
-        //germi2
         if (types.size() > 0) {
             //only return the first type!
-            return VIE2.getType(types.get(0).type.toString());
+            var ret =  VIE2.getType(types.get(0).type.value);
+            return ret;
         } else {
-            VIE2.log("warn", "VIE2.getPropFromCache()", "No type found, assuming 'Thing'!");
-            return VIE2.getType('Thing');
+            return null;
         }
     }
     
@@ -392,6 +389,12 @@ VIE2.serialize = function (model, options) {
 
 VIE2.howMuchDoIKnow = function () {
     return "You have " + VIE2.globalCache.databank.size() + " triples stored in the local cache!";
+}
+
+VIE2.whatDoIKnow = function () {
+    for (var i = 0; i < VIE2.globalCache.databank.triples().length; i++) {
+        console.log(VIE2.globalCache.databank.triples()[i].toString());
+    }
 }
 
 VIE2.all = function (typeId) {

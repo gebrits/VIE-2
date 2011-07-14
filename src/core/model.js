@@ -22,7 +22,7 @@ VIE2.Entity = function (attrs, opts) {
     
     //check if model already exists, if so, throw Error
     if (attrs['id'] && VIE2.entities.get(attrs['id'])) {
-        throw new Error(["Can't add the same model to a set twice", attrs['id']]);
+        throw new Error("Sorry, model already existing! Please use VIE2.entities.get(" + attrs['id'] + ")");
     }
     
     //generate blank id if none was given
@@ -41,37 +41,86 @@ VIE2.Entity = function (attrs, opts) {
     
     var Model = VIE.RDFEntity.extend({
         
-        initialize: function (attrs, opts) {
+        set: function (attrs, opts) {
+            if (!attrs) {attrs = {};}
+            if (!opts) {opts = {};}
             
-            //do the whole magic from the parent class
-            VIE.RDFEntity.prototype.initialize.call(this, attrs, opts);
+            //inherit the whole magic from the parent class
+            VIE.RDFEntity.prototype.set.call(this, attrs, opts);
             
             if (!opts.backend) {
                 //add triple to global VIE2 cache via VIE2.addToCache
-                var uri = this.get('id');
                 
                 //add type of entity first!
-                VIE2.addToCache(uri, 'a', attrs['a']);
+                if ('a' in attrs) {
+                    this._setH('a', this.get('a'), attrs['a'], opts);
+                }
                             
                 for (var attr in attrs) {
                     if (attr !== 'id' && attr !== 'a') {
-                        var val = attrs[attr];
-                        if (!jQuery.isArray(val)) {
-                            val = [ val ];
-                        }
-                        var attrUri = this.get('a').getAttr(attr).id;
-                        for (var i = 0; i < val.length; i++) {
-                            VIE2.addToCache(uri, attrUri, VIE2.Util.js2turtle(val[i]));
-                        }
+                        var oldVals = this.get(attr);
+                        var newVals = attrs[attr];               
+                        
+                        this._setH(attr, oldVals, newVals, opts);
                     }
                 }
             }
             return this;
         },
         
-        set: function (attrs, opts) {
-            //TODO: update cache if needed!
-            VIE.RDFEntity.prototype.set.call(this, attrs, opts);
+        _setH: function (attr, oldVals, newVals, opts) {
+            var uri = this.get('id');
+            var attrUri = attr === 'a' ? 'a' : this.get('a').getAttr(attr).id;
+
+            if (oldVals === null) {
+                oldVals = [];
+            }
+            if (!jQuery.isArray(oldVals)) {
+                oldVals = [ oldVals ];
+            }
+            if (!jQuery.isArray(newVals)) {
+                newVals = [ newVals ];
+            }
+            
+            //TODO: validate including typechecking!
+            
+            //sort both!
+            var oldValsC = oldVals.slice(0).sort(VIE2.Util.sort);
+            var newValsC = newVals.slice(0).sort(VIE2.Util.sort);
+            
+            var i = 0, j = 0;
+            while (i < oldValsC.length && j < newValsC.length) {
+                var o = oldValsC[i];
+                var n = newValsC[j];
+                
+                if (o instanceof VIE2.Type) {
+                    n = VIE2.getType(n);
+                }
+                
+                if (o === n) {
+                    //ignore
+                    i++;
+                    j++;
+                } else if (o < n) {
+                    //remove old o
+                    VIE2.removeFromCache(uri, attrUri, VIE2.Util.js2turtle(o));
+                    i++;
+                } else {
+                    //add new n
+                    VIE2.addToCache(uri, attrUri, VIE2.Util.js2turtle(n));
+                    j++;
+                }
+            }
+            
+            for (; i < oldValsC.length; i++) {
+                //remove what's left
+                VIE2.removeFromCache(uri, attrUri, VIE2.Util.js2turtle(oldValsC[i]));
+            }
+            
+            for (; j < newValsC.length; j++) {
+                //insert what's left
+                VIE2.addToCache(uri, attrUri, VIE2.Util.js2turtle(newValsC[j]));
+            }
         },
         
         get: function (attr) {
@@ -86,6 +135,24 @@ VIE2.Entity = function (attrs, opts) {
                 
                 return ret;
             }
+        },
+        
+        unset: function (attr, opts) {
+            if (!attr || attr === 'id') return this;
+            if (!opts) {opts = {};}
+            
+            VIE.RDFEntity.prototype.unset.call(this, attr, opts);
+            
+            if (attr !== 'id') {
+                this._setH(attr, this.get(attr), [], opts);
+            }
+            return this;
+        },
+        
+        destroy: function (opts) {
+            //TODO
+            VIE.RDFEntity.prototype.destroy.call(this, opts);
+            VIE2.entities.remove(this, opts);
         },
     
         //for convenience
