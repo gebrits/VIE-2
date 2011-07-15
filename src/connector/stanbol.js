@@ -15,8 +15,8 @@ var VIE2 = this.VIE2;
 
 new VIE2.Connector('stanbol', {
 	proxy_url     : "../utils/proxy/proxy.php",
-    enhancer_url  : "/engines/",
-    entityhub_url : "/entityhub/",
+    enhancer_url  : (VIE2.STANBOL_BASE_URI ? VIE2.STANBOL_BASE_URI : "") + "/engines/",
+    entityhub_url  : (VIE2.STANBOL_BASE_URI ? VIE2.STANBOL_BASE_URI : "") + "/entityhub/",
     namespaces: {
         semdesk : "http://www.semanticdesktop.org/ontologies/2007/03/22/nfo#",
         owl : "http://www.w3.org/2002/07/owl#",
@@ -30,7 +30,8 @@ new VIE2.Connector('stanbol', {
     rules: {
         'prefix' :  {
             'fise': 'http://fise.iks-project.eu/ontology/',
-            'dc'  : 'http://purl.org/dc/terms/'
+            'dc'  : 'http://purl.org/dc/terms/',
+            'foaf': 'http://xmlns.com/foaf/0.1/'
         },
         'rules':  [
             {'left' : [
@@ -50,6 +51,17 @@ new VIE2.Connector('stanbol', {
                  '?entity fise:hasTextAnnotation ?relation',
                  '?entity fise:hasEntityAnnotation ?subject'
              ]
+             },
+             {'left' : [
+                '?subject a <http://dbpedia.org/ontology/Person>',
+                '?subject <http://fise.iks-project.eu/ontology/hasEntityAnnotation> ?entityAnnot',
+                '?entityAnnot <http://fise.iks-project.eu/ontology/entity-label> ?lbl',
+            ],
+             'right' : [
+                 '?subject a <http://schema.org/Person>',
+                 //TODO: remove ALL other types!
+                 '?subject <http://schema.org/name> ?lbl'
+             ]
              }
         ]
     }
@@ -58,9 +70,13 @@ new VIE2.Connector('stanbol', {
 VIE2.connectors['stanbol'].analyze = function (object, options) {
     var rdf = jQuery.rdf();
     
+    if (!options) {
+        options = {};
+    }
+    
     if (object === undefined) {
         VIE2.log ("warn", "VIE2.Connector('" + this.id + "')", "Given object is undefined!");
-        if (options && options.error) {
+        if (options.error) {
             options.error("Given object is undefined!");
         }
     } else if (typeof object === 'object') {
@@ -76,7 +92,7 @@ VIE2.connectors['stanbol'].analyze = function (object, options) {
             });
 
             if (self._options.rules) {
-                VIE2.log("info", "VIE2.Connector(" + self.id + ")", "Start reasoning '" + (rdf.databank.triples().length) + "'");
+                VIE2.log("info", "VIE2.Connector(" + self.id + ")", "Start reasoning '" + (rdf.databank.size()) + "'");
                 var rules = jQuery.rdf.ruleset();
                 for (var prefix in self._options.rules.prefix) {
                     rules.prefix(prefix, self._options.rules.prefix[prefix]);
@@ -84,10 +100,10 @@ VIE2.connectors['stanbol'].analyze = function (object, options) {
                 for (var i = 0; i < self._options.rules.rules.length; i++) {
                     rules.add(self._options.rules.rules[i]['left'], self._options.rules.rules[i]['right']);
                 }
-                rdf.reason(rules);
-                VIE2.log("info", "VIE2.Connector(" + self.id + ")", "End   reasoning '" + (rdf.databank.triples().length) + "'");
+                rdf = rdf.reason(rules, 10);
+                VIE2.log("info", "VIE2.Connector(" + self.id + ")", "End   reasoning '" + (rdf.databank.size()) + "'");
             }
-            if (options && options.success) {
+            if (options.success) {
                 options.success.call(self, rdf);
             } else {
                 VIE2.log("warn", "VIE2.Connector(" + self.id + ")", "No success callback given. How do you think this should gonna work?'");
@@ -96,7 +112,7 @@ VIE2.connectors['stanbol'].analyze = function (object, options) {
         this.enhance(text, callback);
     } else {
         VIE2.log("error", "VIE2.Connector(" + this.id + ")", "Expected element of type 'object', found: '" + (typeof object) + "'");
-        if (options && options.error) {
+        if (options.error) {
             options.error.call(this, "Expected element of type 'object', found: '" + (typeof object) + "'");
         }
     }
@@ -127,7 +143,7 @@ VIE2.connectors['stanbol'].enhance = function (text, callback) {
         var c = function(data) {
             if (data && data.status === 200) {
                 try {
-                    var obj = $.parseJSON(data.responseText);
+                    var obj = jQuery.parseJSON(data.responseText);
                     var rdf = jQuery.rdf().load(obj, {});
                     callback(rdf);
                 } 

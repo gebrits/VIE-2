@@ -86,28 +86,22 @@ VIE2.Entity = function (attrs, opts) {
                 try {
                     var attrUri = (attr === 'a')? attr : this['a'].getAttr(attr).id;
                 } catch (e) {
-                    VIE2.log('warn', 'VIE2.Entity.set()', 'The type ' + this['a'].id + ' does not have an attribute ' + attr + '!');
+                    VIE2.log('warn', 'VIE2.Entity.sync()', 'The type ' + this['a'].id + ' does not have an attribute ' + attr + '!');
                     continue;
                 }
-                var oldVals = VIE2.getPropFromCache.call(this, attrUri); //TODO: does not work properly!
-                var newVals = model.attributes[attr];
                 
                 switch (type) {
-                    case 'DELETE':
-                        //"REMOVE FROM TRIPLESTORE!"
-                        this._syncHelper(attrUri, oldVals, [], opts);
-                        break;
-                    case 'PUT':
-                    case 'POST':
-                        //"WRITE INTO TRIPLESTORE!"
-                        this._syncHelper(attrUri, oldVals, newVals, opts);
-                        break;
-                    default:
+                    case 'GET':
                         //"READ FROM TRIPLESTORE!"
                         //overwrite completely with VIE2.getPropFromCache();
                         var ret = VIE2.getPropFromCache.call(this, attrUri);
                         this.attributes[attr] = ret;
-                    
+                        break;
+                    default:
+                        var oldVals = VIE2.getPropFromCache.call(this, attrUri);
+                        var newVals = (type === 'DELETE') ? [] : model.attributes[attr];
+                        //"REMOVE/UPDATE FROM TRIPLESTORE!"
+                        this._syncHelper(attrUri, oldVals, newVals, opts);
                         break;
                 }
             }

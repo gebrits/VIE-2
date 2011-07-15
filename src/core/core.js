@@ -75,9 +75,15 @@ VIE2.getPropFromCache = function (prop) {
         var types = VIE2.globalCache
         .where(jQuery.rdf.pattern(uri, prop, '?type', {namespaces: VIE2.namespaces.toObj()}));
         if (types.size() > 0) {
-            //only return the first type!
-            var ret =  VIE2.getType(types.get(0).type.value.toString());
-            return ret;
+            //only return the first valid type!
+            for (var t = 0; t < types.size(); t++) {
+                var ret =  VIE2.getType(types.get(t).type.value.toString());
+                if (ret) {
+                    VIE2.log('info', "VIE2.getPropFromCache(" + uri + " " + prop + ")", ret);
+                    return ret;
+                }
+            }
+            return null;
         } else {
             return null;
         }
@@ -105,7 +111,7 @@ VIE2.getPropFromCache = function (prop) {
             }
         }
     });
-    
+    VIE2.log('info', "VIE2.getPropFromCache(" + uri + " " + prop + ")", ret);
     return ret;
 };
 
@@ -162,7 +168,7 @@ VIE2.analyze = function (elem, callback, options) {
             var connector = VIE2.connectors[connId];
             
             //the connector's success callback method
-            var successCallback = function (elem) {
+            var successCallback = function (elem, callback) {
                 return function (rdf) {
                     VIE2.log("info", "VIE2.core#analyze()", "Received RDF annotation from connector '" + this.id + "'!");
                     
@@ -192,12 +198,16 @@ VIE2.analyze = function (elem, callback, options) {
                         if (!VIE2.EntityManager.getBySubject(subjStr)) {
                             VIE2.log("info", "VIE2.core#analyze()", "Register new entity (" + subjStr + ")!");
                             
-                            new VIE2.Entity({
+                            //allocate new entity and load data from global cache into the model via fetch()
+                            var entity = new VIE2.Entity({
                               id : subjStr
-                            }, {backend: true});
+                            });
+                            entity.fetch();
                         } else {
                             //inform client(s) that new data is possibly available
-                            VIE2.EntityManager.getBySubject(subjStr).change();
+                            var entity = VIE2.EntityManager.getBySubject(subjStr);
+                            entity.fetch();
+                            entity.change();
                         }
                     });
                     
@@ -207,15 +217,15 @@ VIE2.analyze = function (elem, callback, options) {
                     if (connectorQueue.length === 0) {
                         //if the queue is empty, all connectors have successfully returned and we can execute the
                         //callback function.
-                        VIE2.log("info", "VIE2.analyze()", "Finished! Global Cache holds now " + VIE2.globalCache.databank.triples().length + " triples!");
-                        VIE2.log("info", "VIE2.analyze()", "Finished! Local element holds now "  + that.options.entities.length + " entities!");
+                        VIE2.log("info", "VIE2.analyze()", "Finished! Global Cache holds now " + VIE2.globalCache.databank.size() + " triples!");
+                        VIE2.log("info", "VIE2.analyze()", "Finished! Local element holds now "  + elem.data('uri').length + " entities!");
                         //provide a status field in the callback object: status = {'ok', 'error'};
                         if (callback) {
                             callback.call(elem);
                         }
                     }
                 };
-            } (element);
+            } (element, callback);
             
             //the connector's error callback method
             var errorCallback = function (reason) {
@@ -225,7 +235,7 @@ VIE2.analyze = function (elem, callback, options) {
             
             //check if we may need to filter for the connector
             if (options.connectors) {
-                if (options.connectors.indexOf(connId) > 0) {
+                if (options.connectors.indexOf(connId) !== -1) {
                     //start analysis with the connector.
                     VIE2.log("info", "VIE2.analyze()", "Starting analysis with connector: '" + connId + "'!");
                     connector.analyze(element, {
@@ -401,8 +411,7 @@ VIE2.all = function (typeId) {
     //TODO!
     var type = VIE2.getType(typeId);
     
-    //TODO!
-    var arr = [];
-    
-    return arr;  
+    return VIE2.entities.select(function (e) {
+        return e.a.isTypeOf(type);
+    });
 };
