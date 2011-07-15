@@ -198,7 +198,6 @@ test("VIE2 Model unset attributes", 8, function () {
 
 
 test("VIE2 Model clear model", 10, function () {
-    console.log("YYYYYYYYYYYYYYYYYYYYYYYYYYY");
    var newPersonType = new VIE2.Type('PersonWithAge', 'Person', [
         {
             id       : 'age',
@@ -220,9 +219,7 @@ test("VIE2 Model clear model", 10, function () {
    equal(entity.get('description').length, 1);
    equal(entity.get('description')[0], 'This is a test');
 
-    console.log("YYYYYYYYYYYYYYYYYYYYYYYYYYY");
    entity.clear();
-    console.log("YYYYYYYYYYYYYYYYYYYYYYYYYYY");
 
    ok(entity);
    equal(entity.get('id'), id);
@@ -234,7 +231,7 @@ test("VIE2 Model clear model", 10, function () {
    
    VIE2.clear();      
 });
-/*
+
 
 test("VIE2 Model destroy model", 6, function () {
     
@@ -268,4 +265,4 @@ test("VIE2 Model destroy model", 6, function () {
    
    VIE2.clear();      
 });
-*/
+

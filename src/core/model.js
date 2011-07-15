@@ -75,39 +75,37 @@ VIE2.Entity = function (attrs, opts) {
                         attributes.push(attr);
                 }
             }
-            
-            console.log(method, "<<<", attributes);
 
             for (var a = 0; a < attributes.length; a++) {
                 var attr = attributes[a];
                 
                 if (attr === 'id') {
-                    //TODO!
+                    //TODO: what to do when to change the id?
                     continue;
                 }
                 try {
                     var attrUri = (attr === 'a')? attr : this['a'].getAttr(attr).id;
                 } catch (e) {
-                    console.log("germi", e);
+                    VIE2.log('warn', 'VIE2.Entity.set()', 'The type ' + this['a'].id + ' does not have an attribute ' + attr + '!');
+                    continue;
                 }
                 var oldVals = VIE2.getPropFromCache.call(this, attrUri); //TODO: does not work properly!
                 var newVals = model.attributes[attr];
                 
                 switch (type) {
                     case 'DELETE':
-                        console.log("REMOVE FROM TRIPLESTORE!");
+                        //"REMOVE FROM TRIPLESTORE!"
                         this._syncHelper(attrUri, oldVals, [], opts);
                         break;
                     case 'PUT':
                     case 'POST':
-                        console.log("WRITE INTO TRIPLESTORE!");
+                        //"WRITE INTO TRIPLESTORE!"
                         this._syncHelper(attrUri, oldVals, newVals, opts);
                         break;
                     default:
-                        console.log("READ FROM TRIPLESTORE!");
+                        //"READ FROM TRIPLESTORE!"
                         //overwrite completely with VIE2.getPropFromCache();
                         var ret = VIE2.getPropFromCache.call(this, attrUri);
-                        console.log("from cache:", ret);
                         this.attributes[attr] = ret;
                     
                         break;
@@ -130,12 +128,7 @@ VIE2.Entity = function (attrs, opts) {
             if (!jQuery.isArray(newVals)) {
                 newVals = [ newVals ];
             }
-            
-            //TODO: validate including typechecking!
-            console.log(attrUri);
-            console.log("ooo", oldVals);
-            console.log("nnn", newVals);
-            
+
             //sort both!
             var oldValsC = oldVals.slice(0).sort(VIE2.Util.sort);
             var newValsC = newVals.slice(0).sort(VIE2.Util.sort);
