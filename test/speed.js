@@ -2,7 +2,7 @@
     
   var entity = undefined;
   
-  JSLitmus.test('Model: register + unregister new type', function() {
+  JSLitmus.test('Type: register + unregister new type', function() {
     var newPersonType = new VIE2.Type('PersonWithAge', 'Person', [
         {id       : 'age',
          datatype : 'Integer'
@@ -22,8 +22,6 @@
    });
   });
   
-      
-   
   JSLitmus.test('Model: change props', function() {
     entity.set({
       name: 'Johnny The Doe',

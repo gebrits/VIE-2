@@ -76,7 +76,7 @@ VIE2.getPropFromCache = function (prop) {
         .where(jQuery.rdf.pattern(uri, prop, '?type', {namespaces: VIE2.namespaces.toObj()}));
         if (types.size() > 0) {
             //only return the first type!
-            var ret =  VIE2.getType(types.get(0).type.value);
+            var ret =  VIE2.getType(types.get(0).type.value.toString());
             return ret;
         } else {
             return null;

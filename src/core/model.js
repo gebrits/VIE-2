@@ -33,56 +33,108 @@ VIE2.Entity = function (attrs, opts) {
     //set type Thing if none was given
     //OR convert given type
     if (!('a' in attrs)) {
-    	attrs['a'] = VIE2.getType("Thing").id;
+    	attrs['a'] = VIE2.getType("Thing");
 	} else {
         // in the current implementation, we only allow *one* type per entity
-		attrs['a'] = VIE2.getType(jQuery.isArray(attrs['a'])? attrs['a'][0] : attrs['a']).id;
+		attrs['a'] = VIE2.getType(jQuery.isArray(attrs['a'])? attrs['a'][0] : attrs['a']);
 	}
+    
+    var methodMap = {
+        'create': 'POST',
+        'update': 'PUT',
+        'delete': 'DELETE',
+        'read'  : 'GET'
+    };
     
     var Model = VIE.RDFEntity.extend({
         
-        set: function (attrs, opts) {
-            if (!attrs) {attrs = {};}
+        /*validate: function(attrs) {
+            //TODO
+            return true;
+        },*/
+       
+       
+        
+        sync: function (method, model, opts) {
             if (!opts) {opts = {};}
             
-            //inherit the whole magic from the parent class
-            VIE.RDFEntity.prototype.set.call(this, attrs, opts);
+            //sync with local triplestore (VIE2.globalCache)!
+            var type = methodMap[method];
             
-            if (!opts.backend) {
-                //add triple to global VIE2 cache via VIE2.addToCache
-                
-                //add type of entity first!
-                if ('a' in attrs) {
-                    this._setH('a', this.get('a'), attrs['a'], opts);
+            var attributes = [];
+            
+            if (opts.filter) {
+                if (!jQuery.isArray(opts.filter)) {
+                    opts.filter = [opts.filter];
                 }
-                            
-                for (var attr in attrs) {
-                    if (attr !== 'id' && attr !== 'a') {
-                        var oldVals = this.get(attr);
-                        var newVals = attrs[attr];               
-                        
-                        this._setH(attr, oldVals, newVals, opts);
-                    }
+                attributes = opts.filter;
+            }
+            else {
+                for (var attr in model.attributes) {
+                    if (attributes.indexOf(attr) === -1) 
+                        attributes.push(attr);
                 }
             }
-            return this;
+            
+            console.log(method, "<<<", attributes);
+
+            for (var a = 0; a < attributes.length; a++) {
+                var attr = attributes[a];
+                
+                if (attr === 'id') {
+                    //TODO!
+                    continue;
+                }
+                try {
+                    var attrUri = (attr === 'a')? attr : this['a'].getAttr(attr).id;
+                } catch (e) {
+                    console.log("germi", e);
+                }
+                var oldVals = VIE2.getPropFromCache.call(this, attrUri); //TODO: does not work properly!
+                var newVals = model.attributes[attr];
+                
+                switch (type) {
+                    case 'DELETE':
+                        console.log("REMOVE FROM TRIPLESTORE!");
+                        this._syncHelper(attrUri, oldVals, [], opts);
+                        break;
+                    case 'PUT':
+                    case 'POST':
+                        console.log("WRITE INTO TRIPLESTORE!");
+                        this._syncHelper(attrUri, oldVals, newVals, opts);
+                        break;
+                    default:
+                        console.log("READ FROM TRIPLESTORE!");
+                        //overwrite completely with VIE2.getPropFromCache();
+                        var ret = VIE2.getPropFromCache.call(this, attrUri);
+                        console.log("from cache:", ret);
+                        this.attributes[attr] = ret;
+                    
+                        break;
+                }
+            }
         },
         
-        _setH: function (attr, oldVals, newVals, opts) {
+        _syncHelper: function (attrUri, oldVals, newVals, opts) {
             var uri = this.get('id');
-            var attrUri = attr === 'a' ? 'a' : this.get('a').getAttr(attr).id;
 
-            if (oldVals === null) {
+            if (oldVals === undefined || oldVals === null) {
                 oldVals = [];
             }
             if (!jQuery.isArray(oldVals)) {
                 oldVals = [ oldVals ];
+            }
+            if (newVals === undefined || newVals === null) {
+                newVals = [];
             }
             if (!jQuery.isArray(newVals)) {
                 newVals = [ newVals ];
             }
             
             //TODO: validate including typechecking!
+            console.log(attrUri);
+            console.log("ooo", oldVals);
+            console.log("nnn", newVals);
             
             //sort both!
             var oldValsC = oldVals.slice(0).sort(VIE2.Util.sort);
@@ -123,36 +175,73 @@ VIE2.Entity = function (attrs, opts) {
             }
         },
         
-        get: function (attr) {
-            if (attr === 'id') {
-                return VIE.RDFEntity.prototype.get.call(this, attr);
-            } else if (attr === 'a') {
-                return VIE2.getPropFromCache.call(this, attr);
-            } else {
-                //overwrite completely with VIE2.getPropFromCache();
-                var attrUri = this.get('a').getAttr(attr).id;
-                var ret = VIE2.getPropFromCache.call(this, attrUri);
-                
-                return ret;
+        get: function (attr, opts) {
+            if (!opts) {opts = {};}
+            if (attr !== 'id' && !opts.sync && !opts.clear) {
+                this.sync.call(this, 'read', this, jQuery.extend(opts, {filter: attr}));
             }
+            var ret = VIE.RDFEntity.prototype.get.call(this, attr);
+            
+            if (ret && !jQuery.isArray(ret) && attr !== 'id' && attr != 'a') {
+                return [ ret ];
+            }
+            if (!ret || (jQuery.isArray(ret) && ret.length === 0) || ret === null) {
+                //return undefined if nothing is there.
+                return undefined;
+            }
+            return ret;
+        },
+                
+        set: function (attrs, opts) {
+            if (!attrs) {attrs = {};}
+            if (!opts) {opts = {};}
+            
+            for (var attr in attrs) {
+                if (attr !== 'a' && attr !== 'id' && attrs[attr] === []) {
+                    this.unset(attr, opts);
+                    delete attrs[attr];
+                }
+            }
+            
+            //inherit the whole magic from the parent class
+            var ret = VIE.RDFEntity.prototype.set.call(this, attrs, opts);
+            if ('a' in attrs) this.a = attrs['a'];
+            
+            this.sync.call(this, true ? 'create' : 'update', this, opts);
+            
+            return ret;
         },
         
         unset: function (attr, opts) {
-            if (!attr || attr === 'id') return this;
             if (!opts) {opts = {};}
             
-            VIE.RDFEntity.prototype.unset.call(this, attr, opts);
-            
-            if (attr !== 'id') {
-                this._setH(attr, this.get(attr), [], opts);
+            //preserve these two special attributes!
+            if (attr === 'id' || attr === 'a') {
+                return this;
             }
-            return this;
+            
+            //inherit the whole magic from the parent class
+            var ret = VIE.RDFEntity.prototype.unset.call(this, attr, jQuery.extend(opts, {filter: attr}));
+            
+            if (!opts.clear) {
+                this.sync.call(this, 'delete', this, jQuery.extend(opts, {filter: attr}));
+            }
+            return ret;
         },
         
-        destroy: function (opts) {
-            //TODO
-            VIE.RDFEntity.prototype.destroy.call(this, opts);
-            VIE2.entities.remove(this, opts);
+        clear : function(opts) {
+            var attributes = [];
+            
+            for (var attr in model.attributes) {
+                if (attributes.indexOf(attr) === -1) 
+                    attributes.push(attr);
+            }
+                
+            var ret = VIE.RDFEntity.prototype.clear.call(this, jQuery.extend(opts, {clear: true}));
+            
+            this.sync.call(this, 'delete', this, jQuery.extend(opts, {filter: attributes}));
+            
+            return ret;
         },
     
         //for convenience

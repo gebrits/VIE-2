@@ -39,7 +39,7 @@ VIE2.EntityCollection = VIE.RDFEntityCollection.extend({
     
     _remove: function (model, opts) {
         if (!opts) { opts = {};}
-        if (model) {
+        /*if (model) {
             //when removing the model from this collection, that means
             //that we remove all corresponding data from the cache as well.
             if (VIE2.entities === this) {
@@ -54,7 +54,9 @@ VIE2.EntityCollection = VIE.RDFEntityCollection.extend({
                 model.destroy();
             }
             VIE.RDFEntityCollection.prototype._remove.call(this, model, opts);
-        }
+        }*/
+        VIE.EntityManager.entities.remove(model, opts);
+        VIE.RDFEntityCollection.prototype._remove.call(this, model, opts);
     }
     //TODO
 });
